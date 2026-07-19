@@ -1,0 +1,1513 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#08060f">
+  <meta name="description" content="New Mugen — a modular browser fighting-game project.">
+  <title>New Mugen</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f7f3ff;
+      --muted: #aaa1bc;
+      --panel: rgba(13, 9, 24, 0.78);
+      --line: rgba(255, 255, 255, 0.14);
+      --hot: #ff355d;
+      --hot-2: #ff8a34;
+      --cold: #5ae7ff;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 73% 41%, rgba(117, 24, 84, .38), transparent 28%),
+        radial-gradient(circle at 44% 120%, rgba(255, 64, 41, .22), transparent 43%),
+        linear-gradient(135deg, #05040a 0%, #10091c 52%, #07050c 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      user-select: none;
+    }
+
+    button { font: inherit; }
+    [hidden] { display: none !important; }
+
+    #fx,
+    .vignette,
+    .scanlines,
+    .grid,
+    .slash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    #fx { width: 100%; height: 100%; opacity: .72; }
+
+    .vignette {
+      z-index: 8;
+      box-shadow: inset 0 0 170px 42px rgba(0, 0, 0, .8);
+    }
+
+    .scanlines {
+      z-index: 7;
+      opacity: .16;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 3px,
+        rgba(255, 255, 255, .07) 4px
+      );
+      mix-blend-mode: overlay;
+    }
+
+    .grid {
+      top: 58%;
+      z-index: 0;
+      opacity: .22;
+      background-image:
+        linear-gradient(rgba(255, 83, 99, .38) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 83, 99, .38) 1px, transparent 1px);
+      background-size: 54px 54px;
+      transform: perspective(410px) rotateX(64deg) scale(1.6);
+      transform-origin: center top;
+      mask-image: linear-gradient(to bottom, transparent, black 24%, transparent 88%);
+    }
+
+    .slash {
+      z-index: 1;
+      left: auto;
+      width: 52vw;
+      transform: skewX(-16deg) translateX(10%);
+      background: linear-gradient(110deg, transparent 16%, rgba(255, 42, 82, .11) 17%, rgba(255, 91, 38, .32) 48%, transparent 49%);
+      filter: blur(1px);
+    }
+
+    .frame {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100svh;
+      padding: max(22px, env(safe-area-inset-top)) max(26px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(26px, env(safe-area-inset-left));
+    }
+
+    .topbar,
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .21em;
+      text-transform: uppercase;
+    }
+
+    .build-mark { display: flex; align-items: center; gap: 11px; }
+
+    .build-mark::before {
+      content: "";
+      width: 30px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--hot), var(--hot-2));
+      box-shadow: 0 0 14px var(--hot);
+    }
+
+    .online-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: var(--cold);
+      box-shadow: 0 0 12px var(--cold);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    .screen {
+      display: grid;
+      grid-template-columns: minmax(310px, 520px) minmax(260px, 1fr);
+      align-items: center;
+      gap: clamp(28px, 7vw, 110px);
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 30px 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--hot-2);
+      font-size: clamp(10px, 1vw, 12px);
+      font-weight: 900;
+      letter-spacing: .42em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: clamp(64px, 10vw, 142px);
+      font-stretch: condensed;
+      font-style: italic;
+      font-weight: 900;
+      letter-spacing: -.055em;
+      line-height: .77;
+      text-transform: uppercase;
+      text-shadow: 7px 8px 0 rgba(0, 0, 0, .38), 0 0 34px rgba(255, 53, 93, .12);
+      transform: skewX(-4deg);
+    }
+
+    h1 span {
+      display: block;
+      color: transparent;
+      background: linear-gradient(100deg, #fff 0 20%, #ffb074 36%, var(--hot) 66%, #a60e48 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+
+    .tagline {
+      max-width: 460px;
+      margin: 19px 0 24px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+      letter-spacing: .18em;
+      line-height: 1.6;
+      text-transform: uppercase;
+    }
+
+    .menu {
+      display: grid;
+      gap: 7px;
+      width: min(420px, 100%);
+    }
+
+    .menu-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 38px 1fr auto;
+      align-items: center;
+      min-height: 48px;
+      padding: 0 17px 0 13px;
+      overflow: hidden;
+      border: 1px solid transparent;
+      color: rgba(247, 243, 255, .64);
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      text-transform: uppercase;
+      transition: color .2s var(--ease), transform .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
+    }
+
+    .menu-item::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(90deg, rgba(255, 53, 93, .92), rgba(255, 107, 42, .57) 55%, transparent 100%);
+      transform: translateX(-105%);
+      transition: transform .28s var(--ease);
+    }
+
+    .menu-item::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 23%;
+      width: 3px;
+      height: 54%;
+      background: var(--hot);
+      box-shadow: 0 0 12px var(--hot);
+      opacity: 0;
+      transition: opacity .2s var(--ease);
+    }
+
+    .menu-item .num {
+      color: rgba(255, 255, 255, .28);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .15em;
+    }
+
+    .menu-item .label {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: .19em;
+    }
+
+    .menu-item .arrow {
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity .2s var(--ease), transform .2s var(--ease);
+    }
+
+    .menu-item.active,
+    .menu-item:hover,
+    .menu-item:focus-visible {
+      outline: none;
+      border-color: rgba(255, 255, 255, .13);
+      color: white;
+      background: rgba(255, 255, 255, .035);
+      transform: translateX(9px);
+    }
+
+    .menu-item.active::before,
+    .menu-item:hover::before,
+    .menu-item:focus-visible::before { transform: translateX(0); }
+
+    .menu-item.active::after,
+    .menu-item:hover::after,
+    .menu-item:focus-visible::after { opacity: 1; }
+
+    .menu-item.active .num,
+    .menu-item:hover .num,
+    .menu-item:focus-visible .num { color: rgba(255, 255, 255, .72); }
+
+    .menu-item.active .arrow,
+    .menu-item:hover .arrow,
+    .menu-item:focus-visible .arrow { opacity: 1; transform: translateX(0); }
+
+    .showcase {
+      position: relative;
+      display: grid;
+      place-items: end center;
+      min-height: min(62vh, 650px);
+    }
+
+    .fighter {
+      position: absolute;
+      bottom: 62px;
+      width: min(20vw, 240px);
+      height: min(48vw, 520px);
+      opacity: .78;
+      filter: drop-shadow(0 0 28px rgba(255, 49, 83, .24));
+    }
+
+    .fighter::before,
+    .fighter::after {
+      content: "";
+      position: absolute;
+      background: linear-gradient(135deg, #221329, #050409 64%);
+      border: 1px solid rgba(255, 92, 93, .13);
+    }
+
+    .fighter::before {
+      inset: 8% 20% 0;
+      clip-path: polygon(37% 0, 65% 0, 74% 8%, 68% 18%, 80% 31%, 100% 44%, 78% 53%, 72% 100%, 55% 100%, 50% 61%, 43% 100%, 22% 100%, 28% 53%, 0 45%, 22% 30%, 31% 18%, 27% 8%);
+    }
+
+    .fighter::after {
+      width: 42%;
+      aspect-ratio: 1;
+      top: 0;
+      left: 29%;
+      border-radius: 46% 54% 47% 53%;
+      box-shadow: inset -12px -8px 0 #09060c;
+    }
+
+    .fighter-a { right: 35%; transform: rotate(-5deg) translateX(-26%); }
+    .fighter-b { right: 4%; transform: scaleX(-1) rotate(-3deg); opacity: .47; }
+
+    .mode-card {
+      position: relative;
+      z-index: 2;
+      width: min(430px, 100%);
+      padding: 21px 23px;
+      border: 1px solid var(--line);
+      background: linear-gradient(120deg, rgba(16, 10, 27, .92), rgba(18, 9, 23, .55));
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, .34);
+    }
+
+    .mode-card::before {
+      content: "";
+      position: absolute;
+      inset: -1px auto -1px -1px;
+      width: 3px;
+      background: linear-gradient(var(--hot-2), var(--hot));
+      box-shadow: 0 0 16px var(--hot);
+    }
+
+    .mode-card-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 9px;
+      color: var(--hot-2);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .27em;
+      text-transform: uppercase;
+    }
+
+    #mode-title {
+      margin: 0 0 7px;
+      font-size: 23px;
+      font-style: italic;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    #mode-description {
+      min-height: 40px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .footer { align-self: end; }
+    .controls { display: flex; gap: 20px; }
+    .key { color: white; }
+
+    .copyright { opacity: .65; text-align: right; }
+
+    .arcade-screen {
+      align-self: stretch;
+      width: min(1380px, 100%);
+      min-height: 0;
+      margin: 0 auto;
+      padding: clamp(18px, 3vh, 34px) 0 clamp(14px, 2vh, 24px);
+      overflow: hidden;
+    }
+
+    .arcade-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: clamp(16px, 2.4vh, 28px);
+    }
+
+    .arcade-heading-copy { min-width: 0; }
+
+    .arcade-kicker {
+      margin: 0 0 5px;
+      color: var(--cold);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .34em;
+      text-transform: uppercase;
+    }
+
+    .arcade-heading h2 {
+      margin: 0;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: clamp(38px, 5.8vw, 76px);
+      font-style: italic;
+      letter-spacing: -.025em;
+      line-height: .9;
+      text-transform: uppercase;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      flex: 0 0 auto;
+      padding: 11px 15px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: rgba(255, 255, 255, .035);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      transition: color .2s ease, border-color .2s ease, transform .2s var(--ease);
+    }
+
+    .back-button:hover,
+    .back-button:focus-visible {
+      outline: none;
+      color: white;
+      border-color: rgba(90, 231, 255, .55);
+      transform: translateX(-4px);
+    }
+
+    .select-layout {
+      display: grid;
+      grid-template-columns: minmax(190px, 245px) minmax(310px, 1fr) minmax(290px, 370px);
+      gap: clamp(12px, 1.6vw, 24px);
+      height: min(66vh, 675px);
+      min-height: 470px;
+    }
+
+    .roster-panel,
+    .character-details {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(17, 12, 29, .92), rgba(8, 6, 14, .78));
+      backdrop-filter: blur(13px);
+    }
+
+    .roster-panel {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: 17px;
+    }
+
+    .panel-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 13px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .panel-label strong { color: var(--cold); }
+
+    .roster-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .roster-card {
+      position: relative;
+      aspect-ratio: .82;
+      min-width: 0;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      color: white;
+      background: #0b0812;
+      cursor: pointer;
+    }
+
+    .roster-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 18%;
+      filter: saturate(.86) contrast(1.08);
+      transform: scale(1.04);
+      transition: transform .25s var(--ease), filter .25s ease;
+    }
+
+    .roster-card span {
+      position: absolute;
+      inset: auto 0 0;
+      padding: 22px 7px 7px;
+      background: linear-gradient(transparent, rgba(3, 3, 6, .96));
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .1em;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    .roster-card.selected,
+    .roster-card:hover,
+    .roster-card:focus-visible {
+      outline: none;
+      border-color: var(--cold);
+      box-shadow: 0 0 0 2px rgba(90, 231, 255, .14), 0 0 21px rgba(90, 231, 255, .18);
+    }
+
+    .roster-card.selected img,
+    .roster-card:hover img,
+    .roster-card:focus-visible img { transform: scale(1.1); filter: saturate(1.08) contrast(1.08); }
+
+    .roster-card.locked {
+      display: grid;
+      place-items: center;
+      border-color: rgba(255, 255, 255, .07);
+      color: rgba(255, 255, 255, .19);
+      cursor: default;
+      background:
+        linear-gradient(135deg, transparent 48%, rgba(255,255,255,.05) 49% 51%, transparent 52%),
+        rgba(255,255,255,.018);
+    }
+
+    .roster-card.locked::before {
+      content: "?";
+      font-family: Impact, sans-serif;
+      font-size: clamp(28px, 4vw, 46px);
+      font-style: italic;
+    }
+
+    .roster-card.locked span {
+      color: rgba(255,255,255,.2);
+      text-align: center;
+      background: linear-gradient(transparent, rgba(3, 3, 6, .82));
+    }
+
+    .character-stage {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid rgba(90, 231, 255, .22);
+      background:
+        radial-gradient(circle at 52% 38%, rgba(18, 205, 228, .23), transparent 37%),
+        #05070b;
+      box-shadow: inset 0 0 70px rgba(0,0,0,.45), 0 24px 75px rgba(0,0,0,.34);
+    }
+
+    .character-stage::before {
+      content: "01";
+      position: absolute;
+      z-index: 1;
+      top: -3.5%;
+      right: -1%;
+      color: rgba(255, 255, 255, .045);
+      font-family: Impact, sans-serif;
+      font-size: clamp(130px, 20vw, 280px);
+      font-style: italic;
+      line-height: 1;
+    }
+
+    .character-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(3, 4, 8, .98), transparent 52%), linear-gradient(90deg, rgba(3,4,8,.34), transparent 32% 70%, rgba(3,4,8,.25));
+      pointer-events: none;
+    }
+
+    .character-art {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 20%;
+      animation: character-in .65s var(--ease) both;
+    }
+
+    .character-identity {
+      position: absolute;
+      z-index: 2;
+      inset: auto clamp(17px, 2.2vw, 30px) clamp(18px, 3vh, 30px);
+    }
+
+    .player-tag {
+      display: inline-block;
+      margin-bottom: 7px;
+      padding: 5px 8px;
+      color: #021014;
+      background: var(--cold);
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      box-shadow: 0 0 19px rgba(90, 231, 255, .32);
+    }
+
+    .character-identity h3 {
+      margin: 0;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: clamp(42px, 6vw, 82px);
+      font-style: italic;
+      letter-spacing: -.02em;
+      line-height: .88;
+      text-transform: uppercase;
+      text-shadow: 5px 5px 0 rgba(0,0,0,.44);
+    }
+
+    .character-identity p {
+      margin: 8px 0 0;
+      color: var(--cold);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+    }
+
+    .character-details {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: clamp(17px, 2vw, 25px);
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--hot) transparent;
+    }
+
+    .detail-series {
+      margin: 0 0 5px;
+      color: var(--hot-2);
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+    }
+
+    .character-details h3 {
+      margin: 0 0 5px;
+      font-size: clamp(24px, 3vw, 36px);
+      font-style: italic;
+      font-weight: 950;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .archetype {
+      margin: 0 0 14px;
+      color: var(--cold);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .fighter-description {
+      margin: 0 0 17px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    .stats {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: 58px 1fr 27px;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .stat-track {
+      height: 4px;
+      overflow: hidden;
+      background: rgba(255,255,255,.08);
+    }
+
+    .stat-fill {
+      display: block;
+      width: var(--value);
+      height: 100%;
+      background: linear-gradient(90deg, var(--cold), #d9fbff);
+      box-shadow: 0 0 10px rgba(90, 231, 255, .5);
+      transform-origin: left;
+      animation: stat-in .65s var(--ease) both;
+    }
+
+    .move-heading {
+      margin: 0 0 9px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .move-list {
+      display: grid;
+      gap: 7px;
+      margin: 0 0 19px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .move-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: white;
+      font-size: 10px;
+      font-weight: 850;
+    }
+
+    .move-input {
+      flex: 0 0 auto;
+      color: var(--cold);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .choose-button {
+      width: 100%;
+      margin-top: auto;
+      padding: 14px;
+      border: 1px solid rgba(90, 231, 255, .72);
+      color: #031014;
+      background: linear-gradient(100deg, var(--cold), #c8f9ff);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      box-shadow: 0 0 25px rgba(90, 231, 255, .12);
+      transition: transform .2s var(--ease), box-shadow .2s ease;
+    }
+
+    .choose-button:hover,
+    .choose-button:focus-visible {
+      outline: none;
+      transform: translateY(-2px);
+      box-shadow: 0 9px 30px rgba(90, 231, 255, .25);
+    }
+
+    .ready-card {
+      width: min(500px, 100%);
+      padding: clamp(27px, 5vw, 46px);
+      border: 1px solid rgba(90, 231, 255, .44);
+      background:
+        radial-gradient(circle at 50% 0, rgba(90, 231, 255, .16), transparent 45%),
+        #0a0910;
+      box-shadow: 0 30px 100px rgba(0,0,0,.7), 0 0 44px rgba(90,231,255,.08);
+      text-align: center;
+    }
+
+    .ready-card .player-tag { margin-bottom: 14px; }
+
+    .ready-card h2 {
+      margin: 0;
+      font-family: Impact, sans-serif;
+      font-size: clamp(48px, 10vw, 80px);
+      font-style: italic;
+      letter-spacing: -.02em;
+      line-height: .86;
+      text-transform: uppercase;
+    }
+
+    .ready-card h2 span { display: block; color: var(--cold); }
+
+    .ready-card p {
+      margin: 18px auto 24px;
+      max-width: 340px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .08em;
+      line-height: 1.65;
+      text-transform: uppercase;
+    }
+
+    .ready-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .ready-actions .close-button { margin: 0; }
+    .ready-actions .close-button:first-child { border-color: rgba(90,231,255,.5); }
+
+    @keyframes character-in {
+      from { opacity: 0; transform: scale(1.06) translateY(12px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @keyframes stat-in {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      background: rgba(3, 2, 7, .72);
+      backdrop-filter: blur(9px);
+      transition: opacity .2s ease, visibility .2s ease;
+    }
+
+    .modal-backdrop.open { opacity: 1; visibility: visible; }
+
+    .modal {
+      width: min(460px, 100%);
+      padding: 26px;
+      border: 1px solid rgba(255, 255, 255, .16);
+      background: #100b18;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, .6);
+      transform: translateY(12px) scale(.98);
+      transition: transform .24s var(--ease);
+    }
+
+    .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+
+    .modal h2 {
+      margin: 0 0 22px;
+      font-size: 28px;
+      font-style: italic;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .setting {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 58px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .toggle,
+    .close-button {
+      border: 1px solid var(--line);
+      color: white;
+      background: rgba(255,255,255,.05);
+      cursor: pointer;
+    }
+
+    .toggle {
+      min-width: 76px;
+      padding: 8px 10px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .toggle[aria-pressed="true"] { border-color: rgba(90, 231, 255, .5); color: var(--cold); }
+
+    .close-button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 13px;
+      border-color: rgba(255, 53, 93, .55);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .toggle:hover,
+    .toggle:focus-visible,
+    .close-button:hover,
+    .close-button:focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
+
+    .toast {
+      position: fixed;
+      z-index: 40;
+      left: 50%;
+      bottom: max(70px, calc(env(safe-area-inset-bottom) + 48px));
+      width: min(520px, calc(100% - 32px));
+      padding: 14px 18px;
+      border-left: 3px solid var(--hot);
+      color: white;
+      background: rgba(10, 7, 17, .94);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, .42);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-align: center;
+      text-transform: uppercase;
+      transform: translate(-50%, 30px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease, transform .22s var(--ease);
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @keyframes pulse { 50% { opacity: .38; transform: scale(.72); } }
+
+    @media (max-width: 840px) {
+      .frame { padding-inline: 20px; }
+      .screen { grid-template-columns: 1fr; align-content: center; padding: 22px 0 44px; }
+      .showcase { display: none; }
+      h1 { font-size: clamp(66px, 22vw, 108px); }
+      .tagline { margin-bottom: 19px; font-size: 11px; }
+      .menu { width: 100%; }
+      .menu-item { min-height: 51px; background: rgba(255,255,255,.018); }
+      .footer { font-size: 9px; letter-spacing: .14em; }
+      .controls span:nth-child(2) { display: none; }
+      .arcade-screen { overflow: auto; padding-bottom: 80px; }
+      .arcade-heading { align-items: center; }
+      .arcade-heading h2 { font-size: clamp(34px, 11vw, 58px); }
+      .select-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 0;
+      }
+      .roster-panel { order: 2; }
+      .roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .character-stage { min-height: 510px; order: 1; }
+      .character-details { order: 3; overflow: visible; }
+      .roster-card.locked:nth-child(n+6) { display: none; }
+      .ready-actions { grid-template-columns: 1fr; }
+    }
+
+    @media (min-width: 841px) and (max-width: 1080px) {
+      .select-layout { grid-template-columns: 180px minmax(300px, 1fr) minmax(255px, 310px); }
+      .roster-panel { padding: 12px; }
+      .character-details { padding: 17px; }
+    }
+
+    @media (max-height: 690px) and (min-width: 841px) {
+      h1 { font-size: clamp(60px, 9vw, 105px); }
+      .tagline { margin-block: 13px 16px; }
+      .menu { gap: 4px; }
+      .menu-item { min-height: 41px; }
+      .showcase { min-height: 500px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+      #fx { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div class="grid" aria-hidden="true"></div>
+  <div class="slash" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <div class="frame">
+    <header class="topbar">
+      <div class="build-mark" id="build-mark">Fighter System // Build 0002</div>
+      <div><span class="online-dot"></span><span id="screen-status">Menu Online</span></div>
+    </header>
+
+    <main class="screen" id="main-menu-screen">
+      <section aria-labelledby="game-title">
+        <p class="eyebrow">The fight starts here</p>
+        <h1 id="game-title">New <span>Mugen</span></h1>
+        <p class="tagline">Choose your battle. Build your legend.</p>
+
+        <nav class="menu" aria-label="Main menu">
+          <button class="menu-item active" type="button" data-mode="arcade">
+            <span class="num">01</span><span class="label">Arcade</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="versus">
+            <span class="num">02</span><span class="label">Versus</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="training">
+            <span class="num">03</span><span class="label">Training</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="watch">
+            <span class="num">04</span><span class="label">Watch</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="options">
+            <span class="num">05</span><span class="label">Options</span><span class="arrow">›</span>
+          </button>
+        </nav>
+      </section>
+
+      <aside class="showcase" aria-live="polite">
+        <div class="fighter fighter-a" aria-hidden="true"></div>
+        <div class="fighter fighter-b" aria-hidden="true"></div>
+        <div class="mode-card">
+          <div class="mode-card-header"><span>Selected mode</span><span id="mode-code">A-01</span></div>
+          <h2 id="mode-title">Arcade</h2>
+          <p id="mode-description">Fight through a ladder of rivals and reach the final challenger.</p>
+        </div>
+      </aside>
+    </main>
+
+    <main class="arcade-screen" id="arcade-screen" hidden>
+      <header class="arcade-heading">
+        <div class="arcade-heading-copy">
+          <p class="arcade-kicker">Arcade // Player One</p>
+          <h2>Select Fighter</h2>
+        </div>
+        <button class="back-button" id="arcade-back" type="button"><span>‹</span> Main Menu</button>
+      </header>
+
+      <div class="select-layout">
+        <section class="roster-panel" aria-label="Playable fighter roster">
+          <p class="panel-label"><span>Fighter roster</span><strong>01 / 12</strong></p>
+          <div class="roster-grid">
+            <button class="roster-card selected" type="button" data-character="yusuke_urameshi" aria-current="true" aria-label="Select Yusuke Urameshi">
+              <img src="assets/characters/yusuke/portrait.webp" alt="Yusuke Urameshi aiming his Spirit Gun">
+              <span>Yusuke</span>
+            </button>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+          </div>
+        </section>
+
+        <section class="character-stage" aria-labelledby="selected-character-name">
+          <img class="character-art" id="character-art" src="assets/characters/yusuke/portrait.webp" alt="Yusuke Urameshi charging his Spirit Gun">
+          <div class="character-identity">
+            <span class="player-tag">Player 1 // Selected</span>
+            <h3 id="selected-character-name">Yusuke</h3>
+            <p id="selected-character-title">Spirit Detective</p>
+          </div>
+        </section>
+
+        <aside class="character-details" aria-label="Selected fighter details">
+          <p class="detail-series" id="character-series">Yu Yu Hakusho</p>
+          <h3 id="character-full-name">Yusuke Urameshi</h3>
+          <p class="archetype" id="character-archetype">Rushdown / Zoner</p>
+          <p class="fighter-description" id="character-description">A fearless close-range brawler who controls space with concentrated spirit energy.</p>
+
+          <div class="stats" id="character-stats" aria-label="Gameplay statistics">
+            <div class="stat-row"><span>Power</span><span class="stat-track"><span class="stat-fill" style="--value: 84%"></span></span><strong>84</strong></div>
+            <div class="stat-row"><span>Speed</span><span class="stat-track"><span class="stat-fill" style="--value: 76%"></span></span><strong>76</strong></div>
+            <div class="stat-row"><span>Range</span><span class="stat-track"><span class="stat-fill" style="--value: 88%"></span></span><strong>88</strong></div>
+            <div class="stat-row"><span>Defense</span><span class="stat-track"><span class="stat-fill" style="--value: 72%"></span></span><strong>72</strong></div>
+          </div>
+
+          <p class="move-heading">Signature techniques</p>
+          <ul class="move-list" id="character-moves">
+            <li><span>Spirit Gun</span><span class="move-input">↓ ↘ → + P</span></li>
+            <li><span>Spirit Shotgun</span><span class="move-input">↓ ↙ ← + P</span></li>
+            <li><span>Spirit Wave</span><span class="move-input">↓ ↘ → + K</span></li>
+          </ul>
+
+          <button class="choose-button" id="choose-character" type="button">Choose Yusuke</button>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="controls" id="menu-controls">
+        <span><span class="key">↑ ↓ / W S</span> Select</span>
+        <span><span class="key">Enter</span> Confirm</span>
+      </div>
+      <div class="controls" id="arcade-controls" hidden>
+        <span><span class="key">Enter</span> Choose fighter</span>
+        <span><span class="key">Esc / B</span> Back</span>
+      </div>
+      <div class="copyright">New Mugen // Prototype</div>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop" id="options-modal" role="dialog" aria-modal="true" aria-labelledby="options-title">
+    <div class="modal">
+      <h2 id="options-title">Options</h2>
+      <div class="setting"><span>Menu sound</span><button class="toggle" id="sound-toggle" type="button" aria-pressed="true">On</button></div>
+      <div class="setting"><span>Particles</span><button class="toggle" id="particles-toggle" type="button" aria-pressed="true">On</button></div>
+      <div class="setting"><span>Fullscreen</span><button class="toggle" id="fullscreen-toggle" type="button" aria-pressed="false">Enter</button></div>
+      <button class="close-button" id="close-options" type="button">Back to menu</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="fighter-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="fighter-ready-title">
+    <div class="ready-card">
+      <span class="player-tag">Player 1 locked in</span>
+      <h2 id="fighter-ready-title">Yusuke <span>Ready</span></h2>
+      <p>Yusuke is ready for Arcade. Add the next fighter to create his first opponent.</p>
+      <div class="ready-actions">
+        <button class="close-button" id="return-roster" type="button">Back to roster</button>
+        <button class="close-button" id="ready-main-menu" type="button">Main menu</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const modes = {
+        arcade: {
+          title: "Arcade",
+          code: "A-01",
+          description: "Fight through a ladder of rivals and reach the final challenger."
+        },
+        versus: {
+          title: "Versus",
+          code: "V-02",
+          description: "Settle the score in a local head-to-head battle."
+        },
+        training: {
+          title: "Training",
+          code: "T-03",
+          description: "Practice movement, timing, combos, and defensive reactions."
+        },
+        watch: {
+          title: "Watch",
+          code: "W-04",
+          description: "Let two computer-controlled fighters battle for the arena."
+        },
+        options: {
+          title: "Options",
+          code: "O-05",
+          description: "Adjust presentation, sound, and display settings."
+        }
+      };
+
+      const items = [...document.querySelectorAll(".menu-item")];
+      const modeTitle = document.querySelector("#mode-title");
+      const modeCode = document.querySelector("#mode-code");
+      const modeDescription = document.querySelector("#mode-description");
+      const mainMenuScreen = document.querySelector("#main-menu-screen");
+      const arcadeScreen = document.querySelector("#arcade-screen");
+      const screenStatus = document.querySelector("#screen-status");
+      const menuControls = document.querySelector("#menu-controls");
+      const arcadeControls = document.querySelector("#arcade-controls");
+      const arcadeBack = document.querySelector("#arcade-back");
+      const rosterChoice = document.querySelector(".roster-card.selected");
+      const chooseCharacter = document.querySelector("#choose-character");
+      const modal = document.querySelector("#options-modal");
+      const fighterConfirmModal = document.querySelector("#fighter-confirm-modal");
+      const returnRoster = document.querySelector("#return-roster");
+      const readyMainMenu = document.querySelector("#ready-main-menu");
+      const closeOptions = document.querySelector("#close-options");
+      const soundToggle = document.querySelector("#sound-toggle");
+      const particlesToggle = document.querySelector("#particles-toggle");
+      const fullscreenToggle = document.querySelector("#fullscreen-toggle");
+      const characterArt = document.querySelector("#character-art");
+      const selectedCharacterName = document.querySelector("#selected-character-name");
+      const selectedCharacterTitle = document.querySelector("#selected-character-title");
+      const characterSeries = document.querySelector("#character-series");
+      const characterFullName = document.querySelector("#character-full-name");
+      const characterArchetype = document.querySelector("#character-archetype");
+      const characterDescription = document.querySelector("#character-description");
+      const characterStats = document.querySelector("#character-stats");
+      const characterMoves = document.querySelector("#character-moves");
+      const toast = document.querySelector("#toast");
+      const canvas = document.querySelector("#fx");
+      const ctx = canvas.getContext("2d");
+
+      let selectedIndex = 0;
+      let activeScreen = "menu";
+      let soundOn = true;
+      let particlesOn = true;
+      let toastTimer;
+      let audioContext;
+
+      function playTone(frequency = 210, duration = 0.045) {
+        if (!soundOn) return;
+        try {
+          audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = "square";
+          oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+          gain.gain.setValueAtTime(0.025, audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration);
+          oscillator.connect(gain).connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + duration);
+        } catch (_) {
+          // The menu remains fully usable when browser audio is unavailable.
+        }
+      }
+
+      function setSelected(index, focus = false) {
+        selectedIndex = (index + items.length) % items.length;
+        items.forEach((item, itemIndex) => {
+          const active = itemIndex === selectedIndex;
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-current", active ? "true" : "false");
+        });
+
+        const selected = items[selectedIndex];
+        const mode = modes[selected.dataset.mode];
+        modeTitle.textContent = mode.title;
+        modeCode.textContent = mode.code;
+        modeDescription.textContent = mode.description;
+        if (focus) selected.focus({ preventScroll: true });
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+      }
+
+      function openOptions() {
+        modal.classList.add("open");
+        closeOptions.focus();
+      }
+
+      function closeOptionsPanel() {
+        modal.classList.remove("open");
+        items[selectedIndex].focus();
+      }
+
+      function openArcade() {
+        activeScreen = "arcade";
+        mainMenuScreen.hidden = true;
+        arcadeScreen.hidden = false;
+        menuControls.hidden = true;
+        arcadeControls.hidden = false;
+        screenStatus.textContent = "Arcade // Select";
+        document.body.dataset.screen = "arcade";
+        rosterChoice.focus({ preventScroll: true });
+      }
+
+      function returnToMenu() {
+        activeScreen = "menu";
+        arcadeScreen.hidden = true;
+        mainMenuScreen.hidden = false;
+        arcadeControls.hidden = true;
+        menuControls.hidden = false;
+        screenStatus.textContent = "Menu Online";
+        delete document.body.dataset.screen;
+        items[selectedIndex].focus({ preventScroll: true });
+      }
+
+      function lockInFighter() {
+        playTone(520, 0.1);
+        fighterConfirmModal.classList.add("open");
+        returnRoster.focus();
+      }
+
+      function closeFighterConfirm() {
+        fighterConfirmModal.classList.remove("open");
+        chooseCharacter.focus();
+      }
+
+      function createStatRow(label, value) {
+        const row = document.createElement("div");
+        row.className = "stat-row";
+
+        const name = document.createElement("span");
+        name.textContent = label;
+
+        const track = document.createElement("span");
+        track.className = "stat-track";
+        const fill = document.createElement("span");
+        fill.className = "stat-fill";
+        fill.style.setProperty("--value", `${Math.max(0, Math.min(100, value))}%`);
+        track.append(fill);
+
+        const score = document.createElement("strong");
+        score.textContent = value;
+        row.append(name, track, score);
+        return row;
+      }
+
+      function renderCharacter(character) {
+        const { profile, selectStats, moves } = character;
+        characterArt.src = profile.portrait;
+        characterArt.alt = `${character.displayName} charging his Spirit Gun`;
+        rosterChoice.querySelector("img").src = profile.portrait;
+        selectedCharacterName.textContent = character.shortName;
+        selectedCharacterTitle.textContent = profile.title;
+        characterSeries.textContent = character.series;
+        characterFullName.textContent = character.displayName;
+        characterArchetype.textContent = profile.archetype;
+        characterDescription.textContent = profile.description;
+        chooseCharacter.textContent = `Choose ${character.shortName}`;
+
+        characterStats.replaceChildren();
+        Object.entries(selectStats).forEach(([label, value]) => {
+          characterStats.append(createStatRow(label, value));
+        });
+
+        characterMoves.replaceChildren();
+        moves.forEach(move => {
+          const item = document.createElement("li");
+          const name = document.createElement("span");
+          const input = document.createElement("span");
+          name.textContent = move.name;
+          input.className = "move-input";
+          input.textContent = move.input;
+          item.append(name, input);
+          characterMoves.append(item);
+        });
+      }
+
+      async function loadCharacterDefinition() {
+        try {
+          const response = await fetch("characters/yusuke/yusuke.json");
+          if (!response.ok) throw new Error(`Character data returned ${response.status}`);
+          renderCharacter(await response.json());
+        } catch (_) {
+          // The HTML includes a complete fallback so local file previews still work.
+        }
+      }
+
+      function confirmSelection() {
+        const modeName = items[selectedIndex].dataset.mode;
+        playTone(420, 0.08);
+        if (modeName === "arcade") {
+          openArcade();
+          return;
+        }
+        if (modeName === "options") {
+          openOptions();
+          return;
+        }
+        showToast(`${modes[modeName].title} selected — character select is coming in the next build.`);
+      }
+
+      items.forEach((item, index) => {
+        item.addEventListener("pointerenter", () => {
+          if (index !== selectedIndex) playTone(185);
+          setSelected(index);
+        });
+        item.addEventListener("focus", () => setSelected(index));
+        item.addEventListener("click", () => {
+          setSelected(index);
+          confirmSelection();
+        });
+      });
+
+      document.addEventListener("keydown", (event) => {
+        const modalOpen = modal.classList.contains("open");
+        const fighterConfirmOpen = fighterConfirmModal.classList.contains("open");
+        if (event.key === "Escape" && modalOpen) {
+          event.preventDefault();
+          closeOptionsPanel();
+          return;
+        }
+        if (event.key === "Escape" && fighterConfirmOpen) {
+          event.preventDefault();
+          closeFighterConfirm();
+          return;
+        }
+        if (modalOpen || fighterConfirmOpen) return;
+
+        if (activeScreen === "arcade") {
+          if (["Escape", "Backspace", "b", "B"].includes(event.key)) {
+            event.preventDefault();
+            playTone(145);
+            returnToMenu();
+          } else if ((event.key === "Enter" || event.key === " ") && document.activeElement !== arcadeBack) {
+            event.preventDefault();
+            lockInFighter();
+          }
+          return;
+        }
+
+        if (["ArrowDown", "s", "S"].includes(event.key)) {
+          event.preventDefault();
+          playTone(180);
+          setSelected(selectedIndex + 1, true);
+        } else if (["ArrowUp", "w", "W"].includes(event.key)) {
+          event.preventDefault();
+          playTone(220);
+          setSelected(selectedIndex - 1, true);
+        } else if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          confirmSelection();
+        }
+      });
+
+      closeOptions.addEventListener("click", closeOptionsPanel);
+      modal.addEventListener("pointerdown", (event) => {
+        if (event.target === modal) closeOptionsPanel();
+      });
+      arcadeBack.addEventListener("click", returnToMenu);
+      rosterChoice.addEventListener("click", () => {
+        playTone(300);
+        chooseCharacter.focus();
+      });
+      chooseCharacter.addEventListener("click", lockInFighter);
+      returnRoster.addEventListener("click", closeFighterConfirm);
+      readyMainMenu.addEventListener("click", () => {
+        fighterConfirmModal.classList.remove("open");
+        returnToMenu();
+      });
+      fighterConfirmModal.addEventListener("pointerdown", (event) => {
+        if (event.target === fighterConfirmModal) closeFighterConfirm();
+      });
+
+      function bindToggle(button, callback) {
+        button.addEventListener("click", () => {
+          const next = button.getAttribute("aria-pressed") !== "true";
+          button.setAttribute("aria-pressed", String(next));
+          button.textContent = next ? "On" : "Off";
+          callback(next);
+          playTone(next ? 360 : 150);
+        });
+      }
+
+      bindToggle(soundToggle, value => { soundOn = value; });
+      bindToggle(particlesToggle, value => {
+        particlesOn = value;
+        canvas.style.opacity = value ? ".72" : "0";
+      });
+
+      fullscreenToggle.addEventListener("click", async () => {
+        try {
+          if (!document.fullscreenElement) {
+            await document.documentElement.requestFullscreen();
+          } else {
+            await document.exitFullscreen();
+          }
+        } catch (_) {
+          showToast("Fullscreen is not available in this browser.");
+        }
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        const active = Boolean(document.fullscreenElement);
+        fullscreenToggle.setAttribute("aria-pressed", String(active));
+        fullscreenToggle.textContent = active ? "Exit" : "Enter";
+      });
+
+      const sparks = Array.from({ length: 42 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        vx: .00005 + Math.random() * .00018,
+        vy: -.00005 - Math.random() * .00018,
+        size: .6 + Math.random() * 1.8,
+        alpha: .15 + Math.random() * .7
+      }));
+
+      function resizeCanvas() {
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(innerWidth * ratio);
+        canvas.height = Math.floor(innerHeight * ratio);
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+
+      let lastTime = performance.now();
+      function draw(time) {
+        const delta = Math.min(time - lastTime, 32);
+        lastTime = time;
+        ctx.clearRect(0, 0, innerWidth, innerHeight);
+
+        if (particlesOn) {
+          for (const spark of sparks) {
+            spark.x += spark.vx * delta;
+            spark.y += spark.vy * delta;
+            if (spark.y < -.04 || spark.x > 1.04) {
+              spark.x = Math.random() * .9;
+              spark.y = 1.02 + Math.random() * .1;
+            }
+            const x = spark.x * innerWidth;
+            const y = spark.y * innerHeight;
+            ctx.beginPath();
+            ctx.arc(x, y, spark.size, 0, Math.PI * 2);
+            const arcadeColor = activeScreen === "arcade";
+            ctx.fillStyle = arcadeColor
+              ? `rgba(90, 231, 255, ${spark.alpha})`
+              : `rgba(255, ${70 + Math.floor(spark.alpha * 90)}, 55, ${spark.alpha})`;
+            ctx.shadowColor = arcadeColor ? "#5ae7ff" : "#ff355d";
+            ctx.shadowBlur = 9;
+            ctx.fill();
+          }
+          ctx.shadowBlur = 0;
+        }
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener("resize", resizeCanvas, { passive: true });
+      resizeCanvas();
+      setSelected(0);
+      loadCharacterDefinition();
+      requestAnimationFrame(draw);
+    })();
+  </script>
+</body>
+</html>
