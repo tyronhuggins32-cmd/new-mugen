@@ -1,0 +1,2941 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#08060f">
+  <meta name="description" content="New Mugen — a modular browser fighting-game project.">
+  <title>New Mugen</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f7f3ff;
+      --muted: #aaa1bc;
+      --panel: rgba(13, 9, 24, 0.78);
+      --line: rgba(255, 255, 255, 0.14);
+      --hot: #ff355d;
+      --hot-2: #ff8a34;
+      --cold: #5ae7ff;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 73% 41%, rgba(117, 24, 84, .38), transparent 28%),
+        radial-gradient(circle at 44% 120%, rgba(255, 64, 41, .22), transparent 43%),
+        linear-gradient(135deg, #05040a 0%, #10091c 52%, #07050c 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      user-select: none;
+    }
+
+    button { font: inherit; }
+    [hidden] { display: none !important; }
+
+    #fx,
+    .vignette,
+    .scanlines,
+    .grid,
+    .slash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    #fx { width: 100%; height: 100%; opacity: .72; }
+
+    .vignette {
+      z-index: 8;
+      box-shadow: inset 0 0 170px 42px rgba(0, 0, 0, .8);
+    }
+
+    .scanlines {
+      z-index: 7;
+      opacity: .16;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 3px,
+        rgba(255, 255, 255, .07) 4px
+      );
+      mix-blend-mode: overlay;
+    }
+
+    .grid {
+      top: 58%;
+      z-index: 0;
+      opacity: .22;
+      background-image:
+        linear-gradient(rgba(255, 83, 99, .38) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 83, 99, .38) 1px, transparent 1px);
+      background-size: 54px 54px;
+      transform: perspective(410px) rotateX(64deg) scale(1.6);
+      transform-origin: center top;
+      mask-image: linear-gradient(to bottom, transparent, black 24%, transparent 88%);
+    }
+
+    .slash {
+      z-index: 1;
+      left: auto;
+      width: 52vw;
+      transform: skewX(-16deg) translateX(10%);
+      background: linear-gradient(110deg, transparent 16%, rgba(255, 42, 82, .11) 17%, rgba(255, 91, 38, .32) 48%, transparent 49%);
+      filter: blur(1px);
+    }
+
+    .frame {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100svh;
+      padding: max(22px, env(safe-area-inset-top)) max(26px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(26px, env(safe-area-inset-left));
+    }
+
+    .topbar,
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .21em;
+      text-transform: uppercase;
+    }
+
+    .build-mark { display: flex; align-items: center; gap: 11px; }
+
+    .build-mark::before {
+      content: "";
+      width: 30px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--hot), var(--hot-2));
+      box-shadow: 0 0 14px var(--hot);
+    }
+
+    .online-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: var(--cold);
+      box-shadow: 0 0 12px var(--cold);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    .screen {
+      display: grid;
+      grid-template-columns: minmax(310px, 520px) minmax(260px, 1fr);
+      align-items: center;
+      gap: clamp(28px, 7vw, 110px);
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 30px 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--hot-2);
+      font-size: clamp(10px, 1vw, 12px);
+      font-weight: 900;
+      letter-spacing: .42em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: clamp(64px, 10vw, 142px);
+      font-stretch: condensed;
+      font-style: italic;
+      font-weight: 900;
+      letter-spacing: -.055em;
+      line-height: .77;
+      text-transform: uppercase;
+      text-shadow: 7px 8px 0 rgba(0, 0, 0, .38), 0 0 34px rgba(255, 53, 93, .12);
+      transform: skewX(-4deg);
+    }
+
+    h1 span {
+      display: block;
+      color: transparent;
+      background: linear-gradient(100deg, #fff 0 20%, #ffb074 36%, var(--hot) 66%, #a60e48 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+
+    .tagline {
+      max-width: 460px;
+      margin: 19px 0 24px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+      letter-spacing: .18em;
+      line-height: 1.6;
+      text-transform: uppercase;
+    }
+
+    .menu {
+      display: grid;
+      gap: 7px;
+      width: min(420px, 100%);
+    }
+
+    .menu-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 38px 1fr auto;
+      align-items: center;
+      min-height: 48px;
+      padding: 0 17px 0 13px;
+      overflow: hidden;
+      border: 1px solid transparent;
+      color: rgba(247, 243, 255, .64);
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      text-transform: uppercase;
+      transition: color .2s var(--ease), transform .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
+    }
+
+    .menu-item::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(90deg, rgba(255, 53, 93, .92), rgba(255, 107, 42, .57) 55%, transparent 100%);
+      transform: translateX(-105%);
+      transition: transform .28s var(--ease);
+    }
+
+    .menu-item::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 23%;
+      width: 3px;
+      height: 54%;
+      background: var(--hot);
+      box-shadow: 0 0 12px var(--hot);
+      opacity: 0;
+      transition: opacity .2s var(--ease);
+    }
+
+    .menu-item .num {
+      color: rgba(255, 255, 255, .28);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .15em;
+    }
+
+    .menu-item .label {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: .19em;
+    }
+
+    .menu-item .arrow {
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity .2s var(--ease), transform .2s var(--ease);
+    }
+
+    .menu-item.active,
+    .menu-item:hover,
+    .menu-item:focus-visible {
+      outline: none;
+      border-color: rgba(255, 255, 255, .13);
+      color: white;
+      background: rgba(255, 255, 255, .035);
+      transform: translateX(9px);
+    }
+
+    .menu-item.active::before,
+    .menu-item:hover::before,
+    .menu-item:focus-visible::before { transform: translateX(0); }
+
+    .menu-item.active::after,
+    .menu-item:hover::after,
+    .menu-item:focus-visible::after { opacity: 1; }
+
+    .menu-item.active .num,
+    .menu-item:hover .num,
+    .menu-item:focus-visible .num { color: rgba(255, 255, 255, .72); }
+
+    .menu-item.active .arrow,
+    .menu-item:hover .arrow,
+    .menu-item:focus-visible .arrow { opacity: 1; transform: translateX(0); }
+
+    .showcase {
+      position: relative;
+      display: grid;
+      place-items: end center;
+      min-height: min(62vh, 650px);
+    }
+
+    .fighter {
+      position: absolute;
+      bottom: 62px;
+      width: min(20vw, 240px);
+      height: min(48vw, 520px);
+      opacity: .78;
+      filter: drop-shadow(0 0 28px rgba(255, 49, 83, .24));
+    }
+
+    .fighter::before,
+    .fighter::after {
+      content: "";
+      position: absolute;
+      background: linear-gradient(135deg, #221329, #050409 64%);
+      border: 1px solid rgba(255, 92, 93, .13);
+    }
+
+    .fighter::before {
+      inset: 8% 20% 0;
+      clip-path: polygon(37% 0, 65% 0, 74% 8%, 68% 18%, 80% 31%, 100% 44%, 78% 53%, 72% 100%, 55% 100%, 50% 61%, 43% 100%, 22% 100%, 28% 53%, 0 45%, 22% 30%, 31% 18%, 27% 8%);
+    }
+
+    .fighter::after {
+      width: 42%;
+      aspect-ratio: 1;
+      top: 0;
+      left: 29%;
+      border-radius: 46% 54% 47% 53%;
+      box-shadow: inset -12px -8px 0 #09060c;
+    }
+
+    .fighter-a { right: 35%; transform: rotate(-5deg) translateX(-26%); }
+    .fighter-b { right: 4%; transform: scaleX(-1) rotate(-3deg); opacity: .47; }
+
+    .mode-card {
+      position: relative;
+      z-index: 2;
+      width: min(430px, 100%);
+      padding: 21px 23px;
+      border: 1px solid var(--line);
+      background: linear-gradient(120deg, rgba(16, 10, 27, .92), rgba(18, 9, 23, .55));
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, .34);
+    }
+
+    .mode-card::before {
+      content: "";
+      position: absolute;
+      inset: -1px auto -1px -1px;
+      width: 3px;
+      background: linear-gradient(var(--hot-2), var(--hot));
+      box-shadow: 0 0 16px var(--hot);
+    }
+
+    .mode-card-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 9px;
+      color: var(--hot-2);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .27em;
+      text-transform: uppercase;
+    }
+
+    #mode-title {
+      margin: 0 0 7px;
+      font-size: 23px;
+      font-style: italic;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    #mode-description {
+      min-height: 40px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .footer { align-self: end; }
+    .controls { display: flex; gap: 20px; }
+    .key { color: white; }
+
+    .copyright { opacity: .65; text-align: right; }
+
+    .arcade-screen {
+      align-self: stretch;
+      width: min(1380px, 100%);
+      min-height: 0;
+      margin: 0 auto;
+      padding: clamp(18px, 3vh, 34px) 0 clamp(14px, 2vh, 24px);
+      overflow: hidden;
+    }
+
+    .arcade-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: clamp(16px, 2.4vh, 28px);
+    }
+
+    .arcade-heading-copy { min-width: 0; }
+
+    .arcade-kicker {
+      margin: 0 0 5px;
+      color: var(--cold);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .34em;
+      text-transform: uppercase;
+    }
+
+    .arcade-heading h2 {
+      margin: 0;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: clamp(38px, 5.8vw, 76px);
+      font-style: italic;
+      letter-spacing: -.025em;
+      line-height: .9;
+      text-transform: uppercase;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      flex: 0 0 auto;
+      padding: 11px 15px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: rgba(255, 255, 255, .035);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      transition: color .2s ease, border-color .2s ease, transform .2s var(--ease);
+    }
+
+    .back-button:hover,
+    .back-button:focus-visible {
+      outline: none;
+      color: white;
+      border-color: rgba(90, 231, 255, .55);
+      transform: translateX(-4px);
+    }
+
+    .select-layout {
+      display: grid;
+      grid-template-columns: minmax(190px, 245px) minmax(310px, 1fr) minmax(290px, 370px);
+      gap: clamp(12px, 1.6vw, 24px);
+      height: min(66vh, 675px);
+      min-height: 470px;
+    }
+
+    .roster-panel,
+    .character-details {
+      border: 1px solid var(--line);
+      background: linear-gradient(145deg, rgba(17, 12, 29, .92), rgba(8, 6, 14, .78));
+      backdrop-filter: blur(13px);
+    }
+
+    .roster-panel {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: 17px;
+    }
+
+    .panel-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 13px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .panel-label strong { color: var(--cold); }
+
+    .select-status {
+      display: grid;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .select-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .select-status-row strong { color: white; }
+
+    .arcade-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 7px;
+      margin-left: auto;
+    }
+
+    .arcade-badge {
+      padding: 7px 9px;
+      border: 1px solid rgba(90, 231, 255, .22);
+      color: var(--cold);
+      background: rgba(90, 231, 255, .045);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .roster-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .roster-card {
+      position: relative;
+      aspect-ratio: .82;
+      min-width: 0;
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      color: white;
+      background: #0b0812;
+      cursor: pointer;
+    }
+
+    .roster-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 18%;
+      filter: saturate(.86) contrast(1.08);
+      transform: scale(1.04);
+      transition: transform .25s var(--ease), filter .25s ease;
+    }
+
+    .roster-card span {
+      position: absolute;
+      inset: auto 0 0;
+      padding: 22px 7px 7px;
+      background: linear-gradient(transparent, rgba(3, 3, 6, .96));
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .1em;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    .roster-card.selected,
+    .roster-card:hover,
+    .roster-card:focus-visible {
+      outline: none;
+      border-color: var(--cold);
+      box-shadow: 0 0 0 2px rgba(90, 231, 255, .14), 0 0 21px rgba(90, 231, 255, .18);
+    }
+
+    .roster-card.selected img,
+    .roster-card:hover img,
+    .roster-card:focus-visible img { transform: scale(1.1); filter: saturate(1.08) contrast(1.08); }
+
+    .roster-card.locked {
+      display: grid;
+      place-items: center;
+      border-color: rgba(255, 255, 255, .07);
+      color: rgba(255, 255, 255, .19);
+      cursor: default;
+      background:
+        linear-gradient(135deg, transparent 48%, rgba(255,255,255,.05) 49% 51%, transparent 52%),
+        rgba(255,255,255,.018);
+    }
+
+    .roster-card.locked::before {
+      content: "?";
+      font-family: Impact, sans-serif;
+      font-size: clamp(28px, 4vw, 46px);
+      font-style: italic;
+    }
+
+    .roster-card.locked span {
+      color: rgba(255,255,255,.2);
+      text-align: center;
+      background: linear-gradient(transparent, rgba(3, 3, 6, .82));
+    }
+
+    .character-stage {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid rgba(90, 231, 255, .22);
+      background:
+        radial-gradient(circle at 52% 38%, rgba(18, 205, 228, .23), transparent 37%),
+        #05070b;
+      box-shadow: inset 0 0 70px rgba(0,0,0,.45), 0 24px 75px rgba(0,0,0,.34);
+    }
+
+    .character-stage::before {
+      content: "01";
+      position: absolute;
+      z-index: 1;
+      top: -3.5%;
+      right: -1%;
+      color: rgba(255, 255, 255, .045);
+      font-family: Impact, sans-serif;
+      font-size: clamp(130px, 20vw, 280px);
+      font-style: italic;
+      line-height: 1;
+    }
+
+    .character-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(3, 4, 8, .98), transparent 52%), linear-gradient(90deg, rgba(3,4,8,.34), transparent 32% 70%, rgba(3,4,8,.25));
+      pointer-events: none;
+    }
+
+    .character-art {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 20%;
+      animation: character-in .65s var(--ease) both;
+    }
+
+    .character-art.missing,
+    .roster-card img.missing { display: none; }
+
+    .portrait-fallback {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(90, 231, 255, .28), transparent 26%),
+        linear-gradient(145deg, #051216, #08070e 65%);
+      transition: opacity .25s ease;
+    }
+
+    .character-stage.art-missing .portrait-fallback { opacity: 1; }
+
+    .fallback-fighter {
+      position: relative;
+      width: min(50%, 250px);
+      aspect-ratio: .52;
+      filter: drop-shadow(0 0 28px rgba(90, 231, 255, .24));
+    }
+
+    .fallback-fighter::before {
+      content: "";
+      position: absolute;
+      inset: 18% 11% 0;
+      background: linear-gradient(120deg, #0c583f, #062d2a 62%, #041112);
+      clip-path: polygon(31% 0, 68% 0, 74% 12%, 100% 28%, 83% 52%, 77% 100%, 55% 100%, 50% 62%, 44% 100%, 22% 100%, 26% 52%, 0 30%, 26% 12%);
+      border: 1px solid rgba(90, 231, 255, .25);
+    }
+
+    .fallback-fighter::after {
+      content: "";
+      position: absolute;
+      top: 3%;
+      left: 29%;
+      width: 42%;
+      aspect-ratio: .88;
+      border-radius: 48% 48% 42% 44%;
+      background: #121119;
+      box-shadow: 0 -11px 0 -3px #020407, 14px -3px 0 -10px var(--cold);
+    }
+
+    .fallback-energy {
+      position: absolute;
+      z-index: 2;
+      top: 29%;
+      right: -6%;
+      width: 34px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 0 8px white, 0 0 24px var(--cold), 0 0 55px var(--cold);
+      animation: pulse 1.15s ease-in-out infinite;
+    }
+
+    .character-identity {
+      position: absolute;
+      z-index: 2;
+      inset: auto clamp(17px, 2.2vw, 30px) clamp(18px, 3vh, 30px);
+    }
+
+    .player-tag {
+      display: inline-block;
+      margin-bottom: 7px;
+      padding: 5px 8px;
+      color: #021014;
+      background: var(--cold);
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      box-shadow: 0 0 19px rgba(90, 231, 255, .32);
+    }
+
+    .character-identity h3 {
+      margin: 0;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      font-size: clamp(42px, 6vw, 82px);
+      font-style: italic;
+      letter-spacing: -.02em;
+      line-height: .88;
+      text-transform: uppercase;
+      text-shadow: 5px 5px 0 rgba(0,0,0,.44);
+    }
+
+    .character-identity p {
+      margin: 8px 0 0;
+      color: var(--cold);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+    }
+
+    .character-details {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: clamp(17px, 2vw, 25px);
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--hot) transparent;
+    }
+
+    .detail-series {
+      margin: 0 0 5px;
+      color: var(--hot-2);
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+    }
+
+    .character-details h3 {
+      margin: 0 0 5px;
+      font-size: clamp(24px, 3vw, 36px);
+      font-style: italic;
+      font-weight: 950;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .archetype {
+      margin: 0 0 14px;
+      color: var(--cold);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .fighter-description {
+      margin: 0 0 17px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    .stats {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: 58px 1fr 27px;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .stat-track {
+      height: 4px;
+      overflow: hidden;
+      background: rgba(255,255,255,.08);
+    }
+
+    .stat-fill {
+      display: block;
+      width: var(--value);
+      height: 100%;
+      background: linear-gradient(90deg, var(--cold), #d9fbff);
+      box-shadow: 0 0 10px rgba(90, 231, 255, .5);
+      transform-origin: left;
+      animation: stat-in .65s var(--ease) both;
+    }
+
+    .move-heading {
+      margin: 0 0 9px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .move-list {
+      display: grid;
+      gap: 7px;
+      margin: 0 0 19px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .move-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: white;
+      font-size: 10px;
+      font-weight: 850;
+    }
+
+    .move-input {
+      flex: 0 0 auto;
+      color: var(--cold);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    .enemy-preview {
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      align-items: center;
+      gap: 11px;
+      margin: 0 0 16px;
+      padding: 11px;
+      border: 1px solid rgba(255, 53, 93, .22);
+      background: linear-gradient(100deg, rgba(255, 53, 93, .08), transparent);
+    }
+
+    .enemy-avatar {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      aspect-ratio: 1;
+      border: 1px solid rgba(255, 53, 93, .45);
+      color: var(--hot);
+      background: #150811;
+      font-family: Impact, sans-serif;
+      font-size: 18px;
+      font-style: italic;
+      box-shadow: 0 0 18px rgba(255, 53, 93, .12);
+    }
+
+    .enemy-preview small,
+    .enemy-preview strong { display: block; text-transform: uppercase; }
+
+    .enemy-preview small {
+      margin-bottom: 3px;
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 900;
+      letter-spacing: .16em;
+    }
+
+    .enemy-preview strong {
+      color: white;
+      font-size: 10px;
+      letter-spacing: .09em;
+    }
+
+    .enemy-preview em {
+      padding: 4px 6px;
+      color: #13030a;
+      background: var(--hot);
+      font-size: 7px;
+      font-style: normal;
+      font-weight: 950;
+      letter-spacing: .12em;
+    }
+
+    .choose-button {
+      width: 100%;
+      margin-top: auto;
+      padding: 14px;
+      border: 1px solid rgba(90, 231, 255, .72);
+      color: #031014;
+      background: linear-gradient(100deg, var(--cold), #c8f9ff);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      box-shadow: 0 0 25px rgba(90, 231, 255, .12);
+      transition: transform .2s var(--ease), box-shadow .2s ease;
+    }
+
+    .choose-button:hover,
+    .choose-button:focus-visible {
+      outline: none;
+      transform: translateY(-2px);
+      box-shadow: 0 9px 30px rgba(90, 231, 255, .25);
+    }
+
+    .ready-card {
+      width: min(500px, 100%);
+      padding: clamp(27px, 5vw, 46px);
+      border: 1px solid rgba(90, 231, 255, .44);
+      background:
+        radial-gradient(circle at 50% 0, rgba(90, 231, 255, .16), transparent 45%),
+        #0a0910;
+      box-shadow: 0 30px 100px rgba(0,0,0,.7), 0 0 44px rgba(90,231,255,.08);
+      text-align: center;
+    }
+
+    .ready-card .player-tag { margin-bottom: 14px; }
+
+    .ready-card h2 {
+      margin: 0;
+      font-family: Impact, sans-serif;
+      font-size: clamp(48px, 10vw, 80px);
+      font-style: italic;
+      letter-spacing: -.02em;
+      line-height: .86;
+      text-transform: uppercase;
+    }
+
+    .ready-card h2 span { display: block; color: var(--cold); }
+
+    .ready-card p {
+      margin: 18px auto 24px;
+      max-width: 340px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .08em;
+      line-height: 1.65;
+      text-transform: uppercase;
+    }
+
+    .ready-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .ready-actions .close-button { margin: 0; }
+    .ready-actions .close-button:first-child { border-color: rgba(90,231,255,.5); }
+
+    .matchup-line {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      margin: 23px 0 5px;
+    }
+
+    .matchup-fighter {
+      padding: 13px 8px;
+      border: 1px solid var(--line);
+      color: white;
+      background: rgba(255,255,255,.025);
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .matchup-fighter.cpu { border-color: rgba(255,53,93,.35); color: #ff7790; }
+
+    .matchup-vs {
+      color: var(--hot-2);
+      font-family: Impact, sans-serif;
+      font-size: 24px;
+      font-style: italic;
+    }
+
+    .fight-screen {
+      align-self: stretch;
+      display: grid;
+      align-items: center;
+      width: min(1420px, 100%);
+      min-height: 0;
+      margin: 0 auto;
+      padding: clamp(10px, 1.7vh, 20px) 0;
+    }
+
+    .game-shell {
+      position: relative;
+      width: 100%;
+      max-height: min(75vh, 760px);
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.15);
+      background: #05070d;
+      box-shadow: 0 26px 90px rgba(0,0,0,.55), 0 0 0 1px rgba(90,231,255,.04);
+      isolation: isolate;
+    }
+
+    #game-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #05070d;
+      touch-action: none;
+    }
+
+    .fight-hud {
+      position: absolute;
+      z-index: 3;
+      inset: 18px 22px auto;
+      display: grid;
+      grid-template-columns: 1fr 90px 1fr;
+      align-items: start;
+      gap: 16px;
+      pointer-events: none;
+      filter: drop-shadow(0 3px 5px rgba(0,0,0,.7));
+    }
+
+    .hud-fighter.cpu { text-align: right; }
+
+    .hud-name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: clamp(9px, 1.3vw, 14px);
+      font-style: italic;
+      font-weight: 950;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .hud-name span {
+      color: var(--muted);
+      font-size: 8px;
+      font-style: normal;
+      letter-spacing: .15em;
+    }
+
+    .health-track,
+    .meter-track {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.62);
+    }
+
+    .health-track { height: clamp(11px, 1.5vw, 18px); }
+    .meter-track { width: 66%; height: 5px; margin-top: 5px; }
+    .hud-fighter.cpu .meter-track { margin-left: auto; }
+
+    .health-fill,
+    .meter-fill {
+      display: block;
+      width: 100%;
+      height: 100%;
+      transform-origin: left;
+      transition: width .12s linear;
+    }
+
+    .hud-fighter.cpu .health-fill,
+    .hud-fighter.cpu .meter-fill { transform-origin: right; }
+
+    .health-fill { background: linear-gradient(90deg, #40f49b, #d6ff6a); }
+    .hud-fighter.cpu .health-fill { background: linear-gradient(90deg, #ff9a4a, #ff355d); }
+    .meter-fill { background: linear-gradient(90deg, #279ee9, var(--cold)); box-shadow: 0 0 9px var(--cold); }
+    .hud-fighter.cpu .meter-fill { background: linear-gradient(90deg, #ff355d, #b816d4); box-shadow: 0 0 9px var(--hot); }
+
+    .round-clock {
+      display: grid;
+      place-items: center;
+      min-height: 58px;
+      padding: 5px 7px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(4,4,9,.8);
+      backdrop-filter: blur(7px);
+    }
+
+    .round-clock span {
+      color: var(--muted);
+      font-size: 7px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .round-clock strong {
+      font-family: Impact, sans-serif;
+      font-size: clamp(25px, 3.5vw, 42px);
+      font-style: italic;
+      line-height: .9;
+    }
+
+    .battle-top-actions {
+      position: absolute;
+      z-index: 5;
+      top: 102px;
+      left: 22px;
+    }
+
+    .battle-back {
+      padding: 7px 9px;
+      border: 1px solid rgba(255,255,255,.13);
+      color: rgba(255,255,255,.7);
+      background: rgba(4,4,9,.58);
+      cursor: pointer;
+      font-size: 7px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      backdrop-filter: blur(6px);
+    }
+
+    .battle-back:hover,
+    .battle-back:focus-visible { outline: 1px solid var(--cold); color: white; }
+
+    .round-banner {
+      position: absolute;
+      z-index: 4;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .18s ease;
+    }
+
+    .round-banner.show { opacity: 1; }
+
+    .round-banner strong {
+      color: white;
+      font-family: Impact, sans-serif;
+      font-size: clamp(52px, 10vw, 130px);
+      font-style: italic;
+      letter-spacing: -.02em;
+      text-transform: uppercase;
+      text-shadow: 6px 7px 0 rgba(0,0,0,.65), 0 0 30px rgba(90,231,255,.35);
+    }
+
+    .battle-result {
+      position: absolute;
+      z-index: 7;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      background: rgba(3,3,8,.68);
+      backdrop-filter: blur(7px);
+      transition: opacity .24s ease, visibility .24s ease;
+    }
+
+    .battle-result.open { opacity: 1; visibility: visible; }
+
+    .result-card {
+      width: min(470px, 100%);
+      padding: clamp(24px, 4vw, 40px);
+      border: 1px solid rgba(90,231,255,.35);
+      background: linear-gradient(145deg, rgba(12,15,24,.98), rgba(8,6,14,.98));
+      box-shadow: 0 30px 90px rgba(0,0,0,.7);
+      text-align: center;
+    }
+
+    .result-card small {
+      color: var(--cold);
+      font-size: 8px;
+      font-weight: 950;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+    }
+
+    .result-card h2 {
+      margin: 8px 0 7px;
+      font-family: Impact, sans-serif;
+      font-size: clamp(52px, 8vw, 84px);
+      font-style: italic;
+      line-height: .9;
+      text-transform: uppercase;
+    }
+
+    .result-card p {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .08em;
+      line-height: 1.5;
+      text-transform: uppercase;
+    }
+
+    .result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+    .result-button {
+      padding: 12px;
+      border: 1px solid var(--line);
+      color: white;
+      background: rgba(255,255,255,.04);
+      cursor: pointer;
+      font-size: 9px;
+      font-weight: 950;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .result-button.primary { border-color: var(--cold); color: #031014; background: var(--cold); }
+
+    .touch-controls {
+      position: absolute;
+      z-index: 6;
+      inset: auto 15px 13px;
+      display: none;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      pointer-events: none;
+    }
+
+    .touch-group { display: flex; align-items: end; gap: 8px; pointer-events: auto; }
+    .touch-group.actions { align-items: center; }
+
+    .touch-button {
+      display: grid;
+      place-items: center;
+      width: clamp(46px, 13vw, 66px);
+      aspect-ratio: 1;
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 50%;
+      color: white;
+      background: rgba(5,6,12,.56);
+      box-shadow: inset 0 0 18px rgba(255,255,255,.035), 0 5px 20px rgba(0,0,0,.3);
+      backdrop-filter: blur(7px);
+      touch-action: none;
+      font-size: clamp(13px, 4vw, 20px);
+      font-weight: 950;
+    }
+
+    .touch-button[data-control="light"] { border-color: rgba(255,138,52,.65); }
+    .touch-button[data-control="heavy"] { border-color: rgba(255,53,93,.72); }
+    .touch-button[data-control="gun"] { border-color: rgba(90,231,255,.8); color: var(--cold); }
+    .touch-button.active { transform: scale(.92); background: rgba(90,231,255,.2); }
+
+    @keyframes character-in {
+      from { opacity: 0; transform: scale(1.06) translateY(12px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @keyframes stat-in {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      background: rgba(3, 2, 7, .72);
+      backdrop-filter: blur(9px);
+      transition: opacity .2s ease, visibility .2s ease;
+    }
+
+    .modal-backdrop.open { opacity: 1; visibility: visible; }
+
+    .modal {
+      width: min(460px, 100%);
+      padding: 26px;
+      border: 1px solid rgba(255, 255, 255, .16);
+      background: #100b18;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, .6);
+      transform: translateY(12px) scale(.98);
+      transition: transform .24s var(--ease);
+    }
+
+    .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+
+    .modal h2 {
+      margin: 0 0 22px;
+      font-size: 28px;
+      font-style: italic;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .setting {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 58px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .toggle,
+    .close-button {
+      border: 1px solid var(--line);
+      color: white;
+      background: rgba(255,255,255,.05);
+      cursor: pointer;
+    }
+
+    .toggle {
+      min-width: 76px;
+      padding: 8px 10px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .toggle[aria-pressed="true"] { border-color: rgba(90, 231, 255, .5); color: var(--cold); }
+
+    .close-button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 13px;
+      border-color: rgba(255, 53, 93, .55);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .toggle:hover,
+    .toggle:focus-visible,
+    .close-button:hover,
+    .close-button:focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; }
+
+    .toast {
+      position: fixed;
+      z-index: 40;
+      left: 50%;
+      bottom: max(70px, calc(env(safe-area-inset-bottom) + 48px));
+      width: min(520px, calc(100% - 32px));
+      padding: 14px 18px;
+      border-left: 3px solid var(--hot);
+      color: white;
+      background: rgba(10, 7, 17, .94);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, .42);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-align: center;
+      text-transform: uppercase;
+      transform: translate(-50%, 30px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease, transform .22s var(--ease);
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @keyframes pulse { 50% { opacity: .38; transform: scale(.72); } }
+
+    @media (max-width: 840px) {
+      .frame { padding-inline: 20px; }
+      .screen { grid-template-columns: 1fr; align-content: center; padding: 22px 0 44px; }
+      .showcase { display: none; }
+      h1 { font-size: clamp(66px, 22vw, 108px); }
+      .tagline { margin-bottom: 19px; font-size: 11px; }
+      .menu { width: 100%; }
+      .menu-item { min-height: 51px; background: rgba(255,255,255,.018); }
+      .footer { font-size: 9px; letter-spacing: .14em; }
+      .controls span:nth-child(2) { display: none; }
+      .arcade-screen { overflow: auto; padding-bottom: 80px; }
+      .arcade-heading { align-items: center; }
+      .arcade-heading h2 { font-size: clamp(34px, 11vw, 58px); }
+      .select-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 0;
+      }
+      .roster-panel { order: 2; }
+      .roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .character-stage { min-height: 510px; order: 1; }
+      .character-details { order: 3; overflow: visible; }
+      .roster-card.locked:nth-child(n+6) { display: none; }
+      .ready-actions { grid-template-columns: 1fr; }
+      .arcade-badges { display: none; }
+      .game-shell { max-height: none; }
+      .fight-screen { align-items: start; padding-top: 8px; }
+      .fight-hud { inset: 8px 9px auto; grid-template-columns: 1fr 52px 1fr; gap: 7px; }
+      .round-clock { min-height: 42px; }
+      .battle-top-actions { top: 62px; left: 9px; }
+      .touch-controls { display: flex; }
+      .hud-name span { display: none; }
+      .meter-track { width: 82%; }
+      .result-actions { grid-template-columns: 1fr; }
+    }
+
+    @media (pointer: coarse) { .touch-controls { display: flex; } }
+
+    @media (max-width: 600px) {
+      .touch-controls { inset: auto 8px 7px; gap: 5px; }
+      .touch-group { gap: 4px; }
+      .touch-button { width: clamp(34px, 10.5vw, 46px); }
+    }
+
+    @media (min-width: 841px) and (max-width: 1080px) {
+      .select-layout { grid-template-columns: 180px minmax(300px, 1fr) minmax(255px, 310px); }
+      .roster-panel { padding: 12px; }
+      .character-details { padding: 17px; }
+    }
+
+    @media (max-height: 690px) and (min-width: 841px) {
+      h1 { font-size: clamp(60px, 9vw, 105px); }
+      .tagline { margin-block: 13px 16px; }
+      .menu { gap: 4px; }
+      .menu-item { min-height: 41px; }
+      .showcase { min-height: 500px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+      #fx { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div class="grid" aria-hidden="true"></div>
+  <div class="slash" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <div class="frame">
+    <header class="topbar">
+      <div class="build-mark" id="build-mark">Fighter System // Build 0003</div>
+      <div><span class="online-dot"></span><span id="screen-status">Menu Online</span></div>
+    </header>
+
+    <main class="screen" id="main-menu-screen">
+      <section aria-labelledby="game-title">
+        <p class="eyebrow">The fight starts here</p>
+        <h1 id="game-title">New <span>Mugen</span></h1>
+        <p class="tagline">Choose your battle. Build your legend.</p>
+
+        <nav class="menu" aria-label="Main menu">
+          <button class="menu-item active" type="button" data-mode="arcade">
+            <span class="num">01</span><span class="label">Arcade</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="versus">
+            <span class="num">02</span><span class="label">Versus</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="training">
+            <span class="num">03</span><span class="label">Training</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="watch">
+            <span class="num">04</span><span class="label">Watch</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="options">
+            <span class="num">05</span><span class="label">Options</span><span class="arrow">›</span>
+          </button>
+        </nav>
+      </section>
+
+      <aside class="showcase" aria-live="polite">
+        <div class="fighter fighter-a" aria-hidden="true"></div>
+        <div class="fighter fighter-b" aria-hidden="true"></div>
+        <div class="mode-card">
+          <div class="mode-card-header"><span>Selected mode</span><span id="mode-code">A-01</span></div>
+          <h2 id="mode-title">Arcade</h2>
+          <p id="mode-description">Fight through a ladder of rivals and reach the final challenger.</p>
+        </div>
+      </aside>
+    </main>
+
+    <main class="arcade-screen" id="arcade-screen" hidden>
+      <header class="arcade-heading">
+        <div class="arcade-heading-copy">
+          <p class="arcade-kicker">Arcade Route // Match 01</p>
+          <h2>Choose Your Fighter</h2>
+        </div>
+        <div class="arcade-badges" aria-label="Match settings">
+          <span class="arcade-badge">CPU: Normal</span>
+          <span class="arcade-badge">Stage: Spirit Ruins</span>
+          <span class="arcade-badge">60 Seconds</span>
+        </div>
+        <button class="back-button" id="arcade-back" type="button"><span>‹</span> Main Menu</button>
+      </header>
+
+      <div class="select-layout">
+        <section class="roster-panel" aria-label="Playable fighter roster">
+          <p class="panel-label"><span>Fighter roster</span><strong>01 / 12</strong></p>
+          <div class="roster-grid">
+            <button class="roster-card selected" type="button" data-character="yusuke_urameshi" aria-current="true" aria-label="Select Yusuke Urameshi">
+              <img src="assets/characters/yusuke/portrait.webp" alt="Yusuke Urameshi aiming his Spirit Gun">
+              <span>Yusuke</span>
+            </button>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+          </div>
+          <div class="select-status">
+            <div class="select-status-row"><span>Playable</span><strong>1 Fighter</strong></div>
+            <div class="select-status-row"><span>Arcade path</span><strong>1 Match</strong></div>
+            <div class="select-status-row"><span>Control</span><strong>Player 1</strong></div>
+          </div>
+        </section>
+
+        <section class="character-stage" aria-labelledby="selected-character-name">
+          <img class="character-art" id="character-art" src="assets/characters/yusuke/portrait.webp" alt="Yusuke Urameshi charging his Spirit Gun">
+          <div class="portrait-fallback" aria-hidden="true">
+            <div class="fallback-fighter"><span class="fallback-energy"></span></div>
+          </div>
+          <div class="character-identity">
+            <span class="player-tag">Player 1 // Ready</span>
+            <h3 id="selected-character-name">Yusuke</h3>
+            <p id="selected-character-title">Spirit Detective</p>
+          </div>
+        </section>
+
+        <aside class="character-details" aria-label="Selected fighter details">
+          <p class="detail-series" id="character-series">Yu Yu Hakusho</p>
+          <h3 id="character-full-name">Yusuke Urameshi</h3>
+          <p class="archetype" id="character-archetype">Rushdown / Zoner</p>
+          <p class="fighter-description" id="character-description">A fearless close-range brawler who controls space with concentrated spirit energy.</p>
+
+          <div class="stats" id="character-stats" aria-label="Gameplay statistics">
+            <div class="stat-row"><span>Power</span><span class="stat-track"><span class="stat-fill" style="--value: 84%"></span></span><strong>84</strong></div>
+            <div class="stat-row"><span>Speed</span><span class="stat-track"><span class="stat-fill" style="--value: 76%"></span></span><strong>76</strong></div>
+            <div class="stat-row"><span>Range</span><span class="stat-track"><span class="stat-fill" style="--value: 88%"></span></span><strong>88</strong></div>
+            <div class="stat-row"><span>Defense</span><span class="stat-track"><span class="stat-fill" style="--value: 72%"></span></span><strong>72</strong></div>
+          </div>
+
+          <p class="move-heading">Playable moves</p>
+          <ul class="move-list" id="character-moves">
+            <li><span>Rapid Strike</span><span class="move-input">J</span></li>
+            <li><span>Power Hook</span><span class="move-input">K</span></li>
+            <li><span>Spirit Gun</span><span class="move-input">L</span></li>
+          </ul>
+
+          <div class="enemy-preview" aria-label="Next CPU opponent">
+            <span class="enemy-avatar">DS</span>
+            <span><small>First opponent</small><strong>Demon Scout</strong></span>
+            <em>CPU</em>
+          </div>
+
+          <button class="choose-button" id="choose-character" type="button">Lock In Yusuke</button>
+        </aside>
+      </div>
+    </main>
+
+    <main class="fight-screen" id="fight-screen" hidden>
+      <section class="game-shell" aria-label="Arcade fight: Yusuke versus Demon Scout">
+        <canvas id="game-canvas" width="1280" height="720" tabindex="0" aria-label="Playable fighting game arena"></canvas>
+
+        <div class="fight-hud" aria-live="polite">
+          <div class="hud-fighter">
+            <div class="hud-name">Yusuke <span>Player 1</span></div>
+            <div class="health-track"><span class="health-fill" id="player-health"></span></div>
+            <div class="meter-track"><span class="meter-fill" id="player-energy"></span></div>
+          </div>
+          <div class="round-clock"><span>Round 1</span><strong id="round-timer">60</strong></div>
+          <div class="hud-fighter cpu">
+            <div class="hud-name"><span>CPU</span> Demon Scout</div>
+            <div class="health-track"><span class="health-fill" id="cpu-health"></span></div>
+            <div class="meter-track"><span class="meter-fill" id="cpu-energy"></span></div>
+          </div>
+        </div>
+
+        <div class="battle-top-actions">
+          <button class="battle-back" id="battle-back" type="button">‹ Character Select</button>
+        </div>
+
+        <div class="round-banner" id="round-banner" aria-hidden="true"><strong id="round-banner-text">Fight!</strong></div>
+
+        <div class="touch-controls" aria-label="Touch fighting controls">
+          <div class="touch-group movement">
+            <button class="touch-button" type="button" data-control="left" aria-label="Move left">◀</button>
+            <button class="touch-button" type="button" data-control="right" aria-label="Move right">▶</button>
+            <button class="touch-button" type="button" data-control="jump" aria-label="Jump">▲</button>
+            <button class="touch-button" type="button" data-control="block" aria-label="Block">◆</button>
+          </div>
+          <div class="touch-group actions">
+            <button class="touch-button" type="button" data-control="light" aria-label="Light attack">J</button>
+            <button class="touch-button" type="button" data-control="heavy" aria-label="Heavy attack">K</button>
+            <button class="touch-button" type="button" data-control="gun" aria-label="Spirit Gun">霊</button>
+          </div>
+        </div>
+
+        <div class="battle-result" id="battle-result" role="dialog" aria-modal="true" aria-labelledby="battle-result-title">
+          <div class="result-card">
+            <small id="battle-result-kicker">Arcade Match Complete</small>
+            <h2 id="battle-result-title">Victory</h2>
+            <p id="battle-result-message">The Demon Scout has been defeated.</p>
+            <div class="result-actions">
+              <button class="result-button primary" id="rematch-button" type="button">Rematch</button>
+              <button class="result-button" id="result-select-button" type="button">Character Select</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="controls" id="menu-controls">
+        <span><span class="key">↑ ↓ / W S</span> Select</span>
+        <span><span class="key">Enter</span> Confirm</span>
+      </div>
+      <div class="controls" id="arcade-controls" hidden>
+        <span><span class="key">Enter</span> Choose fighter</span>
+        <span><span class="key">Esc / B</span> Back</span>
+      </div>
+      <div class="controls" id="fight-controls" hidden>
+        <span><span class="key">A D / ← →</span> Move</span>
+        <span><span class="key">W</span> Jump · <span class="key">S</span> Block · <span class="key">J K L</span> Attack</span>
+      </div>
+      <div class="copyright">New Mugen // Prototype</div>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop" id="options-modal" role="dialog" aria-modal="true" aria-labelledby="options-title">
+    <div class="modal">
+      <h2 id="options-title">Options</h2>
+      <div class="setting"><span>Menu sound</span><button class="toggle" id="sound-toggle" type="button" aria-pressed="true">On</button></div>
+      <div class="setting"><span>Particles</span><button class="toggle" id="particles-toggle" type="button" aria-pressed="true">On</button></div>
+      <div class="setting"><span>Fullscreen</span><button class="toggle" id="fullscreen-toggle" type="button" aria-pressed="false">Enter</button></div>
+      <button class="close-button" id="close-options" type="button">Back to menu</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="fighter-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="fighter-ready-title">
+    <div class="ready-card">
+      <span class="player-tag">Arcade Match 01</span>
+      <h2 id="fighter-ready-title">Battle <span>Ready</span></h2>
+      <div class="matchup-line" aria-label="Yusuke versus Demon Scout">
+        <span class="matchup-fighter">Yusuke</span>
+        <span class="matchup-vs">VS</span>
+        <span class="matchup-fighter cpu">Demon Scout</span>
+      </div>
+      <p>Spirit Ruins · CPU difficulty normal · 60 second round</p>
+      <div class="ready-actions">
+        <button class="close-button" id="return-roster" type="button">Back to roster</button>
+        <button class="close-button" id="start-battle" type="button">Start Fight</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const modes = {
+        arcade: {
+          title: "Arcade",
+          code: "A-01",
+          description: "Fight through a ladder of rivals and reach the final challenger."
+        },
+        versus: {
+          title: "Versus",
+          code: "V-02",
+          description: "Settle the score in a local head-to-head battle."
+        },
+        training: {
+          title: "Training",
+          code: "T-03",
+          description: "Practice movement, timing, combos, and defensive reactions."
+        },
+        watch: {
+          title: "Watch",
+          code: "W-04",
+          description: "Let two computer-controlled fighters battle for the arena."
+        },
+        options: {
+          title: "Options",
+          code: "O-05",
+          description: "Adjust presentation, sound, and display settings."
+        }
+      };
+
+      const items = [...document.querySelectorAll(".menu-item")];
+      const modeTitle = document.querySelector("#mode-title");
+      const modeCode = document.querySelector("#mode-code");
+      const modeDescription = document.querySelector("#mode-description");
+      const mainMenuScreen = document.querySelector("#main-menu-screen");
+      const arcadeScreen = document.querySelector("#arcade-screen");
+      const fightScreen = document.querySelector("#fight-screen");
+      const screenStatus = document.querySelector("#screen-status");
+      const menuControls = document.querySelector("#menu-controls");
+      const arcadeControls = document.querySelector("#arcade-controls");
+      const fightControls = document.querySelector("#fight-controls");
+      const arcadeBack = document.querySelector("#arcade-back");
+      const rosterChoice = document.querySelector(".roster-card.selected");
+      const chooseCharacter = document.querySelector("#choose-character");
+      const modal = document.querySelector("#options-modal");
+      const fighterConfirmModal = document.querySelector("#fighter-confirm-modal");
+      const returnRoster = document.querySelector("#return-roster");
+      const startBattleButton = document.querySelector("#start-battle");
+      const closeOptions = document.querySelector("#close-options");
+      const soundToggle = document.querySelector("#sound-toggle");
+      const particlesToggle = document.querySelector("#particles-toggle");
+      const fullscreenToggle = document.querySelector("#fullscreen-toggle");
+      const characterArt = document.querySelector("#character-art");
+      const selectedCharacterName = document.querySelector("#selected-character-name");
+      const selectedCharacterTitle = document.querySelector("#selected-character-title");
+      const characterSeries = document.querySelector("#character-series");
+      const characterFullName = document.querySelector("#character-full-name");
+      const characterArchetype = document.querySelector("#character-archetype");
+      const characterDescription = document.querySelector("#character-description");
+      const characterStats = document.querySelector("#character-stats");
+      const characterMoves = document.querySelector("#character-moves");
+      const characterStage = document.querySelector(".character-stage");
+      const rosterPortrait = rosterChoice.querySelector("img");
+      const fightCanvas = document.querySelector("#game-canvas");
+      const fightContext = fightCanvas.getContext("2d");
+      const battleBack = document.querySelector("#battle-back");
+      const playerHealth = document.querySelector("#player-health");
+      const playerEnergy = document.querySelector("#player-energy");
+      const cpuHealth = document.querySelector("#cpu-health");
+      const cpuEnergy = document.querySelector("#cpu-energy");
+      const roundTimer = document.querySelector("#round-timer");
+      const roundBanner = document.querySelector("#round-banner");
+      const roundBannerText = document.querySelector("#round-banner-text");
+      const battleResult = document.querySelector("#battle-result");
+      const battleResultKicker = document.querySelector("#battle-result-kicker");
+      const battleResultTitle = document.querySelector("#battle-result-title");
+      const battleResultMessage = document.querySelector("#battle-result-message");
+      const rematchButton = document.querySelector("#rematch-button");
+      const resultSelectButton = document.querySelector("#result-select-button");
+      const touchButtons = [...document.querySelectorAll(".touch-button")];
+      const toast = document.querySelector("#toast");
+      const canvas = document.querySelector("#fx");
+      const ctx = canvas.getContext("2d");
+
+      let selectedIndex = 0;
+      let activeScreen = "menu";
+      let soundOn = true;
+      let particlesOn = true;
+      let toastTimer;
+      let audioContext;
+      let arcadeGame;
+
+      function playTone(frequency = 210, duration = 0.045) {
+        if (!soundOn) return;
+        try {
+          audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = "square";
+          oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+          gain.gain.setValueAtTime(0.025, audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration);
+          oscillator.connect(gain).connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + duration);
+        } catch (_) {
+          // The menu remains fully usable when browser audio is unavailable.
+        }
+      }
+
+      function setSelected(index, focus = false) {
+        selectedIndex = (index + items.length) % items.length;
+        items.forEach((item, itemIndex) => {
+          const active = itemIndex === selectedIndex;
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-current", active ? "true" : "false");
+        });
+
+        const selected = items[selectedIndex];
+        const mode = modes[selected.dataset.mode];
+        modeTitle.textContent = mode.title;
+        modeCode.textContent = mode.code;
+        modeDescription.textContent = mode.description;
+        if (focus) selected.focus({ preventScroll: true });
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add("show");
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+      }
+
+      function openOptions() {
+        modal.classList.add("open");
+        closeOptions.focus();
+      }
+
+      function closeOptionsPanel() {
+        modal.classList.remove("open");
+        items[selectedIndex].focus();
+      }
+
+      function openArcade() {
+        arcadeGame?.stop();
+        activeScreen = "arcade";
+        mainMenuScreen.hidden = true;
+        arcadeScreen.hidden = false;
+        fightScreen.hidden = true;
+        menuControls.hidden = true;
+        arcadeControls.hidden = false;
+        fightControls.hidden = true;
+        screenStatus.textContent = "Arcade // Select";
+        document.body.dataset.screen = "arcade";
+        rosterChoice.focus({ preventScroll: true });
+      }
+
+      function returnToMenu() {
+        arcadeGame?.stop();
+        activeScreen = "menu";
+        arcadeScreen.hidden = true;
+        fightScreen.hidden = true;
+        mainMenuScreen.hidden = false;
+        arcadeControls.hidden = true;
+        fightControls.hidden = true;
+        menuControls.hidden = false;
+        screenStatus.textContent = "Menu Online";
+        delete document.body.dataset.screen;
+        items[selectedIndex].focus({ preventScroll: true });
+      }
+
+      function lockInFighter() {
+        playTone(520, 0.1);
+        fighterConfirmModal.classList.add("open");
+        returnRoster.focus();
+      }
+
+      function closeFighterConfirm() {
+        fighterConfirmModal.classList.remove("open");
+        chooseCharacter.focus();
+      }
+
+      function createStatRow(label, value) {
+        const row = document.createElement("div");
+        row.className = "stat-row";
+
+        const name = document.createElement("span");
+        name.textContent = label;
+
+        const track = document.createElement("span");
+        track.className = "stat-track";
+        const fill = document.createElement("span");
+        fill.className = "stat-fill";
+        fill.style.setProperty("--value", `${Math.max(0, Math.min(100, value))}%`);
+        track.append(fill);
+
+        const score = document.createElement("strong");
+        score.textContent = value;
+        row.append(name, track, score);
+        return row;
+      }
+
+      function renderCharacter(character) {
+        const { profile, selectStats, moves } = character;
+        characterArt.classList.remove("missing");
+        rosterPortrait.classList.remove("missing");
+        characterStage.classList.remove("art-missing");
+        characterArt.src = profile.portrait;
+        characterArt.alt = `${character.displayName} charging his Spirit Gun`;
+        rosterPortrait.src = profile.portrait;
+        selectedCharacterName.textContent = character.shortName;
+        selectedCharacterTitle.textContent = profile.title;
+        characterSeries.textContent = character.series;
+        characterFullName.textContent = character.displayName;
+        characterArchetype.textContent = profile.archetype;
+        characterDescription.textContent = profile.description;
+        chooseCharacter.textContent = `Lock In ${character.shortName}`;
+
+        characterStats.replaceChildren();
+        Object.entries(selectStats).forEach(([label, value]) => {
+          characterStats.append(createStatRow(label, value));
+        });
+
+        characterMoves.replaceChildren();
+        moves.forEach(move => {
+          const item = document.createElement("li");
+          const name = document.createElement("span");
+          const input = document.createElement("span");
+          name.textContent = move.name;
+          input.className = "move-input";
+          input.textContent = move.input;
+          item.append(name, input);
+          characterMoves.append(item);
+        });
+      }
+
+      async function loadCharacterDefinition() {
+        try {
+          const response = await fetch("characters/yusuke/yusuke.json");
+          if (!response.ok) throw new Error(`Character data returned ${response.status}`);
+          renderCharacter(await response.json());
+        } catch (_) {
+          // The HTML includes a complete fallback so local file previews still work.
+        }
+      }
+
+      function showPortraitFallback(image) {
+        image.classList.add("missing");
+        if (image === characterArt) characterStage.classList.add("art-missing");
+      }
+
+      characterArt.addEventListener("error", () => showPortraitFallback(characterArt));
+      rosterPortrait.addEventListener("error", () => showPortraitFallback(rosterPortrait));
+      characterArt.addEventListener("load", () => {
+        characterArt.classList.remove("missing");
+        characterStage.classList.remove("art-missing");
+      });
+      rosterPortrait.addEventListener("load", () => rosterPortrait.classList.remove("missing"));
+      [characterArt, rosterPortrait].forEach(image => {
+        if (image.complete && image.naturalWidth === 0) showPortraitFallback(image);
+      });
+
+      const arena = Object.freeze({
+        width: fightCanvas.width,
+        height: fightCanvas.height,
+        floor: 600,
+        left: 68,
+        right: fightCanvas.width - 68
+      });
+
+      const attackData = Object.freeze({
+        light: { duration: .34, activeStart: .1, activeEnd: .21, damage: 7, range: 84, height: 74, knockback: 245, hitstun: .23, energyGain: 8 },
+        heavy: { duration: .55, activeStart: .21, activeEnd: .34, damage: 13, range: 112, height: 105, knockback: 390, hitstun: .37, energyGain: 12 },
+        gun: { duration: .68, spawnTime: .29, cost: 28 }
+      });
+
+      const heldControls = new Set();
+      const tappedControls = new Set();
+      const fightKeyMap = Object.freeze({
+        ArrowLeft: "left",
+        KeyA: "left",
+        ArrowRight: "right",
+        KeyD: "right",
+        ArrowUp: "jump",
+        KeyW: "jump",
+        ArrowDown: "block",
+        KeyS: "block",
+        ShiftLeft: "block",
+        ShiftRight: "block",
+        KeyJ: "light",
+        KeyK: "heavy",
+        KeyL: "gun"
+      });
+
+      function pressFightControl(control) {
+        if (!heldControls.has(control)) tappedControls.add(control);
+        heldControls.add(control);
+      }
+
+      function releaseFightControl(control) {
+        heldControls.delete(control);
+      }
+
+      function clearFightInput() {
+        heldControls.clear();
+        tappedControls.clear();
+        touchButtons.forEach(button => button.classList.remove("active"));
+      }
+
+      function consumeTap(control) {
+        if (!tappedControls.has(control)) return false;
+        tappedControls.delete(control);
+        return true;
+      }
+
+      function humanInput() {
+        return {
+          left: heldControls.has("left"),
+          right: heldControls.has("right"),
+          block: heldControls.has("block"),
+          jumpPressed: consumeTap("jump"),
+          lightPressed: consumeTap("light"),
+          heavyPressed: consumeTap("heavy"),
+          gunPressed: consumeTap("gun")
+        };
+      }
+
+      window.addEventListener("keydown", event => {
+        if (activeScreen !== "fight" || !fightKeyMap[event.code]) return;
+        event.preventDefault();
+        pressFightControl(fightKeyMap[event.code]);
+      });
+
+      window.addEventListener("keyup", event => {
+        const control = fightKeyMap[event.code];
+        if (!control) return;
+        releaseFightControl(control);
+      });
+
+      window.addEventListener("blur", clearFightInput);
+
+      touchButtons.forEach(button => {
+        const control = button.dataset.control;
+        button.addEventListener("pointerdown", event => {
+          if (activeScreen !== "fight") return;
+          event.preventDefault();
+          button.setPointerCapture?.(event.pointerId);
+          button.classList.add("active");
+          pressFightControl(control);
+        });
+
+        const release = event => {
+          event.preventDefault();
+          button.classList.remove("active");
+          releaseFightControl(control);
+        };
+        button.addEventListener("pointerup", release);
+        button.addEventListener("pointercancel", release);
+        button.addEventListener("lostpointercapture", release);
+      });
+
+      function rectanglesOverlap(a, b) {
+        return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+      }
+
+      function circleHitsRectangle(circle, rectangle) {
+        const closestX = Math.max(rectangle.x, Math.min(circle.x, rectangle.x + rectangle.width));
+        const closestY = Math.max(rectangle.y, Math.min(circle.y, rectangle.y + rectangle.height));
+        const dx = circle.x - closestX;
+        const dy = circle.y - closestY;
+        return dx * dx + dy * dy <= circle.radius * circle.radius;
+      }
+
+      class Fighter {
+        constructor({ name, x, facing, cpu = false, palette }) {
+          this.name = name;
+          this.x = x;
+          this.y = arena.floor;
+          this.facing = facing;
+          this.cpu = cpu;
+          this.palette = palette;
+          this.width = 76;
+          this.height = 178;
+          this.vx = 0;
+          this.vy = 0;
+          this.health = 100;
+          this.energy = 70;
+          this.state = "idle";
+          this.stateTime = 0;
+          this.hitstun = 0;
+          this.invulnerability = 0;
+          this.attackConnected = false;
+          this.projectileSpawned = false;
+        }
+
+        get grounded() {
+          return this.y >= arena.floor - .5;
+        }
+
+        get hurtbox() {
+          return {
+            x: this.x - this.width / 2,
+            y: this.y - this.height,
+            width: this.width,
+            height: this.height
+          };
+        }
+
+        beginAttack(type) {
+          const attack = attackData[type];
+          if (type === "gun") {
+            if (this.energy < attack.cost) return false;
+            this.energy -= attack.cost;
+          }
+          this.state = `attack-${type}`;
+          this.stateTime = 0;
+          this.attackConnected = false;
+          this.projectileSpawned = false;
+          playTone(type === "light" ? 240 : type === "heavy" ? 165 : 480, type === "gun" ? .1 : .045);
+          return true;
+        }
+
+        currentAttack() {
+          if (!this.state.startsWith("attack-")) return null;
+          return this.state.slice(7);
+        }
+
+        activeHitbox() {
+          const type = this.currentAttack();
+          const attack = attackData[type];
+          if (!attack || type === "gun" || this.stateTime < attack.activeStart || this.stateTime > attack.activeEnd) return null;
+          const width = attack.range;
+          return {
+            x: this.facing > 0 ? this.x + 18 : this.x - 18 - width,
+            y: this.y - attack.height - 24,
+            width,
+            height: attack.height
+          };
+        }
+
+        update(dt, input, opponent, game) {
+          this.invulnerability = Math.max(0, this.invulnerability - dt);
+          this.energy = Math.min(100, this.energy + dt * 5.5);
+          this.stateTime += dt;
+
+          if (this.hitstun > 0) {
+            this.hitstun -= dt;
+            this.state = "hit";
+            this.vx *= Math.max(0, 1 - dt * 5.2);
+            if (this.hitstun <= 0) this.state = "idle";
+            this.applyPhysics(dt);
+            return;
+          }
+
+          const attackType = this.currentAttack();
+          if (attackType) {
+            const attack = attackData[attackType];
+            this.vx *= Math.max(0, 1 - dt * 11);
+            if (attackType === "gun" && !this.projectileSpawned && this.stateTime >= attack.spawnTime) {
+              this.projectileSpawned = true;
+              game.spawnProjectile(this);
+            }
+            if (this.stateTime >= attack.duration) {
+              this.state = "idle";
+              this.stateTime = 0;
+            }
+            this.applyPhysics(dt);
+            return;
+          }
+
+          if (this.grounded && this.state !== "block") {
+            this.facing = opponent.x >= this.x ? 1 : -1;
+          }
+
+          if (input.block && this.grounded) {
+            this.state = "block";
+            this.vx *= Math.max(0, 1 - dt * 18);
+            this.applyPhysics(dt);
+            return;
+          }
+
+          if (this.state === "block") {
+            this.state = "idle";
+            this.stateTime = 0;
+          }
+
+          if (input.gunPressed && this.grounded && this.beginAttack("gun")) {
+            this.applyPhysics(dt);
+            return;
+          }
+          if (input.heavyPressed && this.beginAttack("heavy")) {
+            this.applyPhysics(dt);
+            return;
+          }
+          if (input.lightPressed && this.beginAttack("light")) {
+            this.applyPhysics(dt);
+            return;
+          }
+
+          const direction = Number(input.right) - Number(input.left);
+          if (direction) {
+            this.vx = direction * (this.grounded ? 340 : 255);
+            this.state = this.grounded ? "walk" : "jump";
+          } else {
+            this.vx *= Math.max(0, 1 - dt * (this.grounded ? 15 : 1.5));
+            if (this.grounded) this.state = "idle";
+          }
+
+          if (input.jumpPressed && this.grounded) {
+            this.vy = -765;
+            this.state = "jump";
+            playTone(285, .04);
+          }
+
+          this.applyPhysics(dt);
+        }
+
+        applyPhysics(dt) {
+          if (!this.grounded || this.vy < 0) this.vy += 1840 * dt;
+          this.x += this.vx * dt;
+          this.y += this.vy * dt;
+          this.x = Math.max(arena.left, Math.min(arena.right, this.x));
+          if (this.y >= arena.floor) {
+            this.y = arena.floor;
+            this.vy = 0;
+            if (this.state === "jump") this.state = "idle";
+          }
+        }
+
+        draw(context, time) {
+          const palette = this.palette;
+          const walkCycle = this.state === "walk" ? Math.sin(time * .015) : 0;
+          const attackType = this.currentAttack();
+          const attackProgress = attackType ? Math.min(1, this.stateTime / attackData[attackType].duration) : 0;
+          const attackReach = attackType === "light"
+            ? Math.sin(attackProgress * Math.PI) * 52
+            : attackType === "heavy"
+              ? Math.sin(attackProgress * Math.PI) * 80
+              : attackType === "gun" ? 45 : 0;
+          const crouch = this.state === "block" ? 18 : 0;
+          const recoil = this.state === "hit" ? Math.sin(this.stateTime * 70) * 5 : 0;
+
+          context.save();
+          context.globalAlpha = .34;
+          context.fillStyle = "#000";
+          context.beginPath();
+          context.ellipse(this.x, arena.floor + 8, 58, 13, 0, 0, Math.PI * 2);
+          context.fill();
+          context.restore();
+
+          context.save();
+          context.translate(this.x + recoil, this.y + crouch);
+          context.scale(this.facing, 1);
+
+          if (this.state === "block") {
+            context.strokeStyle = this.cpu ? "rgba(255,53,93,.68)" : "rgba(90,231,255,.78)";
+            context.lineWidth = 5;
+            context.shadowColor = this.cpu ? "#ff355d" : "#5ae7ff";
+            context.shadowBlur = 16;
+            context.beginPath();
+            context.arc(14, -94, 70, -1.1, 1.1);
+            context.stroke();
+            context.shadowBlur = 0;
+          }
+
+          if (attackType === "gun") {
+            const pulse = 14 + Math.sin(time * .025) * 4;
+            context.fillStyle = this.cpu ? "#ff355d" : "#dfffff";
+            context.shadowColor = this.cpu ? "#ff355d" : "#5ae7ff";
+            context.shadowBlur = 28;
+            context.beginPath();
+            context.arc(74, -112, pulse, 0, Math.PI * 2);
+            context.fill();
+            context.shadowBlur = 0;
+          }
+
+          context.lineCap = "round";
+          context.strokeStyle = palette.legDark;
+          context.lineWidth = 24;
+          context.beginPath();
+          context.moveTo(-15, -63);
+          context.lineTo(-24 - walkCycle * 10, -4);
+          context.stroke();
+          context.strokeStyle = palette.leg;
+          context.beginPath();
+          context.moveTo(14, -65);
+          context.lineTo(24 + walkCycle * 10, -4);
+          context.stroke();
+
+          context.strokeStyle = palette.shoe;
+          context.lineWidth = 13;
+          context.beginPath();
+          context.moveTo(-31 - walkCycle * 10, -2);
+          context.lineTo(-14 - walkCycle * 10, -2);
+          context.moveTo(16 + walkCycle * 10, -2);
+          context.lineTo(35 + walkCycle * 10, -2);
+          context.stroke();
+
+          context.strokeStyle = palette.armDark;
+          context.lineWidth = 22;
+          context.beginPath();
+          context.moveTo(-20, -121);
+          context.lineTo(-39, -78);
+          context.stroke();
+
+          context.fillStyle = palette.body;
+          context.strokeStyle = palette.trim;
+          context.lineWidth = 4;
+          context.beginPath();
+          context.moveTo(-29, -132);
+          context.lineTo(30, -132);
+          context.lineTo(35, -62);
+          context.lineTo(-31, -62);
+          context.closePath();
+          context.fill();
+          context.stroke();
+
+          context.strokeStyle = palette.arm;
+          context.lineWidth = 22;
+          context.beginPath();
+          context.moveTo(22, -120);
+          context.lineTo(43 + attackReach * .55, -91 - attackReach * .2);
+          context.lineTo(53 + attackReach, -101);
+          context.stroke();
+          context.fillStyle = palette.skin;
+          context.beginPath();
+          context.arc(57 + attackReach, -101, 12, 0, Math.PI * 2);
+          context.fill();
+
+          context.fillStyle = palette.skin;
+          context.beginPath();
+          context.arc(0, -153, 25, 0, Math.PI * 2);
+          context.fill();
+
+          context.fillStyle = palette.hair;
+          context.beginPath();
+          context.moveTo(-24, -162);
+          context.lineTo(-13, -185);
+          context.lineTo(-4, -173);
+          context.lineTo(9, -189);
+          context.lineTo(15, -171);
+          context.lineTo(29, -178);
+          context.lineTo(23, -151);
+          context.lineTo(-22, -148);
+          context.closePath();
+          context.fill();
+
+          if (this.cpu) {
+            context.fillStyle = "#8d183a";
+            context.beginPath();
+            context.moveTo(-19, -176);
+            context.lineTo(-32, -202);
+            context.lineTo(-5, -180);
+            context.moveTo(16, -178);
+            context.lineTo(31, -202);
+            context.lineTo(5, -181);
+            context.fill();
+          }
+
+          context.fillStyle = this.cpu ? "#ff5574" : "#10131a";
+          context.fillRect(9, -158, 9, 3);
+          context.restore();
+        }
+      }
+
+      class CPUController {
+        constructor() {
+          this.actionCooldown = .35;
+          this.blockTimer = 0;
+          this.retreatTimer = 0;
+        }
+
+        update(dt, fighter, opponent, projectiles) {
+          const input = {
+            left: false,
+            right: false,
+            block: false,
+            jumpPressed: false,
+            lightPressed: false,
+            heavyPressed: false,
+            gunPressed: false
+          };
+          this.actionCooldown -= dt;
+          this.blockTimer -= dt;
+          this.retreatTimer -= dt;
+          const distance = Math.abs(opponent.x - fighter.x);
+          const moveToward = opponent.x < fighter.x ? "left" : "right";
+          const moveAway = moveToward === "left" ? "right" : "left";
+          const incomingShot = projectiles.some(projectile => projectile.owner !== fighter && Math.abs(projectile.x - fighter.x) < 210);
+
+          if (this.blockTimer > 0 || incomingShot || (opponent.currentAttack() && distance < 145 && Math.random() < .09)) {
+            if (this.blockTimer <= 0) this.blockTimer = .22 + Math.random() * .35;
+            input.block = true;
+            return input;
+          }
+
+          if (this.retreatTimer > 0) {
+            input[moveAway] = true;
+            return input;
+          }
+
+          if (distance > 245) {
+            input[moveToward] = true;
+            if (this.actionCooldown <= 0 && fighter.energy >= attackData.gun.cost && distance > 360 && Math.random() < .62) {
+              input[moveToward] = false;
+              input.gunPressed = true;
+              this.actionCooldown = .9 + Math.random() * .55;
+            } else if (this.actionCooldown <= 0 && Math.random() < .08) {
+              input.jumpPressed = true;
+              this.actionCooldown = .8;
+            }
+          } else if (distance > 92) {
+            input[moveToward] = true;
+          } else if (this.actionCooldown <= 0) {
+            if (Math.random() < .58) input.lightPressed = true;
+            else input.heavyPressed = true;
+            this.actionCooldown = .42 + Math.random() * .48;
+            if (Math.random() < .2) this.retreatTimer = .3;
+          }
+          return input;
+        }
+      }
+
+      class ArcadeFight {
+        constructor(context) {
+          this.context = context;
+          this.running = false;
+          this.lastFrame = 0;
+          this.loop = this.loop.bind(this);
+          this.reset();
+        }
+
+        reset() {
+          clearFightInput();
+          this.player = new Fighter({
+            name: "Yusuke",
+            x: 340,
+            facing: 1,
+            palette: { body: "#08744f", trim: "#5ae7ff", arm: "#0b654b", armDark: "#064535", leg: "#0a654b", legDark: "#064032", shoe: "#d9f4ec", skin: "#d59a75", hair: "#080b0e" }
+          });
+          this.cpu = new Fighter({
+            name: "Demon Scout",
+            x: 940,
+            facing: -1,
+            cpu: true,
+            palette: { body: "#311946", trim: "#ff355d", arm: "#3c1b4d", armDark: "#22102f", leg: "#321640", legDark: "#1c0d27", shoe: "#17101d", skin: "#8c5b78", hair: "#16091e" }
+          });
+          this.controller = new CPUController();
+          this.projectiles = [];
+          this.impacts = [];
+          this.timer = 60;
+          this.state = "intro";
+          this.introTime = 0;
+          this.endingTime = 0;
+          this.winner = null;
+          this.shake = 0;
+          battleResult.classList.remove("open");
+          roundBanner.classList.add("show");
+          roundBannerText.textContent = "Round 1";
+          this.updateHud();
+        }
+
+        start() {
+          if (this.running) return;
+          this.running = true;
+          this.lastFrame = performance.now();
+          requestAnimationFrame(this.loop);
+        }
+
+        stop() {
+          this.running = false;
+          clearFightInput();
+        }
+
+        loop(time) {
+          if (!this.running) return;
+          const dt = Math.min((time - this.lastFrame) / 1000, .033);
+          this.lastFrame = time;
+          this.update(dt);
+          this.render(time);
+          requestAnimationFrame(this.loop);
+        }
+
+        update(dt) {
+          this.updateImpacts(dt);
+          this.shake = Math.max(0, this.shake - dt * 26);
+
+          if (this.state === "intro") {
+            this.introTime += dt;
+            if (this.introTime > .72) roundBannerText.textContent = "Fight!";
+            if (this.introTime > 1.4) {
+              this.state = "play";
+              roundBanner.classList.remove("show");
+            }
+            tappedControls.clear();
+            return;
+          }
+
+          if (this.state === "ending") {
+            this.endingTime -= dt;
+            if (this.endingTime <= 0) this.showResult();
+            tappedControls.clear();
+            return;
+          }
+
+          if (this.state !== "play") {
+            tappedControls.clear();
+            return;
+          }
+
+          this.timer = Math.max(0, this.timer - dt);
+          const playerInput = humanInput();
+          const cpuInput = this.controller.update(dt, this.cpu, this.player, this.projectiles);
+          this.player.update(dt, playerInput, this.cpu, this);
+          this.cpu.update(dt, cpuInput, this.player, this);
+          this.separateFighters();
+          this.resolveMelee(this.player, this.cpu);
+          this.resolveMelee(this.cpu, this.player);
+          this.updateProjectiles(dt);
+          this.updateHud();
+
+          if (this.player.health <= 0 || this.cpu.health <= 0 || this.timer <= 0) this.finishRound();
+          tappedControls.clear();
+        }
+
+        separateFighters() {
+          const overlap = 68 - Math.abs(this.player.x - this.cpu.x);
+          if (overlap <= 0) return;
+          const direction = this.player.x < this.cpu.x ? -1 : 1;
+          this.player.x += direction * overlap * .5;
+          this.cpu.x -= direction * overlap * .5;
+          this.player.x = Math.max(arena.left, Math.min(arena.right, this.player.x));
+          this.cpu.x = Math.max(arena.left, Math.min(arena.right, this.cpu.x));
+        }
+
+        resolveMelee(attacker, defender) {
+          const hitbox = attacker.activeHitbox();
+          if (!hitbox || attacker.attackConnected || defender.invulnerability > 0 || !rectanglesOverlap(hitbox, defender.hurtbox)) return;
+          attacker.attackConnected = true;
+          const type = attacker.currentAttack();
+          this.damageFighter(attacker, defender, attackData[type], defender.x, defender.y - 105);
+        }
+
+        spawnProjectile(owner) {
+          const cpuShot = owner.cpu;
+          this.projectiles.push({
+            owner,
+            x: owner.x + owner.facing * 72,
+            y: owner.y - 112,
+            vx: owner.facing * (cpuShot ? 590 : 690),
+            radius: cpuShot ? 15 : 13,
+            damage: cpuShot ? 12 : 15,
+            knockback: cpuShot ? 315 : 370,
+            hitstun: .34,
+            life: 2.1,
+            color: cpuShot ? "#ff355d" : "#5ae7ff"
+          });
+        }
+
+        updateProjectiles(dt) {
+          for (const projectile of this.projectiles) {
+            projectile.x += projectile.vx * dt;
+            projectile.life -= dt;
+            const target = projectile.owner === this.player ? this.cpu : this.player;
+            if (projectile.life > 0 && target.invulnerability <= 0 && circleHitsRectangle(projectile, target.hurtbox)) {
+              this.damageFighter(projectile.owner, target, projectile, projectile.x, projectile.y);
+              projectile.life = 0;
+            }
+          }
+          this.projectiles = this.projectiles.filter(projectile => projectile.life > 0 && projectile.x > -60 && projectile.x < arena.width + 60);
+        }
+
+        damageFighter(attacker, defender, attack, impactX, impactY) {
+          const blocked = defender.state === "block";
+          const damage = attack.damage * (blocked ? .25 : 1);
+          defender.health = Math.max(0, defender.health - damage);
+          defender.invulnerability = blocked ? .1 : .18;
+          defender.hitstun = blocked ? .12 : attack.hitstun;
+          defender.vx = attacker.facing * attack.knockback * (blocked ? .34 : 1);
+          if (!blocked && attack.damage >= 13) defender.vy = -170;
+          attacker.energy = Math.min(100, attacker.energy + (attack.energyGain || 5));
+          this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", blocked ? 7 : 15);
+          this.shake = blocked ? 3 : Math.min(13, attack.damage * .7);
+          playTone(blocked ? 120 : attack.damage >= 13 ? 88 : 135, blocked ? .035 : .07);
+        }
+
+        addImpact(x, y, color, count) {
+          for (let index = 0; index < count; index += 1) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 90 + Math.random() * 360;
+            this.impacts.push({
+              x,
+              y,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
+              life: .24 + Math.random() * .35,
+              maxLife: .59,
+              size: 2 + Math.random() * 5,
+              color
+            });
+          }
+        }
+
+        updateImpacts(dt) {
+          for (const impact of this.impacts) {
+            impact.life -= dt;
+            impact.x += impact.vx * dt;
+            impact.y += impact.vy * dt;
+            impact.vy += 540 * dt;
+            impact.vx *= Math.max(0, 1 - dt * 2.2);
+          }
+          this.impacts = this.impacts.filter(impact => impact.life > 0);
+        }
+
+        finishRound() {
+          if (this.state !== "play") return;
+          if (this.player.health === this.cpu.health) this.winner = null;
+          else this.winner = this.player.health > this.cpu.health ? this.player : this.cpu;
+          this.state = "ending";
+          this.endingTime = 1.15;
+          roundBannerText.textContent = this.timer <= 0 ? "Time!" : "K.O.!";
+          roundBanner.classList.add("show");
+          clearFightInput();
+          playTone(this.winner === this.player ? 620 : 95, .25);
+        }
+
+        showResult() {
+          this.state = "finished";
+          roundBanner.classList.remove("show");
+          if (this.winner === this.player) {
+            battleResultKicker.textContent = "Arcade Match Complete";
+            battleResultTitle.textContent = "Victory";
+            battleResultMessage.textContent = "Yusuke defeated the Demon Scout. The next arcade challenger is coming soon.";
+          } else if (this.winner === this.cpu) {
+            battleResultKicker.textContent = "Mission Failed";
+            battleResultTitle.textContent = "Defeat";
+            battleResultMessage.textContent = "The Demon Scout won this round. Adjust your spacing, block, and try again.";
+          } else {
+            battleResultKicker.textContent = "Round Complete";
+            battleResultTitle.textContent = "Draw";
+            battleResultMessage.textContent = "Both fighters are still standing. Run the match back to settle it.";
+          }
+          battleResult.classList.add("open");
+          rematchButton.focus({ preventScroll: true });
+        }
+
+        updateHud() {
+          playerHealth.style.width = `${Math.max(0, this.player.health)}%`;
+          cpuHealth.style.width = `${Math.max(0, this.cpu.health)}%`;
+          playerEnergy.style.width = `${Math.max(0, this.player.energy)}%`;
+          cpuEnergy.style.width = `${Math.max(0, this.cpu.energy)}%`;
+          roundTimer.textContent = String(Math.max(0, Math.ceil(this.timer))).padStart(2, "0");
+        }
+
+        drawArena(context, time) {
+          const sky = context.createLinearGradient(0, 0, 0, arena.floor);
+          sky.addColorStop(0, "#09071b");
+          sky.addColorStop(.58, "#1d1033");
+          sky.addColorStop(1, "#170d22");
+          context.fillStyle = sky;
+          context.fillRect(0, 0, arena.width, arena.height);
+
+          const glow = context.createRadialGradient(930, 175, 20, 930, 175, 210);
+          glow.addColorStop(0, "rgba(168,225,255,.32)");
+          glow.addColorStop(.3, "rgba(106,78,190,.18)");
+          glow.addColorStop(1, "rgba(0,0,0,0)");
+          context.fillStyle = glow;
+          context.fillRect(690, 0, 480, 430);
+          context.fillStyle = "rgba(221,239,255,.72)";
+          context.beginPath();
+          context.arc(930, 165, 68, 0, Math.PI * 2);
+          context.fill();
+
+          context.fillStyle = "#0b0814";
+          for (let x = -40; x < arena.width + 80; x += 105) {
+            const height = 90 + ((x * 13) % 85 + 85) % 85;
+            context.fillRect(x, arena.floor - 140 - height, 64, height + 140);
+            context.beginPath();
+            context.moveTo(x - 14, arena.floor - 140 - height);
+            context.lineTo(x + 32, arena.floor - 182 - height);
+            context.lineTo(x + 78, arena.floor - 140 - height);
+            context.closePath();
+            context.fill();
+          }
+
+          context.strokeStyle = "rgba(90,231,255,.12)";
+          context.lineWidth = 3;
+          for (let x = 90; x < arena.width; x += 210) {
+            context.beginPath();
+            context.moveTo(x, arena.floor - 250);
+            context.lineTo(x + 8, arena.floor);
+            context.stroke();
+          }
+
+          const floorGradient = context.createLinearGradient(0, arena.floor - 18, 0, arena.height);
+          floorGradient.addColorStop(0, "#30253d");
+          floorGradient.addColorStop(.14, "#15111d");
+          floorGradient.addColorStop(1, "#07060b");
+          context.fillStyle = floorGradient;
+          context.fillRect(0, arena.floor, arena.width, arena.height - arena.floor);
+          context.strokeStyle = "rgba(255,255,255,.15)";
+          context.lineWidth = 3;
+          context.beginPath();
+          context.moveTo(0, arena.floor);
+          context.lineTo(arena.width, arena.floor);
+          context.stroke();
+
+          context.strokeStyle = "rgba(255,255,255,.055)";
+          context.lineWidth = 2;
+          for (let offset = 0; offset < 6; offset += 1) {
+            const y = arena.floor + 16 + offset * 22;
+            context.beginPath();
+            context.moveTo(0, y);
+            context.lineTo(arena.width, y);
+            context.stroke();
+          }
+          for (let x = -200; x < arena.width + 200; x += 130) {
+            context.beginPath();
+            context.moveTo(arena.width / 2, arena.floor);
+            context.lineTo(x, arena.height);
+            context.stroke();
+          }
+
+          context.fillStyle = "rgba(255,255,255,.24)";
+          context.font = "900 13px system-ui, sans-serif";
+          context.letterSpacing = "3px";
+          context.fillText("SPIRIT RUINS // ARCADE MATCH 01", 32, arena.height - 28);
+
+          const haze = .04 + Math.sin(time * .0008) * .015;
+          context.fillStyle = `rgba(90,231,255,${haze})`;
+          context.fillRect(0, 250, arena.width, 350);
+        }
+
+        render(time) {
+          const context = this.context;
+          context.setTransform(1, 0, 0, 1, 0, 0);
+          context.clearRect(0, 0, arena.width, arena.height);
+          context.save();
+          if (this.shake > 0) context.translate((Math.random() - .5) * this.shake, (Math.random() - .5) * this.shake);
+          this.drawArena(context, time);
+
+          for (const projectile of this.projectiles) {
+            context.save();
+            context.fillStyle = projectile.color;
+            context.shadowColor = projectile.color;
+            context.shadowBlur = 28;
+            context.beginPath();
+            context.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+            context.fill();
+            context.globalAlpha = .32;
+            context.fillRect(projectile.x - Math.sign(projectile.vx) * 62, projectile.y - 4, Math.sign(projectile.vx) * 58, 8);
+            context.restore();
+          }
+
+          this.player.draw(context, time);
+          this.cpu.draw(context, time);
+          for (const impact of this.impacts) {
+            context.globalAlpha = Math.min(1, impact.life / impact.maxLife);
+            context.fillStyle = impact.color;
+            context.fillRect(impact.x, impact.y, impact.size, impact.size);
+          }
+          context.globalAlpha = 1;
+          context.restore();
+        }
+      }
+
+      function beginFight() {
+        fighterConfirmModal.classList.remove("open");
+        activeScreen = "fight";
+        mainMenuScreen.hidden = true;
+        arcadeScreen.hidden = true;
+        fightScreen.hidden = false;
+        menuControls.hidden = true;
+        arcadeControls.hidden = true;
+        fightControls.hidden = false;
+        screenStatus.textContent = "Arcade // Match 01";
+        document.body.dataset.screen = "fight";
+        if (!arcadeGame) arcadeGame = new ArcadeFight(fightContext);
+        else arcadeGame.reset();
+        arcadeGame.start();
+        fightCanvas.focus({ preventScroll: true });
+      }
+
+      function exitFightToSelect() {
+        arcadeGame?.stop();
+        battleResult.classList.remove("open");
+        roundBanner.classList.remove("show");
+        openArcade();
+      }
+
+      function confirmSelection() {
+        const modeName = items[selectedIndex].dataset.mode;
+        playTone(420, 0.08);
+        if (modeName === "arcade") {
+          openArcade();
+          return;
+        }
+        if (modeName === "options") {
+          openOptions();
+          return;
+        }
+        showToast(`${modes[modeName].title} selected — character select is coming in the next build.`);
+      }
+
+      items.forEach((item, index) => {
+        item.addEventListener("pointerenter", () => {
+          if (index !== selectedIndex) playTone(185);
+          setSelected(index);
+        });
+        item.addEventListener("focus", () => setSelected(index));
+        item.addEventListener("click", () => {
+          setSelected(index);
+          confirmSelection();
+        });
+      });
+
+      document.addEventListener("keydown", (event) => {
+        const modalOpen = modal.classList.contains("open");
+        const fighterConfirmOpen = fighterConfirmModal.classList.contains("open");
+        if (event.key === "Escape" && modalOpen) {
+          event.preventDefault();
+          closeOptionsPanel();
+          return;
+        }
+        if (event.key === "Escape" && fighterConfirmOpen) {
+          event.preventDefault();
+          closeFighterConfirm();
+          return;
+        }
+        if (modalOpen || fighterConfirmOpen) return;
+
+        if (activeScreen === "fight") {
+          if (["Escape", "Backspace", "b", "B"].includes(event.key)) {
+            event.preventDefault();
+            playTone(145);
+            exitFightToSelect();
+          }
+          return;
+        }
+
+        if (activeScreen === "arcade") {
+          if (["Escape", "Backspace", "b", "B"].includes(event.key)) {
+            event.preventDefault();
+            playTone(145);
+            returnToMenu();
+          } else if ((event.key === "Enter" || event.key === " ") && document.activeElement !== arcadeBack) {
+            event.preventDefault();
+            lockInFighter();
+          }
+          return;
+        }
+
+        if (["ArrowDown", "s", "S"].includes(event.key)) {
+          event.preventDefault();
+          playTone(180);
+          setSelected(selectedIndex + 1, true);
+        } else if (["ArrowUp", "w", "W"].includes(event.key)) {
+          event.preventDefault();
+          playTone(220);
+          setSelected(selectedIndex - 1, true);
+        } else if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          confirmSelection();
+        }
+      });
+
+      closeOptions.addEventListener("click", closeOptionsPanel);
+      modal.addEventListener("pointerdown", (event) => {
+        if (event.target === modal) closeOptionsPanel();
+      });
+      arcadeBack.addEventListener("click", returnToMenu);
+      rosterChoice.addEventListener("click", () => {
+        playTone(300);
+        chooseCharacter.focus();
+      });
+      chooseCharacter.addEventListener("click", lockInFighter);
+      returnRoster.addEventListener("click", closeFighterConfirm);
+      startBattleButton.addEventListener("click", beginFight);
+      battleBack.addEventListener("click", exitFightToSelect);
+      rematchButton.addEventListener("click", () => {
+        arcadeGame?.reset();
+        fightCanvas.focus({ preventScroll: true });
+      });
+      resultSelectButton.addEventListener("click", exitFightToSelect);
+      fighterConfirmModal.addEventListener("pointerdown", (event) => {
+        if (event.target === fighterConfirmModal) closeFighterConfirm();
+      });
+
+      function bindToggle(button, callback) {
+        button.addEventListener("click", () => {
+          const next = button.getAttribute("aria-pressed") !== "true";
+          button.setAttribute("aria-pressed", String(next));
+          button.textContent = next ? "On" : "Off";
+          callback(next);
+          playTone(next ? 360 : 150);
+        });
+      }
+
+      bindToggle(soundToggle, value => { soundOn = value; });
+      bindToggle(particlesToggle, value => {
+        particlesOn = value;
+        canvas.style.opacity = value ? ".72" : "0";
+      });
+
+      fullscreenToggle.addEventListener("click", async () => {
+        try {
+          if (!document.fullscreenElement) {
+            await document.documentElement.requestFullscreen();
+          } else {
+            await document.exitFullscreen();
+          }
+        } catch (_) {
+          showToast("Fullscreen is not available in this browser.");
+        }
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        const active = Boolean(document.fullscreenElement);
+        fullscreenToggle.setAttribute("aria-pressed", String(active));
+        fullscreenToggle.textContent = active ? "Exit" : "Enter";
+      });
+
+      const sparks = Array.from({ length: 42 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        vx: .00005 + Math.random() * .00018,
+        vy: -.00005 - Math.random() * .00018,
+        size: .6 + Math.random() * 1.8,
+        alpha: .15 + Math.random() * .7
+      }));
+
+      function resizeCanvas() {
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(innerWidth * ratio);
+        canvas.height = Math.floor(innerHeight * ratio);
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+
+      let lastTime = performance.now();
+      function draw(time) {
+        const delta = Math.min(time - lastTime, 32);
+        lastTime = time;
+        ctx.clearRect(0, 0, innerWidth, innerHeight);
+
+        if (particlesOn) {
+          for (const spark of sparks) {
+            spark.x += spark.vx * delta;
+            spark.y += spark.vy * delta;
+            if (spark.y < -.04 || spark.x > 1.04) {
+              spark.x = Math.random() * .9;
+              spark.y = 1.02 + Math.random() * .1;
+            }
+            const x = spark.x * innerWidth;
+            const y = spark.y * innerHeight;
+            ctx.beginPath();
+            ctx.arc(x, y, spark.size, 0, Math.PI * 2);
+            const arcadeColor = activeScreen === "arcade";
+            ctx.fillStyle = arcadeColor
+              ? `rgba(90, 231, 255, ${spark.alpha})`
+              : `rgba(255, ${70 + Math.floor(spark.alpha * 90)}, 55, ${spark.alpha})`;
+            ctx.shadowColor = arcadeColor ? "#5ae7ff" : "#ff355d";
+            ctx.shadowBlur = 9;
+            ctx.fill();
+          }
+          ctx.shadowBlur = 0;
+        }
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener("resize", resizeCanvas, { passive: true });
+      resizeCanvas();
+      setSelected(0);
+      loadCharacterDefinition();
+      requestAnimationFrame(draw);
+    })();
+  </script>
+</body>
+</html>
