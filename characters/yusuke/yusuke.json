@@ -13,7 +13,7 @@
     "portrait": "assets/characters/yusuke/portrait.webp"
   },
   "engineStats": {
-    "life": 1000,
+    "life": 10000,
     "attack": 105,
     "defense": 100,
     "walkSpeed": 4.6,
