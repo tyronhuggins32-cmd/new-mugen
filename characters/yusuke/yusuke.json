@@ -20,10 +20,10 @@
     "jumpVelocity": -14
   },
   "selectStats": {
-    "power": 90,
-    "speed": 88,
-    "range": 91,
-    "defense": 76
+    "power": 900,
+    "speed": 880,
+    "range": 910,
+    "defense": 760
   },
   "spriteSheet": {
     "src": "characters/yusuke/sprites.png",
@@ -342,6 +342,66 @@
             "at": 0.82
           }
         ]
+      },
+      "cross": {
+        "keyframes": [
+          {
+            "frame": 12,
+            "at": 0
+          },
+          {
+            "frame": 13,
+            "at": 0.2
+          },
+          {
+            "frame": 13,
+            "at": 0.45
+          },
+          {
+            "frame": 12,
+            "at": 0.8
+          }
+        ]
+      },
+      "body": {
+        "keyframes": [
+          {
+            "frame": 4,
+            "at": 0
+          },
+          {
+            "frame": 12,
+            "at": 0.2
+          },
+          {
+            "frame": 13,
+            "at": 0.45
+          },
+          {
+            "frame": 4,
+            "at": 0.8
+          }
+        ]
+      },
+      "upper": {
+        "keyframes": [
+          {
+            "frame": 14,
+            "at": 0
+          },
+          {
+            "frame": 14,
+            "at": 0.2
+          },
+          {
+            "frame": 15,
+            "at": 0.45
+          },
+          {
+            "frame": 14,
+            "at": 0.8
+          }
+        ]
       }
     }
   },
@@ -568,7 +628,7 @@
     }
   },
   "combat": {
-    "maxHealth": 100,
+    "maxHealth": 1000,
     "startEnergy": 64,
     "energyRegen": 6.5,
     "body": {
@@ -593,10 +653,10 @@
         "duration": 0.19,
         "activeStart": 0.038,
         "activeEnd": 0.102,
-        "damage": 6.5,
+        "damage": 20,
         "range": 101,
         "height": 84,
-        "knockback": 250,
+        "knockback": 110,
         "hitstun": 0.17,
         "energyGain": 9,
         "animation": "light",
@@ -606,7 +666,7 @@
         "duration": 0.325,
         "activeStart": 0.085,
         "activeEnd": 0.198,
-        "damage": 15,
+        "damage": 45,
         "range": 132,
         "height": 116,
         "knockback": 485,
@@ -617,7 +677,8 @@
           "heavyUppercut",
           "heavyKick"
         ],
-        "airAnimation": "airKick"
+        "airAnimation": "airKick",
+        "heavyImpact": true
       },
       "gun": {
         "duration": 0.46,
@@ -632,37 +693,82 @@
         "cost": 30,
         "projectile": "spiritShotgun",
         "animation": "spiritGun"
+      },
+      "cross": {
+        "duration": 0.25,
+        "activeStart": 0.07,
+        "activeEnd": 0.14,
+        "damage": 26,
+        "range": 112,
+        "height": 106,
+        "knockback": 140,
+        "hitstun": 0.23,
+        "energyGain": 10,
+        "animation": "cross",
+        "airAnimation": "airKick",
+        "heavyImpact": false
+      },
+      "body": {
+        "duration": 0.29,
+        "activeStart": 0.09,
+        "activeEnd": 0.17,
+        "damage": 30,
+        "range": 96,
+        "height": 74,
+        "knockback": 100,
+        "hitstun": 0.23,
+        "energyGain": 10,
+        "animation": "body",
+        "airAnimation": "airKick",
+        "heavyImpact": false
+      },
+      "upper": {
+        "duration": 0.39,
+        "activeStart": 0.12,
+        "activeEnd": 0.22,
+        "damage": 42,
+        "range": 110,
+        "height": 106,
+        "knockback": 410,
+        "hitstun": 0.36,
+        "energyGain": 10,
+        "animation": "upper",
+        "airAnimation": "airKick",
+        "heavyImpact": true
       }
     },
     "projectile": {
       "player": {
         "speed": 1120,
         "radius": 16,
-        "damage": 17,
+        "damage": 51,
         "knockback": 475,
         "hitstun": 0.35,
         "life": 1.45,
-        "energyGain": 4
+        "energyGain": 4,
+        "heavyImpact": true
       },
       "cpu": {
         "speed": 720,
         "radius": 17,
-        "damage": 12,
+        "damage": 36,
         "knockback": 315,
         "hitstun": 0.32,
         "life": 1.9,
-        "energyGain": 5
+        "energyGain": 5,
+        "heavyImpact": true
       },
       "shotgun": {
         "pellets": 5,
         "speed": 820,
         "radius": 8,
-        "damage": 13,
+        "damage": 39,
         "knockback": 360,
         "hitstun": 0.28,
         "life": 0.8,
         "energyGain": 4,
-        "spread": 0.16
+        "spread": 0.16,
+        "heavyImpact": true
       }
     },
     "projectileVfx": {
@@ -692,11 +798,12 @@
         "light": 6,
         "heavy": 12
       }
-    }
+    },
+    "roundTime": 180
   },
   "passives": {
     "fightingInstinct": {
-      "healthThreshold": 30,
+      "healthThreshold": 300,
       "damageBoost": 1.1,
       "energyRegenBoost": 1.35,
       "description": "When badly hurt, Yusuke's fighting instinct raises his damage and spirit recovery."
@@ -705,10 +812,10 @@
   "moves": [
     {
       "id": "street_brawl_chain",
-      "name": "Street Brawl Chain",
+      "name": "Jab \u2192 Cross \u2192 Body \u2192 Uppercut",
       "input": "J",
       "type": "normal",
-      "description": "Fast, repeatable punches based on Yusuke's aggressive delinquent fighting style."
+      "description": "Tap J in rhythm for a four-punch sequence. Pausing or getting hit resets the chain."
     },
     {
       "id": "spirit_punch",
