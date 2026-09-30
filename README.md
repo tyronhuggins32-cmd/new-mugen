@@ -1,36 +1,43 @@
-# New Mugen — Arcade Build 0003
+# New Mugen — Browser Fighter
 
-This browser fighting-game prototype currently includes:
+A browser fighting-game prototype featuring Yusuke versus the CPU Demon Scout. Run `python3 -m http.server 8000` in this folder, then visit http://localhost:8000. `index.html` opens the game build.
 
-- A responsive main menu with keyboard and touch controls.
-- A revamped Arcade character-select and matchup flow.
-- Yusuke Urameshi as roster slot 01.
-- A playable 60-second fight against the CPU-controlled Demon Scout.
-- Health, spirit meters, blocking, jumping, projectiles, KO results, and rematches.
-- Keyboard and on-screen touch fighting controls.
-- A modular Yusuke definition in `characters/yusuke/yusuke.json`.
-- Character confirmation and placeholders for the next roster additions.
+## Combat update
 
-## Preview locally
+- Fixed 60 Hz simulation independent of display refresh rate.
+- First-to-two rounds, visible score, draw replays, and complete match rematches.
+- Opponent-facing backward movement and automatic guard while retreating into a threat.
+- Directional blocking: attacks from behind bypass guard.
+- Jump-over cross-ups, body-sized collision, and corner separation.
+- Simultaneous melee strikes can trade rather than always favoring player one.
+- Pause/resume button and P shortcut; losing focus pauses the match.
+- Keyboard aliases and touch inputs are tracked independently.
+- Stopping a fight cancels its animation callback before re-entry.
+- The external character JSON now contains the current format-3 definition, including actual sprite and effect paths, instead of silently falling back to embedded data.
 
-Run a small web server in the project folder:
+## Controls
 
-```bash
-python3 -m http.server 8000
-```
+| Action | Input |
+|---|---|
+| Move | A/D or Left/Right |
+| Jump | W or Up |
+| Guard | S, Down, Shift, or hold away from an incoming threat |
+| Light / heavy | J / K |
+| Spirit Gun | L |
+| Spirit Shotgun | S + L |
+| Pause / resume | P or Pause button |
+| Character select | Esc or B |
 
-Then open `http://localhost:8000` in a browser.
+On-screen buttons support touch play.
 
-## Fight controls
+## Verification
 
-- Move: `A` / `D` or left / right arrow keys
-- Jump: `W` or up arrow
-- Block: `S`, down arrow, or Shift
-- Rapid Strike: `J`
-- Power Hook: `K`
-- Spirit Gun: `L` (uses spirit meter)
-- Return to character select: `Esc` or `B`
+Run `node tests/engine.cjs` for dependency-free logic regression checks. These check timing at 30/60/120/144 Hz, input ownership, collisions, guarding, melee trades, projectile release, round progression, pause, rematches, and animation-loop lifecycle. These tests use DOM stubs and do not verify rendering.
 
-On GitHub Pages, keep `index.html` at the repository root and preserve the `assets` and `characters` folders exactly as provided.
+For browser checks, install Playwright and its Chromium browser, start the server above, and run `node tests/combat.cjs`. Browser verification for this change was blocked by failed Chromium downloads; the script is supplied but is not claimed as passing.
+
+## Current limits
+
+Only Arcade is playable. Versus, Training, and Watch remain menu placeholders. This is a custom JavaScript fighter, not the MUGEN engine: it does not import MUGEN DEF/CNS/CMD/SFF character packs. Native character compatibility and a full roster require further engine work. This update does not claim all bugs are eliminated.
 
 This is a fan-made prototype. Yu Yu Hakusho and Yusuke Urameshi belong to their respective rights holders.

@@ -1652,6 +1652,8 @@
 
         <div class="battle-top-actions">
           <button class="battle-back" id="battle-back" type="button">‹ Character Select</button>
+          <button class="battle-back" id="pause-fight" type="button">Pause (P)</button>
+          <span id="match-score" aria-live="polite">Rounds 0 – 0 · First to 2</span>
         </div>
 
         <div class="round-banner" id="round-banner" aria-hidden="true"><strong id="round-banner-text">Fight!</strong></div>
@@ -2133,6 +2135,7 @@
 
       let attackData = Object.freeze({});
 
+      const controlSources = new Map();
       const heldControls = new Set();
       const tappedControls = new Set();
       const fightKeyMap = Object.freeze({
@@ -2151,16 +2154,24 @@
         KeyL: "gun"
       });
 
-      function pressFightControl(control) {
+      function pressFightControl(control, source = control) {
         if (!heldControls.has(control)) tappedControls.add(control);
+        if (!controlSources.has(control)) controlSources.set(control, new Set());
+        controlSources.get(control).add(source);
         heldControls.add(control);
       }
 
-      function releaseFightControl(control) {
-        heldControls.delete(control);
+      function releaseFightControl(control, source = control) {
+        const sources = controlSources.get(control);
+        sources?.delete(source);
+        if (!sources?.size) {
+          controlSources.delete(control);
+          heldControls.delete(control);
+        }
       }
 
       function clearFightInput() {
+        controlSources.clear();
         heldControls.clear();
         tappedControls.clear();
         touchButtons.forEach(button => button.classList.remove("active"));
@@ -2187,31 +2198,38 @@
       window.addEventListener("keydown", event => {
         if (activeScreen !== "fight" || !fightKeyMap[event.code]) return;
         event.preventDefault();
-        pressFightControl(fightKeyMap[event.code]);
+        if (!event.repeat && !arcadeGame?.paused) pressFightControl(fightKeyMap[event.code], event.code);
       });
 
       window.addEventListener("keyup", event => {
         const control = fightKeyMap[event.code];
         if (!control) return;
-        releaseFightControl(control);
+        releaseFightControl(control, event.code);
       });
 
-      window.addEventListener("blur", clearFightInput);
+      window.addEventListener("blur", () => {
+        clearFightInput();
+        if (activeScreen === "fight") arcadeGame?.setPaused(true);
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden && activeScreen === "fight") arcadeGame?.setPaused(true);
+      });
+      document.querySelector("#pause-fight").addEventListener("click", () => arcadeGame?.setPaused(!arcadeGame.paused));
 
       touchButtons.forEach(button => {
         const control = button.dataset.control;
         button.addEventListener("pointerdown", event => {
-          if (activeScreen !== "fight") return;
+          if (activeScreen !== "fight" || arcadeGame?.paused) return;
           event.preventDefault();
           button.setPointerCapture?.(event.pointerId);
           button.classList.add("active");
-          pressFightControl(control);
+          pressFightControl(control, `pointer-${event.pointerId}`);
         });
 
         const release = event => {
           event.preventDefault();
-          button.classList.remove("active");
-          releaseFightControl(control);
+          releaseFightControl(control, `pointer-${event.pointerId}`);
+          if (!heldControls.has(control)) button.classList.remove("active");
         };
         button.addEventListener("pointerup", release);
         button.addEventListener("pointercancel", release);
@@ -2268,8 +2286,9 @@
           this.height = body?.height || (cpu ? 178 : 194);
           this.vx = 0;
           this.vy = 0;
-          this.health = cpu ? 100 : (yusukeCombat?.maxHealth || 100);
-          this.energy = cpu ? 70 : (yusukeCombat?.startEnergy || 70);
+          this.maxHealth = cpu ? 100 : (yusukeCombat?.maxHealth ?? 100);
+          this.health = this.maxHealth;
+          this.energy = cpu ? 70 : (yusukeCombat?.startEnergy ?? 70);
           this.state = "idle";
           this.stateTime = 0;
           this.hitstun = 0;
@@ -2393,15 +2412,17 @@
           }
 
           const direction = Number(input.right) - Number(input.left);
-          if (direction) this.setFacing(direction);
-          else if (this.grounded && this.state !== "block") this.setFacing(opponent.x >= this.x ? 1 : -1);
+          if (this.grounded) this.setFacing(opponent.x >= this.x ? 1 : -1);
 
           if (input.gunPressed && input.block && !this.cpu && this.grounded && this.beginAttack("shotgun")) {
             this.applyPhysics(dt);
             return;
           }
 
-          if (input.block && this.grounded) {
+          const retreating = direction === -this.facing;
+          const threatened = (opponent.currentAttack() && Math.abs(opponent.x - this.x) < 250)
+            || game.projectiles.some(p => p.owner !== this && Math.abs(p.x - this.x) < 240);
+          if ((input.block || (retreating && threatened)) && this.grounded) {
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             this.setState("block");
             this.vx *= Math.max(0, 1 - dt * movement.groundFriction);
@@ -2425,7 +2446,7 @@
           }
 
           if (direction) {
-            this.vx = direction * (this.grounded ? movement.groundSpeed : movement.airSpeed);
+            this.vx = direction * (this.grounded ? movement.groundSpeed * (retreating ? .78 : 1) : movement.airSpeed);
             this.setState(this.grounded ? "walk" : "jump");
           } else {
             this.vx *= Math.max(0, 1 - dt * (this.grounded ? movement.groundFriction : movement.airFriction));
@@ -2820,7 +2841,14 @@
           this.reset();
         }
 
-        reset() {
+        reset(newMatch = true) {
+          if (newMatch) {
+            this.roundWins = [0, 0];
+            this.roundNumber = 1;
+          }
+          this.paused = false;
+          this.accumulator = 0;
+          document.querySelector("#pause-fight").textContent = "Pause (P)";
           clearFightInput();
           this.player = new Fighter({
             name: activeCharacterDefinition.shortName,
@@ -2849,7 +2877,7 @@
           this.hitStop = 0;
           battleResult.classList.remove("open");
           roundBanner.classList.add("show");
-          roundBannerText.textContent = "Round 1";
+          roundBannerText.textContent = `Round ${this.roundNumber}`;
           this.updateHud();
         }
 
@@ -2857,21 +2885,41 @@
           if (this.running) return;
           this.running = true;
           this.lastFrame = performance.now();
-          requestAnimationFrame(this.loop);
+          this.frameId = requestAnimationFrame(this.loop);
         }
 
         stop() {
+          cancelAnimationFrame(this.frameId);
+          this.frameId = null;
           this.running = false;
           clearFightInput();
         }
 
+        setPaused(paused) {
+          if (!this.running || this.state === "finished") return;
+          this.paused = paused;
+          this.accumulator = 0;
+          this.lastFrame = performance.now();
+          clearFightInput();
+          document.querySelector("#pause-fight").textContent = paused ? "Resume (P)" : "Pause (P)";
+          roundBanner.classList.toggle("show", paused || this.state !== "play");
+          roundBannerText.textContent = paused ? "Paused" : this.state === "intro" ? `Round ${this.roundNumber}` : this.state === "ending" ? "Round over" : "Fight!";
+        }
+
         loop(time) {
           if (!this.running) return;
-          const dt = Math.min((time - this.lastFrame) / 1000, .033);
+          const elapsed = Math.max(0, Math.min((time - this.lastFrame) / 1000, .25));
           this.lastFrame = time;
-          this.update(dt);
+          if (!this.paused) {
+            this.accumulator += elapsed;
+            const step = 1 / 60;
+            while (this.accumulator >= step) {
+              this.accumulator -= step;
+              this.update(step);
+            }
+          }
           this.render(time);
-          requestAnimationFrame(this.loop);
+          this.frameId = requestAnimationFrame(this.loop);
         }
 
         update(dt) {
@@ -2895,7 +2943,13 @@
 
           if (this.state === "ending") {
             this.endingTime -= dt;
-            if (this.endingTime <= 0) this.showResult();
+            if (this.endingTime <= 0) {
+              if (this.roundWins.some(wins => wins >= 2)) this.showResult();
+              else {
+                this.roundNumber += 1;
+                this.reset(false);
+              }
+            }
             tappedControls.clear();
             return;
           }
@@ -2911,8 +2965,9 @@
           this.player.update(dt, playerInput, this.cpu, this);
           this.cpu.update(dt, cpuInput, this.player, this);
           this.separateFighters();
-          this.resolveMelee(this.player, this.cpu);
-          this.resolveMelee(this.cpu, this.player);
+          // Snapshot both contacts before damage changes either fighter's state.
+          const contacts = [this.prepareMelee(this.player, this.cpu), this.prepareMelee(this.cpu, this.player)];
+          for (const contact of contacts) if (contact) contact();
           this.updateProjectiles(dt);
           this.updateHud();
 
@@ -2921,21 +2976,31 @@
         }
 
         separateFighters() {
-          const overlap = 68 - Math.abs(this.player.x - this.cpu.x);
+          // Only overlapping bodies collide, allowing jump-over cross-ups.
+          if (!rectanglesOverlap(this.player.hurtbox, this.cpu.hurtbox)) return;
+          const spacing = (this.player.width + this.cpu.width) / 2;
+          const overlap = spacing - Math.abs(this.player.x - this.cpu.x);
           if (overlap <= 0) return;
           const direction = this.player.x < this.cpu.x ? -1 : 1;
           this.player.x += direction * overlap * .5;
           this.cpu.x -= direction * overlap * .5;
           this.player.x = Math.max(arena.left, Math.min(arena.right, this.player.x));
           this.cpu.x = Math.max(arena.left, Math.min(arena.right, this.cpu.x));
+          const remaining = spacing - Math.abs(this.player.x - this.cpu.x);
+          if (remaining > 0) {
+            const left = this.player.x < this.cpu.x ? this.player : this.cpu;
+            const right = left === this.player ? this.cpu : this.player;
+            if (left.x === arena.left) right.x = left.x + spacing;
+            else if (right.x === arena.right) left.x = right.x - spacing;
+          }
         }
 
-        resolveMelee(attacker, defender) {
+        prepareMelee(attacker, defender) {
           const hitbox = attacker.activeHitbox();
           if (!hitbox || attacker.attackConnected || defender.invulnerability > 0 || !rectanglesOverlap(hitbox, defender.hurtbox)) return;
           attacker.attackConnected = true;
           const type = attacker.currentAttack();
-          this.damageFighter(attacker, defender, attackData[type], defender.x, defender.y - 105);
+          return () => this.damageFighter(attacker, defender, attackData[type], defender.x, defender.y - 105);
         }
 
         spawnProjectile(owner, kind = "spiritGun") {
@@ -3029,7 +3094,8 @@
         }
 
         damageFighter(attacker, defender, attack, impactX, impactY) {
-          const blocked = defender.state === "block";
+          const hitDirection = attack.facing || attacker.facing;
+          const blocked = defender.state === "block" && defender.grounded && defender.facing === -hitDirection;
           const instinct = !attacker.cpu ? activeCharacterDefinition.passives?.fightingInstinct : null;
           const instinctBoost = instinct && attacker.health <= instinct.healthThreshold ? instinct.damageBoost : 1;
           const damage = attack.damage * instinctBoost * (blocked ? .25 : 1);
@@ -3097,8 +3163,12 @@
 
         finishRound() {
           if (this.state !== "play") return;
-          if (this.player.health === this.cpu.health) this.winner = null;
-          else this.winner = this.player.health > this.cpu.health ? this.player : this.cpu;
+          const playerLife = this.player.health / this.player.maxHealth;
+          const cpuLife = this.cpu.health / this.cpu.maxHealth;
+          if (Math.abs(playerLife - cpuLife) < 1e-9) this.winner = null;
+          else this.winner = playerLife > cpuLife ? this.player : this.cpu;
+          if (this.winner) this.roundWins[this.winner === this.player ? 0 : 1] += 1;
+          this.updateHud();
           this.state = "ending";
           this.endingTime = 1.15;
           roundBannerText.textContent = this.timer <= 0 ? "Time!" : "K.O.!";
@@ -3117,7 +3187,7 @@
           } else if (this.winner === this.cpu) {
             battleResultKicker.textContent = "Mission Failed";
             battleResultTitle.textContent = "Defeat";
-            battleResultMessage.textContent = "The Demon Scout won this round. Adjust your spacing, block, and try again.";
+            battleResultMessage.textContent = "The Demon Scout won the match. Adjust your spacing, block, and try again.";
           } else {
             battleResultKicker.textContent = "Round Complete";
             battleResultTitle.textContent = "Draw";
@@ -3128,8 +3198,9 @@
         }
 
         updateHud() {
-          playerHealth.style.width = `${Math.max(0, this.player.health)}%`;
-          cpuHealth.style.width = `${Math.max(0, this.cpu.health)}%`;
+          document.querySelector("#match-score").textContent = `Rounds ${this.roundWins[0]} – ${this.roundWins[1]} · First to 2`;
+          playerHealth.style.width = `${Math.max(0, this.player.health / this.player.maxHealth * 100)}%`;
+          cpuHealth.style.width = `${Math.max(0, this.cpu.health / this.cpu.maxHealth * 100)}%`;
           playerEnergy.style.width = `${Math.max(0, this.player.energy)}%`;
           cpuEnergy.style.width = `${Math.max(0, this.cpu.energy)}%`;
           roundTimer.textContent = String(Math.max(0, Math.ceil(this.timer))).padStart(2, "0");
@@ -3509,6 +3580,11 @@
         if (modalOpen || fighterConfirmOpen) return;
 
         if (activeScreen === "fight") {
+          if (event.code === "KeyP" && !event.repeat) {
+            event.preventDefault();
+            arcadeGame?.setPaused(!arcadeGame.paused);
+            return;
+          }
           if (["Escape", "Backspace", "b", "B"].includes(event.key)) {
             event.preventDefault();
             playTone(145);

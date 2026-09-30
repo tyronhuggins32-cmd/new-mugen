@@ -1,5 +1,5 @@
 {
-  "formatVersion": 1,
+  "formatVersion": 3,
   "id": "yusuke_urameshi",
   "displayName": "Yusuke Urameshi",
   "shortName": "Yusuke",
@@ -8,51 +8,734 @@
   "status": "selectable",
   "profile": {
     "title": "Spirit Detective",
-    "archetype": "Rushdown / Zoner",
-    "description": "A fearless close-range brawler who controls space with concentrated spirit energy.",
-    "portrait": "assets/characters/yusuke/portrait.webp"
+    "archetype": "Instinctive Brawler / Spirit Artillery",
+    "description": "Dark Tournament Yusuke fights like a fearless street brawler: sharp punches and kicks build spirit energy, then Spirit Gun punishes retreats and Spirit Shotgun catches evasive opponents."
   },
   "engineStats": {
-    "life": 10000,
-    "attack": 105,
+    "life": 1000,
+    "attack": 107,
     "defense": 100,
-    "walkSpeed": 4.6,
-    "backWalkSpeed": 3.7,
-    "jumpVelocity": -13.2
+    "walkSpeed": 5.3,
+    "backWalkSpeed": 4.4,
+    "jumpVelocity": -14
   },
   "selectStats": {
-    "power": 84,
-    "speed": 76,
-    "range": 88,
-    "defense": 72
+    "power": 90,
+    "speed": 88,
+    "range": 91,
+    "defense": 76
+  },
+  "spriteSheet": {
+    "src": "characters/yusuke/sprites.png",
+    "width": 1536,
+    "height": 1024,
+    "scale": 1.1,
+    "frames": [
+      {
+        "x": 69,
+        "y": 32,
+        "w": 136,
+        "h": 197,
+        "ax": 68
+      },
+      {
+        "x": 322,
+        "y": 30,
+        "w": 135,
+        "h": 199,
+        "ax": 68
+      },
+      {
+        "x": 578,
+        "y": 31,
+        "w": 133,
+        "h": 198,
+        "ax": 66
+      },
+      {
+        "x": 821,
+        "y": 34,
+        "w": 134,
+        "h": 195,
+        "ax": 67
+      },
+      {
+        "x": 1069,
+        "y": 86,
+        "w": 113,
+        "h": 142,
+        "ax": 57
+      },
+      {
+        "x": 1313,
+        "y": 92,
+        "w": 118,
+        "h": 136,
+        "ax": 59
+      },
+      {
+        "x": 56,
+        "y": 288,
+        "w": 146,
+        "h": 178,
+        "ax": 73
+      },
+      {
+        "x": 295,
+        "y": 278,
+        "w": 172,
+        "h": 185,
+        "ax": 86
+      },
+      {
+        "x": 549,
+        "y": 283,
+        "w": 150,
+        "h": 182,
+        "ax": 75
+      },
+      {
+        "x": 813,
+        "y": 285,
+        "w": 141,
+        "h": 176,
+        "ax": 70
+      },
+      {
+        "x": 1069,
+        "y": 282,
+        "w": 107,
+        "h": 180,
+        "ax": 54
+      },
+      {
+        "x": 1305,
+        "y": 283,
+        "w": 141,
+        "h": 179,
+        "ax": 70
+      },
+      {
+        "x": 39,
+        "y": 506,
+        "w": 187,
+        "h": 182,
+        "ax": 65
+      },
+      {
+        "x": 296,
+        "y": 515,
+        "w": 183,
+        "h": 173,
+        "ax": 70
+      },
+      {
+        "x": 557,
+        "y": 502,
+        "w": 152,
+        "h": 186,
+        "ax": 70
+      },
+      {
+        "x": 824,
+        "y": 478,
+        "w": 146,
+        "h": 221,
+        "ax": 72
+      },
+      {
+        "x": 1052,
+        "y": 522,
+        "w": 178,
+        "h": 163,
+        "ax": 67
+      },
+      {
+        "x": 1296,
+        "y": 498,
+        "w": 154,
+        "h": 190,
+        "ax": 58
+      },
+      {
+        "x": 68,
+        "y": 734,
+        "w": 109,
+        "h": 171,
+        "ax": 55
+      },
+      {
+        "x": 321,
+        "y": 715,
+        "w": 113,
+        "h": 149,
+        "ax": 56
+      },
+      {
+        "x": 531,
+        "y": 746,
+        "w": 217,
+        "h": 122,
+        "ax": 70
+      },
+      {
+        "x": 799,
+        "y": 762,
+        "w": 167,
+        "h": 193,
+        "ax": 78
+      },
+      {
+        "x": 1008,
+        "y": 773,
+        "w": 199,
+        "h": 185,
+        "ax": 72
+      },
+      {
+        "x": 1257,
+        "y": 773,
+        "w": 254,
+        "h": 185,
+        "ax": 70
+      }
+    ],
+    "animations": {
+      "idle": {
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          2,
+          1
+        ],
+        "fps": 13,
+        "loop": true
+      },
+      "guard": {
+        "frames": [
+          4,
+          5
+        ],
+        "fps": 16,
+        "loop": true
+      },
+      "run": {
+        "frames": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "fps": 22,
+        "loop": true
+      },
+      "jumpRise": {
+        "frames": [
+          18,
+          19
+        ],
+        "fps": 18,
+        "loop": false
+      },
+      "jumpFall": {
+        "frames": [
+          19,
+          18
+        ],
+        "fps": 18,
+        "loop": false
+      },
+      "hit": {
+        "keyframes": [
+          {
+            "frame": 21,
+            "at": 0
+          },
+          {
+            "frame": 10,
+            "at": 0.28
+          },
+          {
+            "frame": 11,
+            "at": 0.68
+          }
+        ]
+      },
+      "light": {
+        "keyframes": [
+          {
+            "frame": 12,
+            "at": 0
+          },
+          {
+            "frame": 13,
+            "at": 0.2
+          },
+          {
+            "frame": 12,
+            "at": 0.7
+          }
+        ]
+      },
+      "heavyUppercut": {
+        "keyframes": [
+          {
+            "frame": 14,
+            "at": 0
+          },
+          {
+            "frame": 15,
+            "at": 0.26
+          },
+          {
+            "frame": 14,
+            "at": 0.76
+          }
+        ]
+      },
+      "heavyKick": {
+        "keyframes": [
+          {
+            "frame": 16,
+            "at": 0
+          },
+          {
+            "frame": 17,
+            "at": 0.27
+          },
+          {
+            "frame": 16,
+            "at": 0.78
+          }
+        ]
+      },
+      "airKick": {
+        "keyframes": [
+          {
+            "frame": 18,
+            "at": 0
+          },
+          {
+            "frame": 20,
+            "at": 0.2
+          },
+          {
+            "frame": 18,
+            "at": 0.76
+          }
+        ]
+      },
+      "spiritGun": {
+        "keyframes": [
+          {
+            "frame": 22,
+            "at": 0
+          },
+          {
+            "frame": 23,
+            "at": 0.3
+          },
+          {
+            "frame": 22,
+            "at": 0.82
+          }
+        ]
+      }
+    }
+  },
+  "effectSheets": {
+    "spiritGun": {
+      "src": "characters/yusuke/spirit-gun-sprites.png",
+      "width": 1536,
+      "height": 1024,
+      "travelFrame": 2,
+      "frames": [
+        {
+          "x": 412,
+          "y": 542,
+          "w": 72,
+          "h": 112
+        },
+        {
+          "x": 668,
+          "y": 558,
+          "w": 38,
+          "h": 58
+        },
+        {
+          "x": 885,
+          "y": 556,
+          "w": 86,
+          "h": 58
+        },
+        {
+          "x": 1098,
+          "y": 545,
+          "w": 138,
+          "h": 76
+        },
+        {
+          "x": 1368,
+          "y": 532,
+          "w": 168,
+          "h": 98
+        }
+      ],
+      "fighterScale": 1.1,
+      "fighterFrames": [
+        {
+          "x": 69,
+          "y": 42,
+          "w": 131,
+          "h": 193,
+          "ax": 65
+        },
+        {
+          "x": 315,
+          "y": 44,
+          "w": 133,
+          "h": 191,
+          "ax": 67
+        },
+        {
+          "x": 581,
+          "y": 44,
+          "w": 129,
+          "h": 191,
+          "ax": 65
+        },
+        {
+          "x": 822,
+          "y": 43,
+          "w": 143,
+          "h": 192,
+          "ax": 72
+        },
+        {
+          "x": 1061,
+          "y": 52,
+          "w": 153,
+          "h": 184,
+          "ax": 77
+        },
+        {
+          "x": 1289,
+          "y": 57,
+          "w": 164,
+          "h": 181,
+          "ax": 82
+        },
+        {
+          "x": 45,
+          "y": 293,
+          "w": 162,
+          "h": 181,
+          "ax": 80
+        },
+        {
+          "x": 280,
+          "y": 295,
+          "w": 163,
+          "h": 181,
+          "ax": 80
+        },
+        {
+          "x": 546,
+          "y": 296,
+          "w": 176,
+          "h": 180,
+          "ax": 81
+        },
+        {
+          "x": 780,
+          "y": 296,
+          "w": 181,
+          "h": 180,
+          "ax": 82
+        },
+        {
+          "x": 1012,
+          "y": 295,
+          "w": 182,
+          "h": 181,
+          "ax": 82
+        },
+        {
+          "x": 1249,
+          "y": 291,
+          "w": 182,
+          "h": 185,
+          "ax": 82
+        },
+        {
+          "x": 259,
+          "y": 769,
+          "w": 179,
+          "h": 174,
+          "ax": 100
+        },
+        {
+          "x": 497,
+          "y": 772,
+          "w": 163,
+          "h": 173,
+          "ax": 95
+        },
+        {
+          "x": 757,
+          "y": 778,
+          "w": 128,
+          "h": 182,
+          "ax": 68
+        },
+        {
+          "x": 1002,
+          "y": 775,
+          "w": 130,
+          "h": 188,
+          "ax": 68
+        },
+        {
+          "x": 1238,
+          "y": 776,
+          "w": 130,
+          "h": 188,
+          "ax": 69
+        }
+      ],
+      "fighterAnimation": {
+        "keyframes": [
+          {
+            "frame": 0,
+            "at": 0
+          },
+          {
+            "frame": 1,
+            "at": 0.08
+          },
+          {
+            "frame": 2,
+            "at": 0.16
+          },
+          {
+            "frame": 3,
+            "at": 0.24
+          },
+          {
+            "frame": 4,
+            "at": 0.32
+          },
+          {
+            "frame": 5,
+            "at": 0.4
+          },
+          {
+            "frame": 7,
+            "at": 0.49
+          },
+          {
+            "frame": 9,
+            "at": 0.58
+          },
+          {
+            "frame": 11,
+            "at": 0.66
+          },
+          {
+            "frame": 12,
+            "at": 0.74
+          },
+          {
+            "frame": 13,
+            "at": 0.82
+          },
+          {
+            "frame": 14,
+            "at": 0.89
+          },
+          {
+            "frame": 15,
+            "at": 0.95
+          },
+          {
+            "frame": 16,
+            "at": 0.985
+          }
+        ]
+      }
+    }
+  },
+  "combat": {
+    "maxHealth": 100,
+    "startEnergy": 64,
+    "energyRegen": 6.5,
+    "body": {
+      "width": 84,
+      "height": 194
+    },
+    "movement": {
+      "groundSpeed": 470,
+      "airSpeed": 330,
+      "jumpVelocity": -900,
+      "gravity": 2350,
+      "groundFriction": 18,
+      "airFriction": 1.35,
+      "attackFriction": 18,
+      "turnDuration": 0.085
+    },
+    "input": {
+      "attackBuffer": 0.16
+    },
+    "attacks": {
+      "light": {
+        "duration": 0.19,
+        "activeStart": 0.038,
+        "activeEnd": 0.102,
+        "damage": 6.5,
+        "range": 101,
+        "height": 84,
+        "knockback": 250,
+        "hitstun": 0.17,
+        "energyGain": 9,
+        "animation": "light",
+        "airAnimation": "airKick"
+      },
+      "heavy": {
+        "duration": 0.325,
+        "activeStart": 0.085,
+        "activeEnd": 0.198,
+        "damage": 15,
+        "range": 132,
+        "height": 116,
+        "knockback": 485,
+        "hitstun": 0.34,
+        "energyGain": 14,
+        "spiritCoated": true,
+        "animations": [
+          "heavyUppercut",
+          "heavyKick"
+        ],
+        "airAnimation": "airKick"
+      },
+      "gun": {
+        "duration": 0.46,
+        "spawnTime": 0.225,
+        "cost": 26,
+        "projectile": "spiritGun",
+        "animation": "spiritGun"
+      },
+      "shotgun": {
+        "duration": 0.5,
+        "spawnTime": 0.235,
+        "cost": 30,
+        "projectile": "spiritShotgun",
+        "animation": "spiritGun"
+      }
+    },
+    "projectile": {
+      "player": {
+        "speed": 1120,
+        "radius": 16,
+        "damage": 17,
+        "knockback": 475,
+        "hitstun": 0.35,
+        "life": 1.45,
+        "energyGain": 4
+      },
+      "cpu": {
+        "speed": 720,
+        "radius": 17,
+        "damage": 12,
+        "knockback": 315,
+        "hitstun": 0.32,
+        "life": 1.9,
+        "energyGain": 5
+      },
+      "shotgun": {
+        "pellets": 5,
+        "speed": 820,
+        "radius": 8,
+        "damage": 13,
+        "knockback": 360,
+        "hitstun": 0.28,
+        "life": 0.8,
+        "energyGain": 4,
+        "spread": 0.16
+      }
+    },
+    "projectileVfx": {
+      "travelFrame": 2,
+      "spriteScale": 0.5,
+      "trailLength": 58,
+      "trailWidth": 11,
+      "trailGap": 13,
+      "afterimages": 3,
+      "afterimageGap": 21,
+      "muzzleOffsetX": 84,
+      "muzzleOffsetY": -108,
+      "releaseGap": 34,
+      "muzzleScale": 0.42,
+      "impactScale": 1.2,
+      "pulseRate": 0.021
+    },
+    "effects": {
+      "hitAnimationDuration": 0.3,
+      "hitStop": {
+        "block": 0.025,
+        "light": 0.045,
+        "heavy": 0.075
+      },
+      "shake": {
+        "block": 3,
+        "light": 6,
+        "heavy": 12
+      }
+    }
+  },
+  "passives": {
+    "fightingInstinct": {
+      "healthThreshold": 30,
+      "damageBoost": 1.1,
+      "energyRegenBoost": 1.35,
+      "description": "When badly hurt, Yusuke's fighting instinct raises his damage and spirit recovery."
+    }
   },
   "moves": [
     {
-      "id": "rapid_strike",
-      "name": "Rapid Strike",
+      "id": "street_brawl_chain",
+      "name": "Street Brawl Chain",
       "input": "J",
       "type": "normal",
-      "description": "A quick close-range strike that builds spirit energy."
+      "description": "Fast, repeatable punches based on Yusuke's aggressive delinquent fighting style."
     },
     {
-      "id": "power_hook",
-      "name": "Power Hook",
+      "id": "spirit_punch",
+      "name": "Spirit Punch",
       "input": "K",
       "type": "normal",
-      "description": "A slower heavy blow with more damage and knockback."
+      "description": "Alternates a spirit-coated uppercut and power kick for heavy knockback."
     },
     {
       "id": "spirit_gun",
       "name": "Spirit Gun",
       "input": "L",
       "type": "special",
-      "description": "Spends spirit meter to fire a fast long-range projectile."
+      "description": "Concentrates spirit energy in Yusuke's index finger, then releases a fast, compact energy bullet with a separate impact burst."
+    },
+    {
+      "id": "spirit_shotgun",
+      "name": "Spirit Shotgun",
+      "input": "S + L",
+      "type": "special",
+      "description": "Releases a wide fan of weaker spirit shots to catch jumps and evasive movement."
     }
   ],
   "ai": {
     "style": "aggressive_adaptive",
     "preferredRange": "mid",
     "pressure": 0.78,
-    "projectileUse": 0.50
+    "projectileUse": 0.62
   }
 }
