@@ -12,7 +12,7 @@ const assert = require('node:assert/strict');
  await page.goto('http://127.0.0.1:8000/');
  await page.locator('[data-mode="arcade"]').click();
  await page.locator('#choose-character').click();
- await page.locator('#start-battle').click();
+ 
  await page.waitForFunction(()=>window.testEngine.game.state==='play');
  const checks=await page.evaluate(()=>{
   const {game:g,arena,pressFightControl,releaseFightControl,humanInput,clearFightInput}=testEngine;
@@ -55,7 +55,7 @@ const assert = require('node:assert/strict');
  assert.ok(await page.evaluate(()=>testEngine.game.player.energy<70));
  await page.screenshot({path:'/tmp/mugen-fight.png'});
  await page.locator('#battle-back').click();
- await page.locator('#choose-character').click();await page.locator('#start-battle').click();
+ await page.locator('#choose-character').click();
  await page.waitForFunction(()=>testEngine.game.state==='play');
  assert.equal(errors.length,0,errors.join('\n'));
  await page.setViewportSize({width:390,height:844});

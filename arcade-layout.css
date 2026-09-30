@@ -1,0 +1,76 @@
+/* Mobile-first arcade shell. The page owns scrolling, not nested panels. */
+html { overflow-y: auto; scroll-padding-top: 20px; }
+body { overflow-x: hidden; overflow-y: auto; background: #071324; }
+.frame { min-height: 100svh; height: auto; grid-template-rows: auto auto auto; gap: 18px; }
+body::before { pointer-events: none; }
+.screen { grid-template-columns: 1fr; gap: 0; max-width: 720px; text-align: center; padding: 34px 0; }
+.screen > section { position: relative; padding: 32px 22px; border-block: 2px solid #5885ad; background: linear-gradient(110deg,#081729ee,#123350e8,#081729ee); box-shadow: 0 12px 70px #0008; }
+.screen .showcase { display: none; }
+h1 { font-family: Impact,'Arial Black',sans-serif; font-size: clamp(66px,13vw,120px); line-height: .95; font-style: italic; letter-spacing: -.035em; text-shadow: 3px 4px #000,0 0 30px #6bd7ff55; }
+h1 span { color: #f6cc57; }
+.eyebrow { color: #a3d8ff; font-size: 10px; letter-spacing: .3em; }
+.tagline { margin: 20px 0; }
+.menu { width: min(420px,100%); margin-inline: auto; }
+.menu-item { min-height: 56px; transform: none; border: 1px solid #406285; margin: 7px 0; background: #081321; text-align: left; }
+.menu-item.active { background: linear-gradient(90deg,#134b79,#09253d); border-color: #f6cc57; box-shadow: inset 4px 0 #f6cc57; }
+.menu-item .label { font-family: Impact,'Arial Black',sans-serif; font-size: 26px; letter-spacing: .06em; }
+.menu-item .num { color: #90b4d1; }
+.arcade-screen { overflow: visible; padding: 12px 0 32px; }
+.arcade-heading { border-block: 2px solid #688ead; padding: 14px 0; align-items: center; }
+.arcade-heading h2 { font-size: clamp(28px,4vw,52px); white-space: normal; }
+.arcade-kicker { color: #f6cc57; }
+.select-playbar { position: sticky; top: 0; z-index: 23; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px; margin-bottom: 14px; background: #08182bf5; border: 1px solid #688ead; box-shadow: 0 6px 20px #0007; }
+.select-playbar p { margin: 0; color: #c9dff0; font-size: 12px; }
+body[data-screen="arcade"] .select-playbar .choose-button { position: static; width: auto; min-width: 170px; min-height: 52px; margin: 0; transform: none; box-shadow: none; color: #101827; background: #f6cc57; }
+.select-layout { grid-template-columns: minmax(210px,1fr) minmax(280px,1.35fr) minmax(250px,1fr); height: auto; min-height: 0; align-items: start; gap: 12px; }
+.character-stage { grid-column: 1; grid-row: 1; height: 460px; min-height: 0; border: 2px solid #6ab7e7; background: linear-gradient(#123654,#050a17); }
+.roster-panel { grid-column: 2; grid-row: 1; padding: 12px; border: 2px solid #6b8eae; background: #0a182a; }
+.roster-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 5px; }
+.roster-card { aspect-ratio: 1; border-radius: 0; border: 2px solid #39516b; }
+.roster-card.selected { border-color: #ffdc63; box-shadow: 0 0 12px #ffd55866; }
+.roster-card.locked:nth-child(n) { display: block; background: linear-gradient(135deg,#203b55,#0a1628); }
+.roster-card.locked span { font-size: 9px; color: #7896b0; text-align: center; }
+.character-details { grid-column: 3; grid-row: 1; overflow: visible; padding: 18px; background: #091728; border: 2px solid #a35369; }
+.character-details h3 { font-size: 28px; }
+.select-status { display: block; }
+.modal-backdrop { overflow-y: auto; align-items: start; padding: max(16px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom)); }
+.modal,.ready-card { max-height: calc(100dvh - 40px); overflow-y: auto; margin: auto; flex-shrink: 0; }
+.ready-actions { position: sticky; bottom: 0; padding-block: 10px; background: #100b18; }
+.close-button,.back-button { min-height: 44px; }
+.battle-top-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+#match-score { font-size: 10px; color: #fff; }
+@media(max-width:840px) {
+ .frame { padding: 16px 12px max(24px,env(safe-area-inset-bottom)); }
+ .screen { padding: 8px 0 20px; }
+ .screen > section { padding: 26px 14px; }
+ .screen h1 { font-size: clamp(64px,19vw,100px); }
+ .arcade-screen { overflow: visible; padding-bottom: 24px; }
+ .arcade-heading { display: flex; flex-wrap: wrap; gap: 12px; }
+ .arcade-heading-copy { width: auto; flex: 1; }
+ .arcade-heading h2 { font-size: 30px; }
+ .arcade-kicker { padding-right: 0; }
+ .back-button { position: static; font-size: 9px; }
+ .select-playbar { gap: 8px; padding: 8px; }
+ .select-playbar p { font-size: 11px; }
+ body[data-screen="arcade"] .select-playbar .choose-button { min-width: 142px; font-size: 12px; }
+ .select-layout { grid-template-columns: minmax(0,.85fr) minmax(0,1.15fr); }
+ .character-stage { grid-column: 1; grid-row: 1; height: 280px; order: initial; }
+ .character-identity { inset: auto 8px 12px; }
+ .character-identity h3 { font-size: 29px; }
+ .character-identity p,.player-tag { font-size: 8px; }
+ .roster-panel { grid-column: 2; grid-row: 1; padding: 7px; order: initial; }
+ .panel-label { font-size: 8px; }
+ .roster-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; }
+ .roster-card span { font-size: 7px; padding: 12px 2px 3px; }
+ .character-details { grid-column: 1 / -1; grid-row: 2; order: initial; }
+ .move-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
+ .footer { flex-wrap: wrap; }
+ .ready-actions { grid-template-columns: 1fr; }
+ .ready-card { padding: 20px; }
+}
+@media(max-height:500px) and (orientation:landscape) {
+ .screen { padding: 0; }
+ .screen > section { padding: 16px; }
+ .screen h1 { font-size: 60px; }
+ .modal,.ready-card { max-height: calc(100dvh - 32px); }
+}

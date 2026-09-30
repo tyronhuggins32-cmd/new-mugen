@@ -1501,6 +1501,7 @@
       #fx { display: none; }
     }
   </style>
+  <link rel="stylesheet" href="arcade-layout.css?v=10">
 </head>
 <body>
   <canvas id="fx" aria-hidden="true"></canvas>
@@ -1523,7 +1524,7 @@
 
         <nav class="menu" aria-label="Main menu">
           <button class="menu-item active" type="button" data-mode="arcade">
-            <span class="num">01</span><span class="label">Arcade</span><span class="arrow">›</span>
+            <span class="num">01</span><span class="label">Play Arcade</span><span class="arrow">›</span>
           </button>
           <button class="menu-item" type="button" data-mode="versus">
             <span class="num">02</span><span class="label">Versus</span><span class="arrow">›</span>
@@ -1555,7 +1556,7 @@
       <header class="arcade-heading">
         <div class="arcade-heading-copy">
           <p class="arcade-kicker">Arcade Route // Match 01</p>
-          <h2>Choose Your Fighter</h2>
+          <h2>Select Your Character</h2>
         </div>
         <div class="arcade-badges" aria-label="Match settings">
           <span class="arcade-badge">CPU: Normal</span>
@@ -1565,21 +1566,22 @@
         <button class="back-button" id="arcade-back" type="button"><span>‹</span> Main Menu</button>
       </header>
 
+      <div class="select-playbar"><p>PLAYER 1 · YUSUKE<br>First to 2 rounds · vs CPU</p><button class="choose-button" id="choose-character" type="button">Play as Yusuke</button></div>
       <div class="select-layout">
         <section class="roster-panel" aria-label="Playable fighter roster">
-          <p class="panel-label"><span>Fighter roster</span><strong>01 / 12</strong></p>
+          <p class="panel-label"><span>Fighter roster</span><strong>1 READY</strong></p>
           <div class="roster-grid">
             <button class="roster-card selected" type="button" data-character="yusuke_urameshi" aria-current="true" aria-label="Select Yusuke Urameshi">
               <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="Yusuke Urameshi aiming his Spirit Gun">
               <span>Yusuke</span>
             </button>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>Incoming</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
+            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
           </div>
           <div class="select-status">
             <div class="select-status-row"><span>Playable</span><strong>1 Fighter</strong></div>
@@ -1627,7 +1629,7 @@
             <em>CPU</em>
           </div>
 
-          <button class="choose-button" id="choose-character" type="button">Lock In Yusuke</button>
+
         </aside>
       </div>
     </main>
@@ -1906,6 +1908,7 @@
         fightControls.hidden = true;
         screenStatus.textContent = "Arcade // Select";
         document.body.dataset.screen = "arcade";
+        window.scrollTo(0, 0);
         rosterChoice.focus({ preventScroll: true });
       }
 
@@ -1920,6 +1923,7 @@
         menuControls.hidden = false;
         screenStatus.textContent = "Menu Online";
         delete document.body.dataset.screen;
+        window.scrollTo(0, 0);
         items[selectedIndex].focus({ preventScroll: true });
       }
 
@@ -1972,7 +1976,7 @@
         characterFullName.textContent = character.displayName;
         characterArchetype.textContent = profile.archetype;
         characterDescription.textContent = profile.description;
-        chooseCharacter.textContent = `Lock In ${character.shortName}`;
+        chooseCharacter.textContent = `Play as ${character.shortName}`;
 
         characterStats.replaceChildren();
         Object.entries(selectStats).forEach(([label, value]) => {
@@ -3525,6 +3529,7 @@
         fightControls.hidden = false;
         screenStatus.textContent = "Arcade // Match 01";
         document.body.dataset.screen = "fight";
+        window.scrollTo(0, 0);
         if (!arcadeGame) arcadeGame = new ArcadeFight(fightContext);
         else arcadeGame.reset();
         arcadeGame.start();
@@ -3628,7 +3633,7 @@
         playTone(300);
         chooseCharacter.focus();
       });
-      chooseCharacter.addEventListener("click", lockInFighter);
+      chooseCharacter.addEventListener("click", beginFight);
       returnRoster.addEventListener("click", closeFighterConfirm);
       startBattleButton.addEventListener("click", beginFight);
       battleBack.addEventListener("click", exitFightToSelect);
