@@ -27,7 +27,7 @@ vm.runInContext(`
  g.state='play';g.cpu.health=0;g.finishRound();g.update(2);assert.equal(g.state,'finished');assert.equal(g.roundWins[0],2);
  g.reset();assert.equal(g.roundNumber,1);assert.ok(g.roundWins.every(x=>x===0));
  g.state='play';g.timer=0;g.finishRound();g.update(2);assert.equal(g.roundNumber,2);assert.ok(g.roundWins.every(x=>x===0));
- g.reset();g.player.setState('block');g.player.facing=1;g.damageFighter(g.cpu,g.player,{damage:10,facing:1,hitstun:.2,knockback:10},0,0);assert.equal(g.player.health,990);
+ g.reset();g.player.setState('block');g.player.facing=1;g.damageFighter(g.cpu,g.player,{damage:10,facing:1,hitstun:.2,knockback:10},0,0);assert.equal(g.player.health,989);
  g.reset();g.player.setState('block');g.player.facing=1;g.damageFighter(g.cpu,g.player,{damage:10,facing:-1,hitstun:.2,knockback:10},0,0);assert.equal(g.player.health,997.5);
  g.reset();g.state='play';g.player.beginAttack('gun');for(let i=0;i<30;i++)g.player.update(1/60,neutral,g.cpu,g);assert.equal(g.projectiles.length,1);
  g.reset();g.player.x=500;g.cpu.x=580;g.player.beginAttack('light');g.cpu.beginAttack('light');g.player.stateTime=g.cpu.stateTime=config.combat.attacks.light.activeStart;const contacts=[g.prepareMelee(g.player,g.cpu),g.prepareMelee(g.cpu,g.player)];assert.ok(contacts.every(Boolean));contacts.forEach(hit=>hit());assert.ok(g.player.health<1000 && g.cpu.health<1000);
@@ -36,5 +36,12 @@ vm.runInContext(`
  // Simulate render cadences without scheduling; each must advance one second of gameplay.
  for(const hz of [30,60,120,144]){g.reset();g.state='play';g.controller.update=()=>neutral;g.running=true;g.lastFrame=0;for(let i=1;i<=hz;i++)g.loop(i*1000/hz);assert.ok(Math.abs(g.timer-179)<.018,'fixed tick at '+hz);g.stop();}
  g.reset();const sequence=[];for(let i=0;i<4;i++){g.player.beginAttack('light');sequence.push(g.player.currentAttack());}assert.equal(sequence.join(','),'light,cross,body,upper');g.player.punchWindow=0;g.player.beginAttack('light');assert.equal(g.player.currentAttack(),'light');assert.equal(g.player.maxHealth,1000);assert.equal(g.cpu.maxHealth,1000);
+ g.reset();for(let i=0;i<3;i++)g.player.beginAttack('light');g.player.beginAttack('gun');assert.equal(g.player.currentAttack(),'shotgun');assert.equal(g.player.punchStep,0);
+ g.reset();g.player.beginAttack('gun');assert.equal(g.player.currentAttack(),'gun');
+ g.reset();for(let i=0;i<10;i++)g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,10);assert.equal(g.cpu.health,845);
+ g.player.update(2.1,neutral,g.cpu,g);assert.equal(g.player.comboHits,0);
+ g.reset();g.cpu.setState('block');g.cpu.facing=-1;g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);assert.equal(g.cpu.health,997.5);
+ g.reset();g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);g.damageFighter(g.cpu,g.player,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);
+ g.reset();for(let n=0;n<3;n++){g.player.beginAttack('light');for(let t=0;t<25;t++)g.player.update(1/60,neutral,g.cpu,g);}g.player.beginAttack('gun');assert.equal(g.player.currentAttack(),'shotgun');for(let t=0;t<20;t++)g.player.update(1/60,neutral,g.cpu,g);assert.equal(g.projectiles.length,5);assert.ok(g.projectiles.every(p=>p.kind==='spiritShotgun'));
  console.log('PASS: syntax, retreat facing, input aliases, corner separation, jump-over, first-to-two, rematch, draw, directional guard, projectile, RAF lifecycle, pause, and 30/60/120/144 Hz timing.');
 `,context);

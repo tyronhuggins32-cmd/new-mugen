@@ -74,3 +74,10 @@ body[data-screen="arcade"] .select-playbar .choose-button { position: static; wi
  .screen h1 { font-size: 60px; }
  .modal,.ready-card { max-height: calc(100dvh - 32px); }
 }
+
+.combo-panel { position:absolute; z-index:3; left:24px; top:150px; width:240px; padding:8px 10px; background:#071425dc; border-left:3px solid #f6cc57; pointer-events:none; color:#f6cc57; font-size:14px; }
+.combo-track,.combo-time { height:5px; background:#ffffff22; margin-top:5px; }
+.combo-track span,.combo-time span { display:block; height:100%; width:0; background:#f6cc57; }
+.combo-time { height:2px; }.combo-time span { background:#74e7ff; }
+.combo-panel small { display:block; margin-top:5px; color:#d7efff; font-size:9px; }
+@media(max-width:840px) { .combo-panel { top:106px; left:9px; width:190px; font-size:11px; padding:5px; } .combo-panel small { font-size:8px; } }

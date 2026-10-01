@@ -24,7 +24,7 @@ A browser fighting-game prototype featuring Yusuke versus the CPU Demon Scout. R
 | Guard | S, Down, Shift, or hold away from an incoming threat |
 | Light / heavy | J / K |
 | Spirit Gun | L |
-| Spirit Shotgun | S + L |
+| Spirit Shotgun | J, J, J, then L |
 | Pause / resume | P or Pause button |
 | Character select | Esc or B |
 
@@ -47,3 +47,11 @@ This is a fan-made prototype. Yu Yu Hakusho and Yusuke Urameshi belong to their 
 Both fighters now have 1,000 HP. Selection ratings use a 1,000-point scale; spirit energy remains a separate 100-point resource. Rounds last up to 180 seconds. Damage rises only about threefold, giving roughly three times the previous durability.
 
 Repeated J taps (or the touch Brawl button) chain a 20-damage jab, 26-damage cross, 30-damage body blow, and 42-damage uppercut. They have distinct startup, recovery, reach, recoil, motion trails, and existing-frame animation sequences. A gap of 0.85 seconds between attack starts, taking a hit, or using another attack resets the chain. These reuse the existing sprite artwork; they are not new hand-drawn sprite sheets.
+
+## Spirit specials and combo meter
+
+The dedicated transparent `characters/yusuke/spirit-specials-v2.png` atlas contains four Spirit Gun and four fist-shotgun poses, loaded and rendered during combat. Three punches then Spirit Gun triggers Shotgun; the old block-plus-gun shortcut is removed. Buffered Spirit inputs can queue during the third punch.
+
+Each unblocked landed hit adds one to the combo and contributes that count as flat bonus damage to that hit: hit 10 adds 10 damage. The meter fills visually at ten hits; the number and bonus continue increasing beyond ten. A two-second gap without a landed hit, taking damage, or a new round resets the combo. Blocked hits do not increase or refresh it. Shotgun pellets count as one volley hit.
+
+Artwork was created with the built-in image generator using the original fighter sheet as reference: eight right-facing full-body poses, yellow shirt/navy pants, four finger-gun phases and four fist-shotgun phases, transparent 4-by-2 atlas.

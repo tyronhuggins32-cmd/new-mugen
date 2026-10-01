@@ -681,15 +681,15 @@
         "heavyImpact": true
       },
       "gun": {
-        "duration": 0.46,
-        "spawnTime": 0.225,
+        "duration": 0.6,
+        "spawnTime": 0.3,
         "cost": 26,
         "projectile": "spiritGun",
         "animation": "spiritGun"
       },
       "shotgun": {
-        "duration": 0.5,
-        "spawnTime": 0.235,
+        "duration": 0.64,
+        "spawnTime": 0.3,
         "cost": 30,
         "projectile": "spiritShotgun",
         "animation": "spiritGun"
@@ -780,7 +780,7 @@
       "afterimages": 3,
       "afterimageGap": 21,
       "muzzleOffsetX": 84,
-      "muzzleOffsetY": -108,
+      "muzzleOffsetY": -158,
       "releaseGap": 34,
       "muzzleScale": 0.42,
       "impactScale": 1.2,
@@ -834,9 +834,9 @@
     {
       "id": "spirit_shotgun",
       "name": "Spirit Shotgun",
-      "input": "S + L",
+      "input": "J \u2192 J \u2192 J \u2192 L",
       "type": "special",
-      "description": "Releases a wide fan of weaker spirit shots to catch jumps and evasive movement."
+      "description": "Three punches prime a fist-fired Spirit Shotgun. Press Spirit Gun before the punch chain expires."
     }
   ],
   "ai": {
@@ -844,5 +844,111 @@
     "preferredRange": "mid",
     "pressure": 0.78,
     "projectileUse": 0.62
+  },
+  "specialSpriteSheet": {
+    "src": "characters/yusuke/spirit-specials-v2.png",
+    "width": 1536,
+    "height": 1024,
+    "scale": 0.6,
+    "frames": [
+      {
+        "x": 0,
+        "y": 100,
+        "w": 384,
+        "h": 390,
+        "ax": 190
+      },
+      {
+        "x": 384,
+        "y": 100,
+        "w": 384,
+        "h": 390,
+        "ax": 190
+      },
+      {
+        "x": 768,
+        "y": 100,
+        "w": 384,
+        "h": 390,
+        "ax": 190
+      },
+      {
+        "x": 1152,
+        "y": 100,
+        "w": 384,
+        "h": 390,
+        "ax": 190
+      },
+      {
+        "x": 0,
+        "y": 552,
+        "w": 384,
+        "h": 378,
+        "ax": 190
+      },
+      {
+        "x": 384,
+        "y": 552,
+        "w": 384,
+        "h": 378,
+        "ax": 190
+      },
+      {
+        "x": 768,
+        "y": 552,
+        "w": 384,
+        "h": 378,
+        "ax": 190
+      },
+      {
+        "x": 1152,
+        "y": 552,
+        "w": 384,
+        "h": 378,
+        "ax": 190
+      }
+    ],
+    "animations": {
+      "gun": {
+        "keyframes": [
+          {
+            "frame": 0,
+            "at": 0
+          },
+          {
+            "frame": 1,
+            "at": 0.2
+          },
+          {
+            "frame": 2,
+            "at": 0.5
+          },
+          {
+            "frame": 3,
+            "at": 0.78
+          }
+        ]
+      },
+      "shotgun": {
+        "keyframes": [
+          {
+            "frame": 4,
+            "at": 0
+          },
+          {
+            "frame": 5,
+            "at": 0.2
+          },
+          {
+            "frame": 6,
+            "at": 0.47
+          },
+          {
+            "frame": 7,
+            "at": 0.8
+          }
+        ]
+      }
+    }
   }
 }

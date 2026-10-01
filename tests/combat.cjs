@@ -38,7 +38,7 @@ const assert = require('node:assert/strict');
   ok(g.roundNumber===2 && g.roundWins.every(x=>x===0),'draw replay');
   g.reset();g.player.setState('block');g.player.facing=1;
   g.damageFighter(g.cpu,g.player,{damage:10,facing:1,hitstun:.2,knockback:10},0,0);
-  ok(g.player.health===990,'rear guard bypass');
+  ok(g.player.health===989,'rear guard bypass');
   g.reset();g.player.setState('block');g.player.facing=1;
   g.damageFighter(g.cpu,g.player,{damage:10,facing:-1,hitstun:.2,knockback:10},0,0);
   ok(g.player.health===997.5,'front guard');

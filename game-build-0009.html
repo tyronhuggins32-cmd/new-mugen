@@ -1501,7 +1501,7 @@
       #fx { display: none; }
     }
   </style>
-  <link rel="stylesheet" href="arcade-layout.css?v=10">
+  <link rel="stylesheet" href="arcade-layout.css?v=13">
 </head>
 <body>
   <canvas id="fx" aria-hidden="true"></canvas>
@@ -1620,7 +1620,7 @@
             <li><span>Street Brawl Chain</span><span class="move-input">J</span></li>
             <li><span>Spirit Punch</span><span class="move-input">K</span></li>
             <li><span>Spirit Gun</span><span class="move-input">L</span></li>
-            <li><span>Spirit Shotgun</span><span class="move-input">S + L</span></li>
+            <li><span>Spirit Shotgun</span><span class="move-input">J ×3 → L</span></li>
           </ul>
 
           <div class="enemy-preview" aria-label="Next CPU opponent">
@@ -1658,6 +1658,7 @@
           <span id="match-score" aria-live="polite">Rounds 0 – 0 · First to 2</span>
         </div>
 
+        <div class="combo-panel"><strong id="combo-label">0 HITS · +0 DAMAGE</strong><div class="combo-track"><span id="combo-fill"></span></div><div class="combo-time"><span id="combo-window"></span></div><small id="shotgun-ready">SHOTGUN: PUNCH ×3 → SPIRIT</small></div>
         <div class="round-banner" id="round-banner" aria-hidden="true"><strong id="round-banner-text">Fight!</strong></div>
 
         <div class="touch-controls" aria-label="Touch fighting controls">
@@ -1665,7 +1666,7 @@
             <button class="touch-button" type="button" data-control="left" aria-label="Move left">◀</button>
             <button class="touch-button" type="button" data-control="right" aria-label="Move right">▶</button>
             <button class="touch-button" type="button" data-control="jump" aria-label="Jump">▲</button>
-            <button class="touch-button" type="button" data-control="block" aria-label="Block; hold with Spirit button for Spirit Shotgun">◆</button>
+            <button class="touch-button" type="button" data-control="block" aria-label="Block">◆</button>
           </div>
           <div class="touch-group actions">
             <button class="touch-button" type="button" data-control="light" aria-label="Light attack">J</button>
@@ -1699,7 +1700,7 @@
       </div>
       <div class="controls" id="fight-controls" hidden>
         <span><span class="key">A D / ← →</span> Move</span>
-        <span><span class="key">W</span> Jump · <span class="key">S</span> Block · <span class="key">J</span> Brawl · <span class="key">K</span> Spirit Punch · <span class="key">L</span> Spirit Gun · <span class="key">S+L</span> Shotgun</span>
+        <span><span class="key">W</span> Jump · <span class="key">S</span> Block · <span class="key">J</span> Brawl · <span class="key">K</span> Spirit Punch · <span class="key">L</span> Spirit Gun · <span class="key">J×3→L</span> Shotgun</span>
       </div>
       <div class="copyright">New Mugen // Prototype</div>
     </footer>
@@ -1772,9 +1773,10 @@
       const CHARACTER_CONFIG_URL = "characters/yusuke/yusuke.json";
       // Build 0009 keeps a known-good character definition inside the page.
       // A valid external v3+ JSON still overrides it, preserving modular updates.
-      const embeddedYusukeDefinition = JSON.parse(atob("eyJmb3JtYXRWZXJzaW9uIjogMywgImlkIjogInl1c3VrZV91cmFtZXNoaSIsICJkaXNwbGF5TmFtZSI6ICJZdXN1a2UgVXJhbWVzaGkiLCAic2hvcnROYW1lIjogIll1c3VrZSIsICJzZXJpZXMiOiAiWXUgWXUgSGFrdXNobyIsICJzbG90IjogMSwgInN0YXR1cyI6ICJzZWxlY3RhYmxlIiwgInByb2ZpbGUiOiB7InRpdGxlIjogIlNwaXJpdCBEZXRlY3RpdmUiLCAiYXJjaGV0eXBlIjogIkluc3RpbmN0aXZlIEJyYXdsZXIgLyBTcGlyaXQgQXJ0aWxsZXJ5IiwgImRlc2NyaXB0aW9uIjogIkRhcmsgVG91cm5hbWVudCBZdXN1a2UgZmlnaHRzIGxpa2UgYSBmZWFybGVzcyBzdHJlZXQgYnJhd2xlcjogc2hhcnAgcHVuY2hlcyBhbmQga2lja3MgYnVpbGQgc3Bpcml0IGVuZXJneSwgdGhlbiBTcGlyaXQgR3VuIHB1bmlzaGVzIHJldHJlYXRzIGFuZCBTcGlyaXQgU2hvdGd1biBjYXRjaGVzIGV2YXNpdmUgb3Bwb25lbnRzLiJ9LCAiZW5naW5lU3RhdHMiOiB7ImxpZmUiOiAxMDAwLCAiYXR0YWNrIjogMTA3LCAiZGVmZW5zZSI6IDEwMCwgIndhbGtTcGVlZCI6IDUuMywgImJhY2tXYWxrU3BlZWQiOiA0LjQsICJqdW1wVmVsb2NpdHkiOiAtMTR9LCAic2VsZWN0U3RhdHMiOiB7InBvd2VyIjogOTAwLCAic3BlZWQiOiA4ODAsICJyYW5nZSI6IDkxMCwgImRlZmVuc2UiOiA3NjB9LCAic3ByaXRlU2hlZXQiOiB7InNyYyI6ICJjaGFyYWN0ZXJzL3l1c3VrZS9zcHJpdGVzLnBuZyIsICJ3aWR0aCI6IDE1MzYsICJoZWlnaHQiOiAxMDI0LCAic2NhbGUiOiAxLjEsICJmcmFtZXMiOiBbeyJ4IjogNjksICJ5IjogMzIsICJ3IjogMTM2LCAiaCI6IDE5NywgImF4IjogNjh9LCB7IngiOiAzMjIsICJ5IjogMzAsICJ3IjogMTM1LCAiaCI6IDE5OSwgImF4IjogNjh9LCB7IngiOiA1NzgsICJ5IjogMzEsICJ3IjogMTMzLCAiaCI6IDE5OCwgImF4IjogNjZ9LCB7IngiOiA4MjEsICJ5IjogMzQsICJ3IjogMTM0LCAiaCI6IDE5NSwgImF4IjogNjd9LCB7IngiOiAxMDY5LCAieSI6IDg2LCAidyI6IDExMywgImgiOiAxNDIsICJheCI6IDU3fSwgeyJ4IjogMTMxMywgInkiOiA5MiwgInciOiAxMTgsICJoIjogMTM2LCAiYXgiOiA1OX0sIHsieCI6IDU2LCAieSI6IDI4OCwgInciOiAxNDYsICJoIjogMTc4LCAiYXgiOiA3M30sIHsieCI6IDI5NSwgInkiOiAyNzgsICJ3IjogMTcyLCAiaCI6IDE4NSwgImF4IjogODZ9LCB7IngiOiA1NDksICJ5IjogMjgzLCAidyI6IDE1MCwgImgiOiAxODIsICJheCI6IDc1fSwgeyJ4IjogODEzLCAieSI6IDI4NSwgInciOiAxNDEsICJoIjogMTc2LCAiYXgiOiA3MH0sIHsieCI6IDEwNjksICJ5IjogMjgyLCAidyI6IDEwNywgImgiOiAxODAsICJheCI6IDU0fSwgeyJ4IjogMTMwNSwgInkiOiAyODMsICJ3IjogMTQxLCAiaCI6IDE3OSwgImF4IjogNzB9LCB7IngiOiAzOSwgInkiOiA1MDYsICJ3IjogMTg3LCAiaCI6IDE4MiwgImF4IjogNjV9LCB7IngiOiAyOTYsICJ5IjogNTE1LCAidyI6IDE4MywgImgiOiAxNzMsICJheCI6IDcwfSwgeyJ4IjogNTU3LCAieSI6IDUwMiwgInciOiAxNTIsICJoIjogMTg2LCAiYXgiOiA3MH0sIHsieCI6IDgyNCwgInkiOiA0NzgsICJ3IjogMTQ2LCAiaCI6IDIyMSwgImF4IjogNzJ9LCB7IngiOiAxMDUyLCAieSI6IDUyMiwgInciOiAxNzgsICJoIjogMTYzLCAiYXgiOiA2N30sIHsieCI6IDEyOTYsICJ5IjogNDk4LCAidyI6IDE1NCwgImgiOiAxOTAsICJheCI6IDU4fSwgeyJ4IjogNjgsICJ5IjogNzM0LCAidyI6IDEwOSwgImgiOiAxNzEsICJheCI6IDU1fSwgeyJ4IjogMzIxLCAieSI6IDcxNSwgInciOiAxMTMsICJoIjogMTQ5LCAiYXgiOiA1Nn0sIHsieCI6IDUzMSwgInkiOiA3NDYsICJ3IjogMjE3LCAiaCI6IDEyMiwgImF4IjogNzB9LCB7IngiOiA3OTksICJ5IjogNzYyLCAidyI6IDE2NywgImgiOiAxOTMsICJheCI6IDc4fSwgeyJ4IjogMTAwOCwgInkiOiA3NzMsICJ3IjogMTk5LCAiaCI6IDE4NSwgImF4IjogNzJ9LCB7IngiOiAxMjU3LCAieSI6IDc3MywgInciOiAyNTQsICJoIjogMTg1LCAiYXgiOiA3MH1dLCAiYW5pbWF0aW9ucyI6IHsiaWRsZSI6IHsiZnJhbWVzIjogWzAsIDEsIDIsIDMsIDIsIDFdLCAiZnBzIjogMTMsICJsb29wIjogdHJ1ZX0sICJndWFyZCI6IHsiZnJhbWVzIjogWzQsIDVdLCAiZnBzIjogMTYsICJsb29wIjogdHJ1ZX0sICJydW4iOiB7ImZyYW1lcyI6IFs2LCA3LCA4LCA5XSwgImZwcyI6IDIyLCAibG9vcCI6IHRydWV9LCAianVtcFJpc2UiOiB7ImZyYW1lcyI6IFsxOCwgMTldLCAiZnBzIjogMTgsICJsb29wIjogZmFsc2V9LCAianVtcEZhbGwiOiB7ImZyYW1lcyI6IFsxOSwgMThdLCAiZnBzIjogMTgsICJsb29wIjogZmFsc2V9LCAiaGl0IjogeyJrZXlmcmFtZXMiOiBbeyJmcmFtZSI6IDIxLCAiYXQiOiAwfSwgeyJmcmFtZSI6IDEwLCAiYXQiOiAwLjI4fSwgeyJmcmFtZSI6IDExLCAiYXQiOiAwLjY4fV19LCAibGlnaHQiOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMTIsICJhdCI6IDB9LCB7ImZyYW1lIjogMTMsICJhdCI6IDAuMn0sIHsiZnJhbWUiOiAxMiwgImF0IjogMC43fV19LCAiaGVhdnlVcHBlcmN1dCI6IHsia2V5ZnJhbWVzIjogW3siZnJhbWUiOiAxNCwgImF0IjogMH0sIHsiZnJhbWUiOiAxNSwgImF0IjogMC4yNn0sIHsiZnJhbWUiOiAxNCwgImF0IjogMC43Nn1dfSwgImhlYXZ5S2ljayI6IHsia2V5ZnJhbWVzIjogW3siZnJhbWUiOiAxNiwgImF0IjogMH0sIHsiZnJhbWUiOiAxNywgImF0IjogMC4yN30sIHsiZnJhbWUiOiAxNiwgImF0IjogMC43OH1dfSwgImFpcktpY2siOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMTgsICJhdCI6IDB9LCB7ImZyYW1lIjogMjAsICJhdCI6IDAuMn0sIHsiZnJhbWUiOiAxOCwgImF0IjogMC43Nn1dfSwgInNwaXJpdEd1biI6IHsia2V5ZnJhbWVzIjogW3siZnJhbWUiOiAyMiwgImF0IjogMH0sIHsiZnJhbWUiOiAyMywgImF0IjogMC4zfSwgeyJmcmFtZSI6IDIyLCAiYXQiOiAwLjgyfV19LCAiY3Jvc3MiOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMTIsICJhdCI6IDB9LCB7ImZyYW1lIjogMTMsICJhdCI6IDAuMn0sIHsiZnJhbWUiOiAxMywgImF0IjogMC40NX0sIHsiZnJhbWUiOiAxMiwgImF0IjogMC44fV19LCAiYm9keSI6IHsia2V5ZnJhbWVzIjogW3siZnJhbWUiOiA0LCAiYXQiOiAwfSwgeyJmcmFtZSI6IDEyLCAiYXQiOiAwLjJ9LCB7ImZyYW1lIjogMTMsICJhdCI6IDAuNDV9LCB7ImZyYW1lIjogNCwgImF0IjogMC44fV19LCAidXBwZXIiOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMTQsICJhdCI6IDB9LCB7ImZyYW1lIjogMTQsICJhdCI6IDAuMn0sIHsiZnJhbWUiOiAxNSwgImF0IjogMC40NX0sIHsiZnJhbWUiOiAxNCwgImF0IjogMC44fV19fX0sICJlZmZlY3RTaGVldHMiOiB7InNwaXJpdEd1biI6IHsic3JjIjogImNoYXJhY3RlcnMveXVzdWtlL3NwaXJpdC1ndW4tc3ByaXRlcy5wbmciLCAid2lkdGgiOiAxNTM2LCAiaGVpZ2h0IjogMTAyNCwgInRyYXZlbEZyYW1lIjogMiwgImZyYW1lcyI6IFt7IngiOiA0MTIsICJ5IjogNTQyLCAidyI6IDcyLCAiaCI6IDExMn0sIHsieCI6IDY2OCwgInkiOiA1NTgsICJ3IjogMzgsICJoIjogNTh9LCB7IngiOiA4ODUsICJ5IjogNTU2LCAidyI6IDg2LCAiaCI6IDU4fSwgeyJ4IjogMTA5OCwgInkiOiA1NDUsICJ3IjogMTM4LCAiaCI6IDc2fSwgeyJ4IjogMTM2OCwgInkiOiA1MzIsICJ3IjogMTY4LCAiaCI6IDk4fV0sICJmaWdodGVyU2NhbGUiOiAxLjEsICJmaWdodGVyRnJhbWVzIjogW3sieCI6IDY5LCAieSI6IDQyLCAidyI6IDEzMSwgImgiOiAxOTMsICJheCI6IDY1fSwgeyJ4IjogMzE1LCAieSI6IDQ0LCAidyI6IDEzMywgImgiOiAxOTEsICJheCI6IDY3fSwgeyJ4IjogNTgxLCAieSI6IDQ0LCAidyI6IDEyOSwgImgiOiAxOTEsICJheCI6IDY1fSwgeyJ4IjogODIyLCAieSI6IDQzLCAidyI6IDE0MywgImgiOiAxOTIsICJheCI6IDcyfSwgeyJ4IjogMTA2MSwgInkiOiA1MiwgInciOiAxNTMsICJoIjogMTg0LCAiYXgiOiA3N30sIHsieCI6IDEyODksICJ5IjogNTcsICJ3IjogMTY0LCAiaCI6IDE4MSwgImF4IjogODJ9LCB7IngiOiA0NSwgInkiOiAyOTMsICJ3IjogMTYyLCAiaCI6IDE4MSwgImF4IjogODB9LCB7IngiOiAyODAsICJ5IjogMjk1LCAidyI6IDE2MywgImgiOiAxODEsICJheCI6IDgwfSwgeyJ4IjogNTQ2LCAieSI6IDI5NiwgInciOiAxNzYsICJoIjogMTgwLCAiYXgiOiA4MX0sIHsieCI6IDc4MCwgInkiOiAyOTYsICJ3IjogMTgxLCAiaCI6IDE4MCwgImF4IjogODJ9LCB7IngiOiAxMDEyLCAieSI6IDI5NSwgInciOiAxODIsICJoIjogMTgxLCAiYXgiOiA4Mn0sIHsieCI6IDEyNDksICJ5IjogMjkxLCAidyI6IDE4MiwgImgiOiAxODUsICJheCI6IDgyfSwgeyJ4IjogMjU5LCAieSI6IDc2OSwgInciOiAxNzksICJoIjogMTc0LCAiYXgiOiAxMDB9LCB7IngiOiA0OTcsICJ5IjogNzcyLCAidyI6IDE2MywgImgiOiAxNzMsICJheCI6IDk1fSwgeyJ4IjogNzU3LCAieSI6IDc3OCwgInciOiAxMjgsICJoIjogMTgyLCAiYXgiOiA2OH0sIHsieCI6IDEwMDIsICJ5IjogNzc1LCAidyI6IDEzMCwgImgiOiAxODgsICJheCI6IDY4fSwgeyJ4IjogMTIzOCwgInkiOiA3NzYsICJ3IjogMTMwLCAiaCI6IDE4OCwgImF4IjogNjl9XSwgImZpZ2h0ZXJBbmltYXRpb24iOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMCwgImF0IjogMH0sIHsiZnJhbWUiOiAxLCAiYXQiOiAwLjA4fSwgeyJmcmFtZSI6IDIsICJhdCI6IDAuMTZ9LCB7ImZyYW1lIjogMywgImF0IjogMC4yNH0sIHsiZnJhbWUiOiA0LCAiYXQiOiAwLjMyfSwgeyJmcmFtZSI6IDUsICJhdCI6IDAuNH0sIHsiZnJhbWUiOiA3LCAiYXQiOiAwLjQ5fSwgeyJmcmFtZSI6IDksICJhdCI6IDAuNTh9LCB7ImZyYW1lIjogMTEsICJhdCI6IDAuNjZ9LCB7ImZyYW1lIjogMTIsICJhdCI6IDAuNzR9LCB7ImZyYW1lIjogMTMsICJhdCI6IDAuODJ9LCB7ImZyYW1lIjogMTQsICJhdCI6IDAuODl9LCB7ImZyYW1lIjogMTUsICJhdCI6IDAuOTV9LCB7ImZyYW1lIjogMTYsICJhdCI6IDAuOTg1fV19fX0sICJjb21iYXQiOiB7Im1heEhlYWx0aCI6IDEwMDAsICJzdGFydEVuZXJneSI6IDY0LCAiZW5lcmd5UmVnZW4iOiA2LjUsICJib2R5IjogeyJ3aWR0aCI6IDg0LCAiaGVpZ2h0IjogMTk0fSwgIm1vdmVtZW50IjogeyJncm91bmRTcGVlZCI6IDQ3MCwgImFpclNwZWVkIjogMzMwLCAianVtcFZlbG9jaXR5IjogLTkwMCwgImdyYXZpdHkiOiAyMzUwLCAiZ3JvdW5kRnJpY3Rpb24iOiAxOCwgImFpckZyaWN0aW9uIjogMS4zNSwgImF0dGFja0ZyaWN0aW9uIjogMTgsICJ0dXJuRHVyYXRpb24iOiAwLjA4NX0sICJpbnB1dCI6IHsiYXR0YWNrQnVmZmVyIjogMC4xNn0sICJhdHRhY2tzIjogeyJsaWdodCI6IHsiZHVyYXRpb24iOiAwLjE5LCAiYWN0aXZlU3RhcnQiOiAwLjAzOCwgImFjdGl2ZUVuZCI6IDAuMTAyLCAiZGFtYWdlIjogMjAsICJyYW5nZSI6IDEwMSwgImhlaWdodCI6IDg0LCAia25vY2tiYWNrIjogMTEwLCAiaGl0c3R1biI6IDAuMTcsICJlbmVyZ3lHYWluIjogOSwgImFuaW1hdGlvbiI6ICJsaWdodCIsICJhaXJBbmltYXRpb24iOiAiYWlyS2ljayJ9LCAiaGVhdnkiOiB7ImR1cmF0aW9uIjogMC4zMjUsICJhY3RpdmVTdGFydCI6IDAuMDg1LCAiYWN0aXZlRW5kIjogMC4xOTgsICJkYW1hZ2UiOiA0NSwgInJhbmdlIjogMTMyLCAiaGVpZ2h0IjogMTE2LCAia25vY2tiYWNrIjogNDg1LCAiaGl0c3R1biI6IDAuMzQsICJlbmVyZ3lHYWluIjogMTQsICJzcGlyaXRDb2F0ZWQiOiB0cnVlLCAiYW5pbWF0aW9ucyI6IFsiaGVhdnlVcHBlcmN1dCIsICJoZWF2eUtpY2siXSwgImFpckFuaW1hdGlvbiI6ICJhaXJLaWNrIiwgImhlYXZ5SW1wYWN0IjogdHJ1ZX0sICJndW4iOiB7ImR1cmF0aW9uIjogMC40NiwgInNwYXduVGltZSI6IDAuMjI1LCAiY29zdCI6IDI2LCAicHJvamVjdGlsZSI6ICJzcGlyaXRHdW4iLCAiYW5pbWF0aW9uIjogInNwaXJpdEd1biJ9LCAic2hvdGd1biI6IHsiZHVyYXRpb24iOiAwLjUsICJzcGF3blRpbWUiOiAwLjIzNSwgImNvc3QiOiAzMCwgInByb2plY3RpbGUiOiAic3Bpcml0U2hvdGd1biIsICJhbmltYXRpb24iOiAic3Bpcml0R3VuIn0sICJjcm9zcyI6IHsiZHVyYXRpb24iOiAwLjI1LCAiYWN0aXZlU3RhcnQiOiAwLjA3LCAiYWN0aXZlRW5kIjogMC4xNCwgImRhbWFnZSI6IDI2LCAicmFuZ2UiOiAxMTIsICJoZWlnaHQiOiAxMDYsICJrbm9ja2JhY2siOiAxNDAsICJoaXRzdHVuIjogMC4yMywgImVuZXJneUdhaW4iOiAxMCwgImFuaW1hdGlvbiI6ICJjcm9zcyIsICJhaXJBbmltYXRpb24iOiAiYWlyS2ljayIsICJoZWF2eUltcGFjdCI6IGZhbHNlfSwgImJvZHkiOiB7ImR1cmF0aW9uIjogMC4yOSwgImFjdGl2ZVN0YXJ0IjogMC4wOSwgImFjdGl2ZUVuZCI6IDAuMTcsICJkYW1hZ2UiOiAzMCwgInJhbmdlIjogOTYsICJoZWlnaHQiOiA3NCwgImtub2NrYmFjayI6IDEwMCwgImhpdHN0dW4iOiAwLjIzLCAiZW5lcmd5R2FpbiI6IDEwLCAiYW5pbWF0aW9uIjogImJvZHkiLCAiYWlyQW5pbWF0aW9uIjogImFpcktpY2siLCAiaGVhdnlJbXBhY3QiOiBmYWxzZX0sICJ1cHBlciI6IHsiZHVyYXRpb24iOiAwLjM5LCAiYWN0aXZlU3RhcnQiOiAwLjEyLCAiYWN0aXZlRW5kIjogMC4yMiwgImRhbWFnZSI6IDQyLCAicmFuZ2UiOiAxMTAsICJoZWlnaHQiOiAxMDYsICJrbm9ja2JhY2siOiA0MTAsICJoaXRzdHVuIjogMC4zNiwgImVuZXJneUdhaW4iOiAxMCwgImFuaW1hdGlvbiI6ICJ1cHBlciIsICJhaXJBbmltYXRpb24iOiAiYWlyS2ljayIsICJoZWF2eUltcGFjdCI6IHRydWV9fSwgInByb2plY3RpbGUiOiB7InBsYXllciI6IHsic3BlZWQiOiAxMTIwLCAicmFkaXVzIjogMTYsICJkYW1hZ2UiOiA1MSwgImtub2NrYmFjayI6IDQ3NSwgImhpdHN0dW4iOiAwLjM1LCAibGlmZSI6IDEuNDUsICJlbmVyZ3lHYWluIjogNCwgImhlYXZ5SW1wYWN0IjogdHJ1ZX0sICJjcHUiOiB7InNwZWVkIjogNzIwLCAicmFkaXVzIjogMTcsICJkYW1hZ2UiOiAzNiwgImtub2NrYmFjayI6IDMxNSwgImhpdHN0dW4iOiAwLjMyLCAibGlmZSI6IDEuOSwgImVuZXJneUdhaW4iOiA1LCAiaGVhdnlJbXBhY3QiOiB0cnVlfSwgInNob3RndW4iOiB7InBlbGxldHMiOiA1LCAic3BlZWQiOiA4MjAsICJyYWRpdXMiOiA4LCAiZGFtYWdlIjogMzksICJrbm9ja2JhY2siOiAzNjAsICJoaXRzdHVuIjogMC4yOCwgImxpZmUiOiAwLjgsICJlbmVyZ3lHYWluIjogNCwgInNwcmVhZCI6IDAuMTYsICJoZWF2eUltcGFjdCI6IHRydWV9fSwgInByb2plY3RpbGVWZngiOiB7InRyYXZlbEZyYW1lIjogMiwgInNwcml0ZVNjYWxlIjogMC41LCAidHJhaWxMZW5ndGgiOiA1OCwgInRyYWlsV2lkdGgiOiAxMSwgInRyYWlsR2FwIjogMTMsICJhZnRlcmltYWdlcyI6IDMsICJhZnRlcmltYWdlR2FwIjogMjEsICJtdXp6bGVPZmZzZXRYIjogODQsICJtdXp6bGVPZmZzZXRZIjogLTEwOCwgInJlbGVhc2VHYXAiOiAzNCwgIm11enpsZVNjYWxlIjogMC40MiwgImltcGFjdFNjYWxlIjogMS4yLCAicHVsc2VSYXRlIjogMC4wMjF9LCAiZWZmZWN0cyI6IHsiaGl0QW5pbWF0aW9uRHVyYXRpb24iOiAwLjMsICJoaXRTdG9wIjogeyJibG9jayI6IDAuMDI1LCAibGlnaHQiOiAwLjA0NSwgImhlYXZ5IjogMC4wNzV9LCAic2hha2UiOiB7ImJsb2NrIjogMywgImxpZ2h0IjogNiwgImhlYXZ5IjogMTJ9fSwgInJvdW5kVGltZSI6IDE4MH0sICJwYXNzaXZlcyI6IHsiZmlnaHRpbmdJbnN0aW5jdCI6IHsiaGVhbHRoVGhyZXNob2xkIjogMzAwLCAiZGFtYWdlQm9vc3QiOiAxLjEsICJlbmVyZ3lSZWdlbkJvb3N0IjogMS4zNSwgImRlc2NyaXB0aW9uIjogIldoZW4gYmFkbHkgaHVydCwgWXVzdWtlJ3MgZmlnaHRpbmcgaW5zdGluY3QgcmFpc2VzIGhpcyBkYW1hZ2UgYW5kIHNwaXJpdCByZWNvdmVyeS4ifX0sICJtb3ZlcyI6IFt7ImlkIjogInN0cmVldF9icmF3bF9jaGFpbiIsICJuYW1lIjogIkphYiBcdTIxOTIgQ3Jvc3MgXHUyMTkyIEJvZHkgXHUyMTkyIFVwcGVyY3V0IiwgImlucHV0IjogIkoiLCAidHlwZSI6ICJub3JtYWwiLCAiZGVzY3JpcHRpb24iOiAiVGFwIEogaW4gcmh5dGhtIGZvciBhIGZvdXItcHVuY2ggc2VxdWVuY2UuIFBhdXNpbmcgb3IgZ2V0dGluZyBoaXQgcmVzZXRzIHRoZSBjaGFpbi4ifSwgeyJpZCI6ICJzcGlyaXRfcHVuY2giLCAibmFtZSI6ICJTcGlyaXQgUHVuY2giLCAiaW5wdXQiOiAiSyIsICJ0eXBlIjogIm5vcm1hbCIsICJkZXNjcmlwdGlvbiI6ICJBbHRlcm5hdGVzIGEgc3Bpcml0LWNvYXRlZCB1cHBlcmN1dCBhbmQgcG93ZXIga2ljayBmb3IgaGVhdnkga25vY2tiYWNrLiJ9LCB7ImlkIjogInNwaXJpdF9ndW4iLCAibmFtZSI6ICJTcGlyaXQgR3VuIiwgImlucHV0IjogIkwiLCAidHlwZSI6ICJzcGVjaWFsIiwgImRlc2NyaXB0aW9uIjogIkNvbmNlbnRyYXRlcyBzcGlyaXQgZW5lcmd5IGluIFl1c3VrZSdzIGluZGV4IGZpbmdlciwgdGhlbiByZWxlYXNlcyBhIGZhc3QsIGNvbXBhY3QgZW5lcmd5IGJ1bGxldCB3aXRoIGEgc2VwYXJhdGUgaW1wYWN0IGJ1cnN0LiJ9LCB7ImlkIjogInNwaXJpdF9zaG90Z3VuIiwgIm5hbWUiOiAiU3Bpcml0IFNob3RndW4iLCAiaW5wdXQiOiAiUyArIEwiLCAidHlwZSI6ICJzcGVjaWFsIiwgImRlc2NyaXB0aW9uIjogIlJlbGVhc2VzIGEgd2lkZSBmYW4gb2Ygd2Vha2VyIHNwaXJpdCBzaG90cyB0byBjYXRjaCBqdW1wcyBhbmQgZXZhc2l2ZSBtb3ZlbWVudC4ifV0sICJhaSI6IHsic3R5bGUiOiAiYWdncmVzc2l2ZV9hZGFwdGl2ZSIsICJwcmVmZXJyZWRSYW5nZSI6ICJtaWQiLCAicHJlc3N1cmUiOiAwLjc4LCAicHJvamVjdGlsZVVzZSI6IDAuNjJ9fQ=="));
+      const embeddedYusukeDefinition = JSON.parse(atob("eyJmb3JtYXRWZXJzaW9uIjogMywgImlkIjogInl1c3VrZV91cmFtZXNoaSIsICJkaXNwbGF5TmFtZSI6ICJZdXN1a2UgVXJhbWVzaGkiLCAic2hvcnROYW1lIjogIll1c3VrZSIsICJzZXJpZXMiOiAiWXUgWXUgSGFrdXNobyIsICJzbG90IjogMSwgInN0YXR1cyI6ICJzZWxlY3RhYmxlIiwgInByb2ZpbGUiOiB7InRpdGxlIjogIlNwaXJpdCBEZXRlY3RpdmUiLCAiYXJjaGV0eXBlIjogIkluc3RpbmN0aXZlIEJyYXdsZXIgLyBTcGlyaXQgQXJ0aWxsZXJ5IiwgImRlc2NyaXB0aW9uIjogIkRhcmsgVG91cm5hbWVudCBZdXN1a2UgZmlnaHRzIGxpa2UgYSBmZWFybGVzcyBzdHJlZXQgYnJhd2xlcjogc2hhcnAgcHVuY2hlcyBhbmQga2lja3MgYnVpbGQgc3Bpcml0IGVuZXJneSwgdGhlbiBTcGlyaXQgR3VuIHB1bmlzaGVzIHJldHJlYXRzIGFuZCBTcGlyaXQgU2hvdGd1biBjYXRjaGVzIGV2YXNpdmUgb3Bwb25lbnRzLiJ9LCAiZW5naW5lU3RhdHMiOiB7ImxpZmUiOiAxMDAwLCAiYXR0YWNrIjogMTA3LCAiZGVmZW5zZSI6IDEwMCwgIndhbGtTcGVlZCI6IDUuMywgImJhY2tXYWxrU3BlZWQiOiA0LjQsICJqdW1wVmVsb2NpdHkiOiAtMTR9LCAic2VsZWN0U3RhdHMiOiB7InBvd2VyIjogOTAwLCAic3BlZWQiOiA4ODAsICJyYW5nZSI6IDkxMCwgImRlZmVuc2UiOiA3NjB9LCAic3ByaXRlU2hlZXQiOiB7InNyYyI6ICJjaGFyYWN0ZXJzL3l1c3VrZS9zcHJpdGVzLnBuZyIsICJ3aWR0aCI6IDE1MzYsICJoZWlnaHQiOiAxMDI0LCAic2NhbGUiOiAxLjEsICJmcmFtZXMiOiBbeyJ4IjogNjksICJ5IjogMzIsICJ3IjogMTM2LCAiaCI6IDE5NywgImF4IjogNjh9LCB7IngiOiAzMjIsICJ5IjogMzAsICJ3IjogMTM1LCAiaCI6IDE5OSwgImF4IjogNjh9LCB7IngiOiA1NzgsICJ5IjogMzEsICJ3IjogMTMzLCAiaCI6IDE5OCwgImF4IjogNjZ9LCB7IngiOiA4MjEsICJ5IjogMzQsICJ3IjogMTM0LCAiaCI6IDE5NSwgImF4IjogNjd9LCB7IngiOiAxMDY5LCAieSI6IDg2LCAidyI6IDExMywgImgiOiAxNDIsICJheCI6IDU3fSwgeyJ4IjogMTMxMywgInkiOiA5MiwgInciOiAxMTgsICJoIjogMTM2LCAiYXgiOiA1OX0sIHsieCI6IDU2LCAieSI6IDI4OCwgInciOiAxNDYsICJoIjogMTc4LCAiYXgiOiA3M30sIHsieCI6IDI5NSwgInkiOiAyNzgsICJ3IjogMTcyLCAiaCI6IDE4NSwgImF4IjogODZ9LCB7IngiOiA1NDksICJ5IjogMjgzLCAidyI6IDE1MCwgImgiOiAxODIsICJheCI6IDc1fSwgeyJ4IjogODEzLCAieSI6IDI4NSwgInciOiAxNDEsICJoIjogMTc2LCAiYXgiOiA3MH0sIHsieCI6IDEwNjksICJ5IjogMjgyLCAidyI6IDEwNywgImgiOiAxODAsICJheCI6IDU0fSwgeyJ4IjogMTMwNSwgInkiOiAyODMsICJ3IjogMTQxLCAiaCI6IDE3OSwgImF4IjogNzB9LCB7IngiOiAzOSwgInkiOiA1MDYsICJ3IjogMTg3LCAiaCI6IDE4MiwgImF4IjogNjV9LCB7IngiOiAyOTYsICJ5IjogNTE1LCAidyI6IDE4MywgImgiOiAxNzMsICJheCI6IDcwfSwgeyJ4IjogNTU3LCAieSI6IDUwMiwgInciOiAxNTIsICJoIjogMTg2LCAiYXgiOiA3MH0sIHsieCI6IDgyNCwgInkiOiA0NzgsICJ3IjogMTQ2LCAiaCI6IDIyMSwgImF4IjogNzJ9LCB7IngiOiAxMDUyLCAieSI6IDUyMiwgInciOiAxNzgsICJoIjogMTYzLCAiYXgiOiA2N30sIHsieCI6IDEyOTYsICJ5IjogNDk4LCAidyI6IDE1NCwgImgiOiAxOTAsICJheCI6IDU4fSwgeyJ4IjogNjgsICJ5IjogNzM0LCAidyI6IDEwOSwgImgiOiAxNzEsICJheCI6IDU1fSwgeyJ4IjogMzIxLCAieSI6IDcxNSwgInciOiAxMTMsICJoIjogMTQ5LCAiYXgiOiA1Nn0sIHsieCI6IDUzMSwgInkiOiA3NDYsICJ3IjogMjE3LCAiaCI6IDEyMiwgImF4IjogNzB9LCB7IngiOiA3OTksICJ5IjogNzYyLCAidyI6IDE2NywgImgiOiAxOTMsICJheCI6IDc4fSwgeyJ4IjogMTAwOCwgInkiOiA3NzMsICJ3IjogMTk5LCAiaCI6IDE4NSwgImF4IjogNzJ9LCB7IngiOiAxMjU3LCAieSI6IDc3MywgInciOiAyNTQsICJoIjogMTg1LCAiYXgiOiA3MH1dLCAiYW5pbWF0aW9ucyI6IHsiaWRsZSI6IHsiZnJhbWVzIjogWzAsIDEsIDIsIDMsIDIsIDFdLCAiZnBzIjogMTMsICJsb29wIjogdHJ1ZX0sICJndWFyZCI6IHsiZnJhbWVzIjogWzQsIDVdLCAiZnBzIjogMTYsICJsb29wIjogdHJ1ZX0sICJydW4iOiB7ImZyYW1lcyI6IFs2LCA3LCA4LCA5XSwgImZwcyI6IDIyLCAibG9vcCI6IHRydWV9LCAianVtcFJpc2UiOiB7ImZyYW1lcyI6IFsxOCwgMTldLCAiZnBzIjogMTgsICJsb29wIjogZmFsc2V9LCAianVtcEZhbGwiOiB7ImZyYW1lcyI6IFsxOSwgMThdLCAiZnBzIjogMTgsICJsb29wIjogZmFsc2V9LCAiaGl0IjogeyJrZXlmcmFtZXMiOiBbeyJmcmFtZSI6IDIxLCAiYXQiOiAwfSwgeyJmcmFtZSI6IDEwLCAiYXQiOiAwLjI4fSwgeyJmcmFtZSI6IDExLCAiYXQiOiAwLjY4fV19LCAibGlnaHQiOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMTIsICJhdCI6IDB9LCB7ImZyYW1lIjogMTMsICJhdCI6IDAuMn0sIHsiZnJhbWUiOiAxMiwgImF0IjogMC43fV19LCAiaGVhdnlVcHBlcmN1dCI6IHsia2V5ZnJhbWVzIjogW3siZnJhbWUiOiAxNCwgImF0IjogMH0sIHsiZnJhbWUiOiAxNSwgImF0IjogMC4yNn0sIHsiZnJhbWUiOiAxNCwgImF0IjogMC43Nn1dfSwgImhlYXZ5S2ljayI6IHsia2V5ZnJhbWVzIjogW3siZnJhbWUiOiAxNiwgImF0IjogMH0sIHsiZnJhbWUiOiAxNywgImF0IjogMC4yN30sIHsiZnJhbWUiOiAxNiwgImF0IjogMC43OH1dfSwgImFpcktpY2siOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMTgsICJhdCI6IDB9LCB7ImZyYW1lIjogMjAsICJhdCI6IDAuMn0sIHsiZnJhbWUiOiAxOCwgImF0IjogMC43Nn1dfSwgInNwaXJpdEd1biI6IHsia2V5ZnJhbWVzIjogW3siZnJhbWUiOiAyMiwgImF0IjogMH0sIHsiZnJhbWUiOiAyMywgImF0IjogMC4zfSwgeyJmcmFtZSI6IDIyLCAiYXQiOiAwLjgyfV19LCAiY3Jvc3MiOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMTIsICJhdCI6IDB9LCB7ImZyYW1lIjogMTMsICJhdCI6IDAuMn0sIHsiZnJhbWUiOiAxMywgImF0IjogMC40NX0sIHsiZnJhbWUiOiAxMiwgImF0IjogMC44fV19LCAiYm9keSI6IHsia2V5ZnJhbWVzIjogW3siZnJhbWUiOiA0LCAiYXQiOiAwfSwgeyJmcmFtZSI6IDEyLCAiYXQiOiAwLjJ9LCB7ImZyYW1lIjogMTMsICJhdCI6IDAuNDV9LCB7ImZyYW1lIjogNCwgImF0IjogMC44fV19LCAidXBwZXIiOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMTQsICJhdCI6IDB9LCB7ImZyYW1lIjogMTQsICJhdCI6IDAuMn0sIHsiZnJhbWUiOiAxNSwgImF0IjogMC40NX0sIHsiZnJhbWUiOiAxNCwgImF0IjogMC44fV19fX0sICJlZmZlY3RTaGVldHMiOiB7InNwaXJpdEd1biI6IHsic3JjIjogImNoYXJhY3RlcnMveXVzdWtlL3NwaXJpdC1ndW4tc3ByaXRlcy5wbmciLCAid2lkdGgiOiAxNTM2LCAiaGVpZ2h0IjogMTAyNCwgInRyYXZlbEZyYW1lIjogMiwgImZyYW1lcyI6IFt7IngiOiA0MTIsICJ5IjogNTQyLCAidyI6IDcyLCAiaCI6IDExMn0sIHsieCI6IDY2OCwgInkiOiA1NTgsICJ3IjogMzgsICJoIjogNTh9LCB7IngiOiA4ODUsICJ5IjogNTU2LCAidyI6IDg2LCAiaCI6IDU4fSwgeyJ4IjogMTA5OCwgInkiOiA1NDUsICJ3IjogMTM4LCAiaCI6IDc2fSwgeyJ4IjogMTM2OCwgInkiOiA1MzIsICJ3IjogMTY4LCAiaCI6IDk4fV0sICJmaWdodGVyU2NhbGUiOiAxLjEsICJmaWdodGVyRnJhbWVzIjogW3sieCI6IDY5LCAieSI6IDQyLCAidyI6IDEzMSwgImgiOiAxOTMsICJheCI6IDY1fSwgeyJ4IjogMzE1LCAieSI6IDQ0LCAidyI6IDEzMywgImgiOiAxOTEsICJheCI6IDY3fSwgeyJ4IjogNTgxLCAieSI6IDQ0LCAidyI6IDEyOSwgImgiOiAxOTEsICJheCI6IDY1fSwgeyJ4IjogODIyLCAieSI6IDQzLCAidyI6IDE0MywgImgiOiAxOTIsICJheCI6IDcyfSwgeyJ4IjogMTA2MSwgInkiOiA1MiwgInciOiAxNTMsICJoIjogMTg0LCAiYXgiOiA3N30sIHsieCI6IDEyODksICJ5IjogNTcsICJ3IjogMTY0LCAiaCI6IDE4MSwgImF4IjogODJ9LCB7IngiOiA0NSwgInkiOiAyOTMsICJ3IjogMTYyLCAiaCI6IDE4MSwgImF4IjogODB9LCB7IngiOiAyODAsICJ5IjogMjk1LCAidyI6IDE2MywgImgiOiAxODEsICJheCI6IDgwfSwgeyJ4IjogNTQ2LCAieSI6IDI5NiwgInciOiAxNzYsICJoIjogMTgwLCAiYXgiOiA4MX0sIHsieCI6IDc4MCwgInkiOiAyOTYsICJ3IjogMTgxLCAiaCI6IDE4MCwgImF4IjogODJ9LCB7IngiOiAxMDEyLCAieSI6IDI5NSwgInciOiAxODIsICJoIjogMTgxLCAiYXgiOiA4Mn0sIHsieCI6IDEyNDksICJ5IjogMjkxLCAidyI6IDE4MiwgImgiOiAxODUsICJheCI6IDgyfSwgeyJ4IjogMjU5LCAieSI6IDc2OSwgInciOiAxNzksICJoIjogMTc0LCAiYXgiOiAxMDB9LCB7IngiOiA0OTcsICJ5IjogNzcyLCAidyI6IDE2MywgImgiOiAxNzMsICJheCI6IDk1fSwgeyJ4IjogNzU3LCAieSI6IDc3OCwgInciOiAxMjgsICJoIjogMTgyLCAiYXgiOiA2OH0sIHsieCI6IDEwMDIsICJ5IjogNzc1LCAidyI6IDEzMCwgImgiOiAxODgsICJheCI6IDY4fSwgeyJ4IjogMTIzOCwgInkiOiA3NzYsICJ3IjogMTMwLCAiaCI6IDE4OCwgImF4IjogNjl9XSwgImZpZ2h0ZXJBbmltYXRpb24iOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMCwgImF0IjogMH0sIHsiZnJhbWUiOiAxLCAiYXQiOiAwLjA4fSwgeyJmcmFtZSI6IDIsICJhdCI6IDAuMTZ9LCB7ImZyYW1lIjogMywgImF0IjogMC4yNH0sIHsiZnJhbWUiOiA0LCAiYXQiOiAwLjMyfSwgeyJmcmFtZSI6IDUsICJhdCI6IDAuNH0sIHsiZnJhbWUiOiA3LCAiYXQiOiAwLjQ5fSwgeyJmcmFtZSI6IDksICJhdCI6IDAuNTh9LCB7ImZyYW1lIjogMTEsICJhdCI6IDAuNjZ9LCB7ImZyYW1lIjogMTIsICJhdCI6IDAuNzR9LCB7ImZyYW1lIjogMTMsICJhdCI6IDAuODJ9LCB7ImZyYW1lIjogMTQsICJhdCI6IDAuODl9LCB7ImZyYW1lIjogMTUsICJhdCI6IDAuOTV9LCB7ImZyYW1lIjogMTYsICJhdCI6IDAuOTg1fV19fX0sICJjb21iYXQiOiB7Im1heEhlYWx0aCI6IDEwMDAsICJzdGFydEVuZXJneSI6IDY0LCAiZW5lcmd5UmVnZW4iOiA2LjUsICJib2R5IjogeyJ3aWR0aCI6IDg0LCAiaGVpZ2h0IjogMTk0fSwgIm1vdmVtZW50IjogeyJncm91bmRTcGVlZCI6IDQ3MCwgImFpclNwZWVkIjogMzMwLCAianVtcFZlbG9jaXR5IjogLTkwMCwgImdyYXZpdHkiOiAyMzUwLCAiZ3JvdW5kRnJpY3Rpb24iOiAxOCwgImFpckZyaWN0aW9uIjogMS4zNSwgImF0dGFja0ZyaWN0aW9uIjogMTgsICJ0dXJuRHVyYXRpb24iOiAwLjA4NX0sICJpbnB1dCI6IHsiYXR0YWNrQnVmZmVyIjogMC4xNn0sICJhdHRhY2tzIjogeyJsaWdodCI6IHsiZHVyYXRpb24iOiAwLjE5LCAiYWN0aXZlU3RhcnQiOiAwLjAzOCwgImFjdGl2ZUVuZCI6IDAuMTAyLCAiZGFtYWdlIjogMjAsICJyYW5nZSI6IDEwMSwgImhlaWdodCI6IDg0LCAia25vY2tiYWNrIjogMTEwLCAiaGl0c3R1biI6IDAuMTcsICJlbmVyZ3lHYWluIjogOSwgImFuaW1hdGlvbiI6ICJsaWdodCIsICJhaXJBbmltYXRpb24iOiAiYWlyS2ljayJ9LCAiaGVhdnkiOiB7ImR1cmF0aW9uIjogMC4zMjUsICJhY3RpdmVTdGFydCI6IDAuMDg1LCAiYWN0aXZlRW5kIjogMC4xOTgsICJkYW1hZ2UiOiA0NSwgInJhbmdlIjogMTMyLCAiaGVpZ2h0IjogMTE2LCAia25vY2tiYWNrIjogNDg1LCAiaGl0c3R1biI6IDAuMzQsICJlbmVyZ3lHYWluIjogMTQsICJzcGlyaXRDb2F0ZWQiOiB0cnVlLCAiYW5pbWF0aW9ucyI6IFsiaGVhdnlVcHBlcmN1dCIsICJoZWF2eUtpY2siXSwgImFpckFuaW1hdGlvbiI6ICJhaXJLaWNrIiwgImhlYXZ5SW1wYWN0IjogdHJ1ZX0sICJndW4iOiB7ImR1cmF0aW9uIjogMC42LCAic3Bhd25UaW1lIjogMC4zLCAiY29zdCI6IDI2LCAicHJvamVjdGlsZSI6ICJzcGlyaXRHdW4iLCAiYW5pbWF0aW9uIjogInNwaXJpdEd1biJ9LCAic2hvdGd1biI6IHsiZHVyYXRpb24iOiAwLjY0LCAic3Bhd25UaW1lIjogMC4zLCAiY29zdCI6IDMwLCAicHJvamVjdGlsZSI6ICJzcGlyaXRTaG90Z3VuIiwgImFuaW1hdGlvbiI6ICJzcGlyaXRHdW4ifSwgImNyb3NzIjogeyJkdXJhdGlvbiI6IDAuMjUsICJhY3RpdmVTdGFydCI6IDAuMDcsICJhY3RpdmVFbmQiOiAwLjE0LCAiZGFtYWdlIjogMjYsICJyYW5nZSI6IDExMiwgImhlaWdodCI6IDEwNiwgImtub2NrYmFjayI6IDE0MCwgImhpdHN0dW4iOiAwLjIzLCAiZW5lcmd5R2FpbiI6IDEwLCAiYW5pbWF0aW9uIjogImNyb3NzIiwgImFpckFuaW1hdGlvbiI6ICJhaXJLaWNrIiwgImhlYXZ5SW1wYWN0IjogZmFsc2V9LCAiYm9keSI6IHsiZHVyYXRpb24iOiAwLjI5LCAiYWN0aXZlU3RhcnQiOiAwLjA5LCAiYWN0aXZlRW5kIjogMC4xNywgImRhbWFnZSI6IDMwLCAicmFuZ2UiOiA5NiwgImhlaWdodCI6IDc0LCAia25vY2tiYWNrIjogMTAwLCAiaGl0c3R1biI6IDAuMjMsICJlbmVyZ3lHYWluIjogMTAsICJhbmltYXRpb24iOiAiYm9keSIsICJhaXJBbmltYXRpb24iOiAiYWlyS2ljayIsICJoZWF2eUltcGFjdCI6IGZhbHNlfSwgInVwcGVyIjogeyJkdXJhdGlvbiI6IDAuMzksICJhY3RpdmVTdGFydCI6IDAuMTIsICJhY3RpdmVFbmQiOiAwLjIyLCAiZGFtYWdlIjogNDIsICJyYW5nZSI6IDExMCwgImhlaWdodCI6IDEwNiwgImtub2NrYmFjayI6IDQxMCwgImhpdHN0dW4iOiAwLjM2LCAiZW5lcmd5R2FpbiI6IDEwLCAiYW5pbWF0aW9uIjogInVwcGVyIiwgImFpckFuaW1hdGlvbiI6ICJhaXJLaWNrIiwgImhlYXZ5SW1wYWN0IjogdHJ1ZX19LCAicHJvamVjdGlsZSI6IHsicGxheWVyIjogeyJzcGVlZCI6IDExMjAsICJyYWRpdXMiOiAxNiwgImRhbWFnZSI6IDUxLCAia25vY2tiYWNrIjogNDc1LCAiaGl0c3R1biI6IDAuMzUsICJsaWZlIjogMS40NSwgImVuZXJneUdhaW4iOiA0LCAiaGVhdnlJbXBhY3QiOiB0cnVlfSwgImNwdSI6IHsic3BlZWQiOiA3MjAsICJyYWRpdXMiOiAxNywgImRhbWFnZSI6IDM2LCAia25vY2tiYWNrIjogMzE1LCAiaGl0c3R1biI6IDAuMzIsICJsaWZlIjogMS45LCAiZW5lcmd5R2FpbiI6IDUsICJoZWF2eUltcGFjdCI6IHRydWV9LCAic2hvdGd1biI6IHsicGVsbGV0cyI6IDUsICJzcGVlZCI6IDgyMCwgInJhZGl1cyI6IDgsICJkYW1hZ2UiOiAzOSwgImtub2NrYmFjayI6IDM2MCwgImhpdHN0dW4iOiAwLjI4LCAibGlmZSI6IDAuOCwgImVuZXJneUdhaW4iOiA0LCAic3ByZWFkIjogMC4xNiwgImhlYXZ5SW1wYWN0IjogdHJ1ZX19LCAicHJvamVjdGlsZVZmeCI6IHsidHJhdmVsRnJhbWUiOiAyLCAic3ByaXRlU2NhbGUiOiAwLjUsICJ0cmFpbExlbmd0aCI6IDU4LCAidHJhaWxXaWR0aCI6IDExLCAidHJhaWxHYXAiOiAxMywgImFmdGVyaW1hZ2VzIjogMywgImFmdGVyaW1hZ2VHYXAiOiAyMSwgIm11enpsZU9mZnNldFgiOiA4NCwgIm11enpsZU9mZnNldFkiOiAtMTU4LCAicmVsZWFzZUdhcCI6IDM0LCAibXV6emxlU2NhbGUiOiAwLjQyLCAiaW1wYWN0U2NhbGUiOiAxLjIsICJwdWxzZVJhdGUiOiAwLjAyMX0sICJlZmZlY3RzIjogeyJoaXRBbmltYXRpb25EdXJhdGlvbiI6IDAuMywgImhpdFN0b3AiOiB7ImJsb2NrIjogMC4wMjUsICJsaWdodCI6IDAuMDQ1LCAiaGVhdnkiOiAwLjA3NX0sICJzaGFrZSI6IHsiYmxvY2siOiAzLCAibGlnaHQiOiA2LCAiaGVhdnkiOiAxMn19LCAicm91bmRUaW1lIjogMTgwfSwgInBhc3NpdmVzIjogeyJmaWdodGluZ0luc3RpbmN0IjogeyJoZWFsdGhUaHJlc2hvbGQiOiAzMDAsICJkYW1hZ2VCb29zdCI6IDEuMSwgImVuZXJneVJlZ2VuQm9vc3QiOiAxLjM1LCAiZGVzY3JpcHRpb24iOiAiV2hlbiBiYWRseSBodXJ0LCBZdXN1a2UncyBmaWdodGluZyBpbnN0aW5jdCByYWlzZXMgaGlzIGRhbWFnZSBhbmQgc3Bpcml0IHJlY292ZXJ5LiJ9fSwgIm1vdmVzIjogW3siaWQiOiAic3RyZWV0X2JyYXdsX2NoYWluIiwgIm5hbWUiOiAiSmFiIFx1MjE5MiBDcm9zcyBcdTIxOTIgQm9keSBcdTIxOTIgVXBwZXJjdXQiLCAiaW5wdXQiOiAiSiIsICJ0eXBlIjogIm5vcm1hbCIsICJkZXNjcmlwdGlvbiI6ICJUYXAgSiBpbiByaHl0aG0gZm9yIGEgZm91ci1wdW5jaCBzZXF1ZW5jZS4gUGF1c2luZyBvciBnZXR0aW5nIGhpdCByZXNldHMgdGhlIGNoYWluLiJ9LCB7ImlkIjogInNwaXJpdF9wdW5jaCIsICJuYW1lIjogIlNwaXJpdCBQdW5jaCIsICJpbnB1dCI6ICJLIiwgInR5cGUiOiAibm9ybWFsIiwgImRlc2NyaXB0aW9uIjogIkFsdGVybmF0ZXMgYSBzcGlyaXQtY29hdGVkIHVwcGVyY3V0IGFuZCBwb3dlciBraWNrIGZvciBoZWF2eSBrbm9ja2JhY2suIn0sIHsiaWQiOiAic3Bpcml0X2d1biIsICJuYW1lIjogIlNwaXJpdCBHdW4iLCAiaW5wdXQiOiAiTCIsICJ0eXBlIjogInNwZWNpYWwiLCAiZGVzY3JpcHRpb24iOiAiQ29uY2VudHJhdGVzIHNwaXJpdCBlbmVyZ3kgaW4gWXVzdWtlJ3MgaW5kZXggZmluZ2VyLCB0aGVuIHJlbGVhc2VzIGEgZmFzdCwgY29tcGFjdCBlbmVyZ3kgYnVsbGV0IHdpdGggYSBzZXBhcmF0ZSBpbXBhY3QgYnVyc3QuIn0sIHsiaWQiOiAic3Bpcml0X3Nob3RndW4iLCAibmFtZSI6ICJTcGlyaXQgU2hvdGd1biIsICJpbnB1dCI6ICJKIFx1MjE5MiBKIFx1MjE5MiBKIFx1MjE5MiBMIiwgInR5cGUiOiAic3BlY2lhbCIsICJkZXNjcmlwdGlvbiI6ICJUaHJlZSBwdW5jaGVzIHByaW1lIGEgZmlzdC1maXJlZCBTcGlyaXQgU2hvdGd1bi4gUHJlc3MgU3Bpcml0IEd1biBiZWZvcmUgdGhlIHB1bmNoIGNoYWluIGV4cGlyZXMuIn1dLCAiYWkiOiB7InN0eWxlIjogImFnZ3Jlc3NpdmVfYWRhcHRpdmUiLCAicHJlZmVycmVkUmFuZ2UiOiAibWlkIiwgInByZXNzdXJlIjogMC43OCwgInByb2plY3RpbGVVc2UiOiAwLjYyfSwgInNwZWNpYWxTcHJpdGVTaGVldCI6IHsic3JjIjogImNoYXJhY3RlcnMveXVzdWtlL3NwaXJpdC1zcGVjaWFscy12Mi5wbmciLCAid2lkdGgiOiAxNTM2LCAiaGVpZ2h0IjogMTAyNCwgInNjYWxlIjogMC42LCAiZnJhbWVzIjogW3sieCI6IDAsICJ5IjogMTAwLCAidyI6IDM4NCwgImgiOiAzOTAsICJheCI6IDE5MH0sIHsieCI6IDM4NCwgInkiOiAxMDAsICJ3IjogMzg0LCAiaCI6IDM5MCwgImF4IjogMTkwfSwgeyJ4IjogNzY4LCAieSI6IDEwMCwgInciOiAzODQsICJoIjogMzkwLCAiYXgiOiAxOTB9LCB7IngiOiAxMTUyLCAieSI6IDEwMCwgInciOiAzODQsICJoIjogMzkwLCAiYXgiOiAxOTB9LCB7IngiOiAwLCAieSI6IDU1MiwgInciOiAzODQsICJoIjogMzc4LCAiYXgiOiAxOTB9LCB7IngiOiAzODQsICJ5IjogNTUyLCAidyI6IDM4NCwgImgiOiAzNzgsICJheCI6IDE5MH0sIHsieCI6IDc2OCwgInkiOiA1NTIsICJ3IjogMzg0LCAiaCI6IDM3OCwgImF4IjogMTkwfSwgeyJ4IjogMTE1MiwgInkiOiA1NTIsICJ3IjogMzg0LCAiaCI6IDM3OCwgImF4IjogMTkwfV0sICJhbmltYXRpb25zIjogeyJndW4iOiB7ImtleWZyYW1lcyI6IFt7ImZyYW1lIjogMCwgImF0IjogMH0sIHsiZnJhbWUiOiAxLCAiYXQiOiAwLjJ9LCB7ImZyYW1lIjogMiwgImF0IjogMC41fSwgeyJmcmFtZSI6IDMsICJhdCI6IDAuNzh9XX0sICJzaG90Z3VuIjogeyJrZXlmcmFtZXMiOiBbeyJmcmFtZSI6IDQsICJhdCI6IDB9LCB7ImZyYW1lIjogNSwgImF0IjogMC4yfSwgeyJmcmFtZSI6IDYsICJhdCI6IDAuNDd9LCB7ImZyYW1lIjogNywgImF0IjogMC44fV19fX19"));
       const yusukeSpriteSheet = new Image();
       yusukeSpriteSheet.decoding = "async";
+      const yusukeSpecialSheet = new Image();
       const yusukeSpiritGunSheet = new Image();
       yusukeSpiritGunSheet.decoding = "async";
       let activeCharacterDefinition = null;
@@ -2090,6 +2092,7 @@
 
           await Promise.all([
             loadSpriteAsset(yusukeSpriteSheet, character.spriteSheet, "Yusuke sprite sheet"),
+            loadSpriteAsset(yusukeSpecialSheet, character.specialSpriteSheet, "Special attack sprite sheet"),
             loadSpriteAsset(yusukeSpiritGunSheet, character.effectSheets.spiritGun, "Spirit Gun effect sheet")
           ]);
 
@@ -2306,6 +2309,8 @@
           this.lastSpiritVolley = null;
           this.punchStep = 0;
           this.punchWindow = 0;
+          this.comboHits = 0;
+          this.comboTime = 0;
         }
 
         get grounded() {
@@ -2335,6 +2340,8 @@
         }
 
         beginAttack(type) {
+          if (type === "gun" && !this.cpu && this.punchStep === 3 && this.punchWindow > 0) type = "shotgun";
+          if (attackData[type]?.cost && this.energy < attackData[type].cost) return false;
           if (type === "light" && !this.cpu && this.grounded) {
             if (this.punchWindow <= 0) this.punchStep = 0;
             type = ["light", "cross", "body", "upper"][this.punchStep];
@@ -2382,6 +2389,8 @@
         update(dt, input, opponent, game) {
           const movement = yusukeCombat.movement;
           this.punchWindow = Math.max(0, this.punchWindow - dt);
+          this.comboTime = Math.max(0, this.comboTime - dt);
+          if (this.comboTime === 0) this.comboHits = 0;
           this.invulnerability = Math.max(0, this.invulnerability - dt);
           this.actionBufferTime = Math.max(0, this.actionBufferTime - dt);
           if (this.actionBufferTime === 0) this.actionBuffer = null;
@@ -2407,11 +2416,11 @@
           if (attackType) {
             const attack = attackData[attackType];
             const queuedAttack = input.gunPressed
-              ? (input.block && !this.cpu ? "shotgun" : "gun")
+              ? "gun"
               : input.heavyPressed ? "heavy" : input.lightPressed ? "light" : null;
             if (queuedAttack) {
               this.actionBuffer = queuedAttack;
-              this.actionBufferTime = yusukeCombat.input.attackBuffer;
+              this.actionBufferTime = input.gunPressed ? Math.max(yusukeCombat.input.attackBuffer, attack.duration - this.stateTime + .05) : yusukeCombat.input.attackBuffer;
             }
             this.vx *= Math.max(0, 1 - dt * movement.attackFriction);
             if (attack.projectile && !this.projectileSpawned && this.stateTime >= attack.spawnTime) {
@@ -2432,10 +2441,6 @@
           const direction = Number(input.right) - Number(input.left);
           if (this.grounded) this.setFacing(opponent.x >= this.x ? 1 : -1);
 
-          if (input.gunPressed && input.block && !this.cpu && this.grounded && this.beginAttack("shotgun")) {
-            this.applyPhysics(dt);
-            return;
-          }
 
           const retreating = direction === -this.facing;
           const threatened = (opponent.currentAttack() && Math.abs(opponent.x - this.x) < 250)
@@ -2517,12 +2522,13 @@
         drawYusukeSprite(context, time) {
           const attackType = this.currentAttack();
           const attackProgress = attackType ? Math.min(1, this.stateTime / attackData[attackType].duration) : 0;
-          const firingSheet = yusukeEffectSheets.spiritGun;
+          const specialSheet = activeCharacterDefinition.specialSpriteSheet;
+          const firingSheet = { fighterFrames: specialSheet.frames, fighterAnimation: specialSheet.animations[attackType], fighterScale: specialSheet.scale };
           const usesFiringAnimation = Boolean(attackData[attackType]?.projectile && firingSheet?.fighterFrames?.length);
           const firingFrameIndex = usesFiringAnimation
             ? animationFrameFrom(firingSheet.fighterAnimation, this.stateTime, attackProgress)
             : -1;
-          const renderSheet = usesFiringAnimation ? yusukeSpiritGunSheet : yusukeSpriteSheet;
+          const renderSheet = usesFiringAnimation ? yusukeSpecialSheet : yusukeSpriteSheet;
           const frame = usesFiringAnimation
             ? firingSheet.fighterFrames[firingFrameIndex] || firingSheet.fighterFrames[0]
             : yusukeSpriteFrames[this.yusukeFrameIndex()] || yusukeSpriteFrames[0];
@@ -2588,7 +2594,7 @@
               ? 1
               : Math.max(0, 1 - (this.stateTime - specialAttack.spawnTime) / .035);
             const muzzleX = vfx.muzzleOffsetX;
-            const muzzleY = vfx.muzzleOffsetY;
+            const muzzleY = attackType === "shotgun" ? -132 : vfx.muzzleOffsetY;
             const shotgunCharge = attackType === "shotgun" ? 1.16 : 1;
             const pulse = ((7 + charge * 13) + Math.sin(time * vfx.pulseRate) * (1.5 + charge * 2)) * shotgunCharge;
             const chargeGlow = context.createRadialGradient(muzzleX, muzzleY, 1, muzzleX, muzzleY, pulse * 1.65);
@@ -2604,20 +2610,10 @@
             context.arc(muzzleX, muzzleY, pulse * 1.65, 0, Math.PI * 2);
             context.fill();
             context.shadowBlur = 0;
-            context.strokeStyle = `rgba(210,252,255,${.18 + charge * .62})`;
-            context.lineWidth = 2.5;
-            for (let ring = 0; ring < 2; ring += 1) {
-              const ringRadius = pulse * (.72 + ring * .48);
-              context.beginPath();
-              context.arc(muzzleX, muzzleY, ringRadius, time * .006 + ring, time * .006 + ring + Math.PI * (1.15 + charge * .35));
-              context.stroke();
-            }
-            for (let spark = 0; spark < 5; spark += 1) {
-              const angle = time * .01 + spark * (Math.PI * 2 / 5);
-              const distance = pulse * (1.05 + (spark % 2) * .34);
-              context.fillStyle = spark % 2 ? "#ffffff" : "#6fefff";
-              context.fillRect(muzzleX + Math.cos(angle) * distance, muzzleY + Math.sin(angle) * distance, 3, 3);
-            }
+            context.fillStyle = "#ffffff";
+            context.beginPath();
+            context.arc(muzzleX, muzzleY, 2 + charge * 4, 0, Math.PI * 2);
+            context.fill();
             context.globalAlpha = 1;
           }
 
@@ -3039,7 +3035,7 @@
           const color = cpuShot ? "#ff355d" : "#5ae7ff";
           const vfx = yusukeCombat.projectileVfx;
           const muzzleX = owner.x + owner.facing * vfx.muzzleOffsetX;
-          const muzzleY = owner.y + vfx.muzzleOffsetY;
+          const muzzleY = owner.y + (kind === "spiritShotgun" ? -132 : vfx.muzzleOffsetY);
           const releaseX = muzzleX + owner.facing * vfx.releaseGap;
 
           if (kind === "spiritShotgun") {
@@ -3131,7 +3127,14 @@
           const blocked = defender.state === "block" && defender.grounded && defender.facing === -hitDirection;
           const instinct = !attacker.cpu ? activeCharacterDefinition.passives?.fightingInstinct : null;
           const instinctBoost = instinct && attacker.health <= instinct.healthThreshold ? instinct.damageBoost : 1;
-          const damage = attack.damage * instinctBoost * (blocked ? .25 : 1);
+          if (!blocked) {
+            attacker.comboHits += 1;
+            attacker.comboTime = 2;
+            defender.comboHits = 0;
+            defender.comboTime = 0;
+          }
+          const bonusDamage = blocked ? 0 : attacker.comboHits;
+          const damage = (attack.damage * instinctBoost + bonusDamage) * (blocked ? .25 : 1);
           defender.health = Math.max(0, defender.health - damage);
           defender.invulnerability = blocked ? .1 : .18;
           defender.hitstun = blocked ? .12 : attack.hitstun;
@@ -3231,6 +3234,12 @@
         }
 
         updateHud() {
+          const hits = this.player.comboHits;
+          const primed = this.player.punchStep === 3 && this.player.punchWindow > 0;
+          document.querySelector("#combo-label").textContent = `${hits} HIT${hits === 1 ? "" : "S"} · +${hits} DAMAGE`;
+          document.querySelector("#combo-fill").style.width = `${Math.min(100, hits * 10)}%`;
+          document.querySelector("#combo-window").style.width = `${this.player.comboTime / 2 * 100}%`;
+          document.querySelector("#shotgun-ready").textContent = primed ? "SHOTGUN READY — PRESS SPIRIT" : "SHOTGUN: PUNCH ×3 → SPIRIT";
           document.querySelector("#match-score").textContent = `Rounds ${this.roundWins[0]} – ${this.roundWins[1]} · First to 2`;
           playerHealth.parentElement.title = `${Math.ceil(this.player.health)} / ${this.player.maxHealth} HP`;
           cpuHealth.parentElement.title = `${Math.ceil(this.cpu.health)} / ${this.cpu.maxHealth} HP`;
@@ -3329,196 +3338,77 @@
         }
 
         drawSpiritProjectile(context, projectile, time) {
-          const vfx = yusukeCombat.projectileVfx;
-          const direction = Math.sign(projectile.vx) || 1;
-          const cpuShot = projectile.owner.cpu;
-          const primary = cpuShot ? "#ff355d" : "#5ae7ff";
-          const pulse = 1 + Math.sin(time * vfx.pulseRate + projectile.phase) * .055;
-
+          const shotgun = projectile.kind === "spiritShotgun";
+          const cyan = projectile.owner.cpu ? "#ff355d" : "#39bcff";
+          const radius = projectile.radius;
+          const tail = Math.min(shotgun ? 52 : 180, projectile.age * Math.abs(projectile.vx));
           context.save();
-          context.translate(projectile.x, projectile.y + Math.sin(time * .018 + projectile.phase) * .75);
-          context.scale(direction, 1);
-
-          if (projectile.kind === "spiritShotgun") {
-            for (let ghost = 2; ghost >= 1; ghost -= 1) {
-              context.globalAlpha = ghost === 2 ? .12 : .24;
-              context.fillStyle = primary;
-              context.beginPath();
-              context.ellipse(-ghost * 12, 0, projectile.radius * (.55 / ghost), projectile.radius * (.34 / ghost), 0, 0, Math.PI * 2);
-              context.fill();
-            }
-            context.globalAlpha = 1;
-            context.shadowColor = primary;
-            context.shadowBlur = 18;
-            context.fillStyle = primary;
-            context.beginPath();
-            context.ellipse(0, 0, projectile.radius * 1.35, projectile.radius * .68, 0, 0, Math.PI * 2);
-            context.fill();
-            context.fillStyle = "#ffffff";
-            context.beginPath();
-            context.ellipse(2, 0, projectile.radius * .67, projectile.radius * .31, 0, 0, Math.PI * 2);
-            context.fill();
-            context.restore();
-            return;
-          }
-
-          const spawnEase = Math.min(1, .72 + projectile.age * 7);
-          const trailLength = vfx.trailLength * spawnEase;
-          const trailGap = vfx.trailGap;
-          const trailWidth = vfx.trailWidth * pulse;
-          const trail = context.createLinearGradient(-trailGap - trailLength, 0, -trailGap, 0);
-          trail.addColorStop(0, cpuShot ? "rgba(255,53,93,0)" : "rgba(90,231,255,0)");
-          trail.addColorStop(.5, cpuShot ? "rgba(255,53,93,.08)" : "rgba(90,231,255,.1)");
-          trail.addColorStop(1, cpuShot ? "rgba(255,53,93,.44)" : "rgba(90,231,255,.46)");
+          context.translate(projectile.x, projectile.y);
+          context.rotate(Math.atan2(projectile.vy || 0, projectile.vx));
+          context.globalCompositeOperation = "lighter";
+          const trail = context.createLinearGradient(-tail, 0, 10, 0);
+          trail.addColorStop(0, "transparent");
+          trail.addColorStop(.65, cyan);
+          trail.addColorStop(1, "#eaffff");
+          context.shadowColor = cyan;
+          context.shadowBlur = shotgun ? 12 : 25;
           context.fillStyle = trail;
           context.beginPath();
-          context.moveTo(-trailGap - trailLength, 0);
-          context.quadraticCurveTo(-trailGap - trailLength * .38, -trailWidth, -trailGap, -2);
-          context.lineTo(-trailGap, 2);
-          context.quadraticCurveTo(-trailGap - trailLength * .38, trailWidth, -trailGap - trailLength, 0);
+          context.moveTo(-tail, 0);
+          context.quadraticCurveTo(-tail * .35, -radius * .65, 2, -radius * .7);
+          context.quadraticCurveTo(radius * 2.1, 0, 2, radius * .7);
+          context.quadraticCurveTo(-tail * .35, radius * .65, -tail, 0);
           context.fill();
-
-          for (let copy = vfx.afterimages; copy >= 1; copy -= 1) {
-            const distance = trailGap + copy * vfx.afterimageGap;
-            const size = Math.max(2.5, projectile.radius * (.42 - copy * .065));
-            context.globalAlpha = .08 + (vfx.afterimages - copy) * .075;
-            context.fillStyle = copy % 2 ? "#ffffff" : primary;
-            context.beginPath();
-            context.ellipse(-distance, Math.sin(projectile.phase + copy * 1.7) * 2.4, size * 1.3, size * .55, 0, 0, Math.PI * 2);
-            context.fill();
-          }
-
-          context.globalAlpha = .34;
-          context.strokeStyle = "#ffffff";
-          context.lineWidth = 1.5;
-          context.lineCap = "round";
-          for (let wisp = 0; wisp < 2; wisp += 1) {
-            const y = (wisp ? 1 : -1) * (9 + Math.sin(time * .016 + projectile.phase) * 2);
-            context.beginPath();
-            context.moveTo(-30, y);
-            context.quadraticCurveTo(-9, y * 1.35, 5, y * .55);
-            context.stroke();
-          }
-
-          const frame = yusukeEffectSheets.spiritGun.frames[this.spiritProjectileFrame(projectile)];
-          context.globalAlpha = .32;
-          context.fillStyle = primary;
-          context.shadowColor = primary;
-          context.shadowBlur = 20;
-          context.beginPath();
-          context.ellipse(0, 0, projectile.radius * 1.18 * spawnEase, projectile.radius * .68 * spawnEase, 0, 0, Math.PI * 2);
-          context.fill();
-          if (!cpuShot && yusukeSpiritGunSheet.complete && yusukeSpiritGunSheet.naturalWidth > 0 && frame) {
-            const spriteScale = vfx.spriteScale * pulse * spawnEase;
-            const drawWidth = frame.w * spriteScale;
-            const drawHeight = frame.h * spriteScale;
-            const drawX = -drawWidth / 2;
-            const drawY = -drawHeight / 2;
-            context.globalAlpha = 1;
-            context.shadowColor = primary;
-            context.shadowBlur = 22;
-            context.drawImage(
-              yusukeSpiritGunSheet,
-              frame.x, frame.y, frame.w, frame.h,
-              drawX, drawY, drawWidth, drawHeight
-            );
-          } else {
-            context.globalAlpha = 1;
-            context.fillStyle = "#ffffff";
-            context.shadowColor = primary;
-            context.shadowBlur = 22;
-            context.beginPath();
-            context.ellipse(0, 0, projectile.radius * 1.3 * spawnEase, projectile.radius * .72 * spawnEase, 0, 0, Math.PI * 2);
-            context.fill();
-            context.strokeStyle = primary;
-            context.lineWidth = 5;
-            context.stroke();
-          }
-
-          context.shadowBlur = 0;
-          context.globalAlpha = .86;
           context.fillStyle = "#ffffff";
           context.beginPath();
-          context.ellipse(4, -1, Math.max(3.5, projectile.radius * .3), Math.max(2.5, projectile.radius * .2), 0, 0, Math.PI * 2);
+          context.ellipse(3, 0, radius * 1.25, radius * .38, 0, 0, Math.PI * 2);
           context.fill();
+          context.lineWidth = shotgun ? 2 : 3;
+          context.strokeStyle = "#ecffff";
+          context.beginPath();
+          context.moveTo(-tail * .65, 0);
+          context.lineTo(6, 0);
+          context.stroke();
           context.restore();
         }
 
         drawSpiritBurst(context, burst, time) {
-          const vfx = yusukeCombat.projectileVfx;
-          const frame = yusukeEffectSheets.spiritGun.frames[0];
-          const remaining = Math.max(0, burst.life / burst.maxLife);
-          const progress = 1 - remaining;
-          const cpuBurst = burst.color === "#ff355d";
-
+          const progress = 1 - Math.max(0, burst.life / burst.maxLife);
+          const fade = 1 - progress;
+          const muzzle = burst.kind === "muzzle";
+          const radius = (muzzle ? 12 + progress * 24 : 16 + progress * 65) * burst.scale;
           context.save();
           context.translate(burst.x, burst.y);
           context.scale(burst.direction, 1);
-          context.globalAlpha = remaining;
+          context.globalCompositeOperation = "lighter";
+          context.globalAlpha = fade;
           context.shadowColor = burst.color;
-          context.shadowBlur = burst.kind === "muzzle" ? 18 : 34;
-
-          if (burst.kind === "muzzle") {
-            const radius = (9 + progress * 20) * burst.scale;
-            const flash = context.createRadialGradient(0, 0, 0, 0, 0, radius * 1.4);
-            flash.addColorStop(0, "rgba(255,255,255,.98)");
-            flash.addColorStop(.35, cpuBurst ? "rgba(255,160,182,.82)" : "rgba(176,249,255,.86)");
-            flash.addColorStop(1, cpuBurst ? "rgba(255,53,93,0)" : "rgba(90,231,255,0)");
-            context.fillStyle = flash;
-            context.beginPath();
-            context.arc(0, 0, radius * 1.4, 0, Math.PI * 2);
-            context.fill();
-
-            context.globalAlpha = remaining * .82;
-            context.fillStyle = "#ffffff";
-            context.beginPath();
-            context.moveTo(-radius * .42, 0);
-            context.lineTo(radius * 1.7, -radius * .46);
-            context.lineTo(radius * 1.12, 0);
-            context.lineTo(radius * 1.7, radius * .46);
-            context.closePath();
-            context.fill();
-
-            if (frame && !cpuBurst && yusukeSpiritGunSheet.complete && yusukeSpiritGunSheet.naturalWidth > 0) {
-              const flashScale = vfx.muzzleScale * burst.scale * (.6 + progress * .32);
-              const width = frame.w * flashScale;
-              const height = frame.h * flashScale;
-              context.globalAlpha = remaining * .7;
-              context.drawImage(
-                yusukeSpiritGunSheet,
-                frame.x, frame.y, frame.w, frame.h,
-                -width / 2, -height / 2, width, height
-              );
-            }
-            context.restore();
-            return;
+          context.shadowBlur = 24;
+          // A sharp animation-style starburst, rather than a floating orb or ring.
+          context.fillStyle = burst.color;
+          context.beginPath();
+          for (let i = 0; i < 24; i++) {
+            const angle = i * Math.PI / 12;
+            const length = radius * (i % 2 ? .3 : 1 + .22 * Math.sin(i * 5.1));
+            const x = Math.cos(angle) * length * (muzzle ? 1.6 : 1);
+            const y = Math.sin(angle) * length;
+            if (i === 0) context.moveTo(x, y); else context.lineTo(x, y);
           }
-
-          const radius = (18 + progress * 62) * burst.scale;
-
-          const glow = context.createRadialGradient(0, 0, 0, 0, 0, radius);
-          glow.addColorStop(0, "rgba(255,255,255,.96)");
-          glow.addColorStop(.2, cpuBurst ? "rgba(255,190,205,.86)" : "rgba(190,251,255,.9)");
-          glow.addColorStop(.55, cpuBurst ? "rgba(255,53,93,.34)" : "rgba(90,231,255,.36)");
-          glow.addColorStop(1, cpuBurst ? "rgba(255,53,93,0)" : "rgba(90,231,255,0)");
-          context.fillStyle = glow;
+          context.closePath(); context.fill();
+          context.fillStyle = "#ffffff";
           context.beginPath();
-          context.arc(0, 0, radius, 0, Math.PI * 2);
+          context.ellipse(0, 0, radius * .48, radius * .3, 0, 0, Math.PI * 2);
           context.fill();
-
-          context.shadowBlur = 0;
-          context.strokeStyle = burst.color;
-          context.lineWidth = Math.max(2, 5 * remaining);
-          context.beginPath();
-          context.arc(0, 0, radius * 1.08, 0, Math.PI * 2);
-          context.stroke();
-          context.globalAlpha = remaining * .75;
-          for (let ray = 0; ray < 8; ray += 1) {
-            const angle = burst.phase + ray * Math.PI / 4 + time * .0008;
-            context.beginPath();
-            context.moveTo(Math.cos(angle) * radius * .36, Math.sin(angle) * radius * .36);
-            context.lineTo(Math.cos(angle) * radius * 1.35, Math.sin(angle) * radius * 1.35);
-            context.stroke();
+          if (!muzzle) {
+            context.strokeStyle = "#c9faff";
+            context.lineWidth = Math.max(1, fade * 3);
+            for (let i = 0; i < 9; i++) {
+              const angle = burst.phase + i * Math.PI * 2 / 9;
+              context.beginPath();
+              context.moveTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+              context.lineTo(Math.cos(angle) * (radius + 18 * fade), Math.sin(angle) * (radius + 18 * fade));
+              context.stroke();
+            }
           }
           context.restore();
         }
