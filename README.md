@@ -1,3 +1,13 @@
+# M.U.G.E.N Reborn restart
+
+The engine restart lives in [`reborn/`](reborn/README.md). Its runnable static site is `reborn/dist/`; the repository landing page now opens it. [Play the hosted foundation](https://mugen-reborn-tyron.tyronhuggins32.chatgpt.site).
+
+Run `cd reborn && npm test` for the 50 engine/parser checks. Full M.U.G.E.N compatibility is pending; the [compatibility matrix](reborn/MUGEN_COMPATIBILITY.md) lists the implemented subset. Browser/device QA is still pending.
+
+The earlier Yusuke prototype remains in `game-build-0009.html` and its character assets remain under `characters/`. Its original notes follow.
+
+---
+
 # New Mugen — Browser Fighter
 
 A browser fighting-game prototype featuring Yusuke versus the CPU Demon Scout. Run `python3 -m http.server 8000` in this folder, then visit http://localhost:8000. `index.html` opens the game build.

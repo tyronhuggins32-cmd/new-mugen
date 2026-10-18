@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#0d1421"><meta name="description" content="M.U.G.E.N Reborn — a browser fighting engine rebuild. Play the foundation with two original fighters."><title>M.U.G.E.N Reborn</title><link rel="stylesheet" href="style.css"></head>
+<body>
+  <header class="topbar"><a class="brand" href="#" id="home">M<span>U</span>GEN <small>REBORN</small></a><div class="build-label"><i></i> ENGINE FOUNDATION <span>0.1.0</span></div><button id="fullscreen" class="icon-button" aria-label="Toggle fullscreen">⛶ <span>FULLSCREEN</span></button></header>
+  <main id="shell">
+    <section class="arena" aria-label="Fighting game">
+      <canvas id="game" width="1280" height="720" aria-label="Fighting arena. Controls are listed below the game."></canvas><div class="scanlines" aria-hidden="true"></div>
+      <div id="main-menu" class="screen home-screen">
+        <div class="home-content"><p class="eyebrow">THE NEXT ROUND STARTS HERE</p><h1>M.U.G.E.N<span>REBORN<span class="period">.</span></span></h1><p class="home-description">A new engine. A familiar fight.</p>
+          <nav class="mode-menu" aria-label="Game modes">
+            <button data-mode="arcade" class="mode active"><span>01</span> ARCADE <b>↗</b></button>
+            <button data-mode="versus" class="mode"><span>02</span> VERSUS <small>LOCAL 2P</small></button>
+            <button data-mode="training" class="mode"><span>03</span> TRAINING</button>
+            <button data-mode="survival" class="mode"><span>04</span> SURVIVAL</button>
+            <button data-mode="watch" class="mode"><span>05</span> WATCH</button>
+          </nav><div class="menu-bottom"><button id="options">OPTIONS</button><span>/</span><button id="content">CONTENT LAB</button><span>/</span><button id="help">CONTROLS</button></div>
+        </div><div class="fighter-caption"><span>ORIGINAL TEST FIGHTER</span><strong>ROOK</strong><small>IRON DISCIPLINE</small></div><div class="stage-tag"><i></i> MOONLIT DOJO <span>01 / 01</span></div>
+      </div>
+      <div id="selection" class="screen selection hidden"><p class="eyebrow">CHOOSE YOUR SIDE</p><h2>SELECT FIGHTERS<span>.</span></h2><p id="select-mode"></p><div id="fighter-select" class="fighter-select"></div><div class="select-stage"><span>STAGE 01</span><strong>MOONLIT DOJO</strong><small>Original stage · dynamic camera</small></div><div class="selection-actions"><button class="secondary" id="selection-back">← BACK</button><button class="primary" id="start">ENTER THE ARENA ↗</button></div></div>
+      <div id="hud" class="hidden"><div class="life-side p1"><div class="fighter-meta"><span id="name1">ROOK</span><small>PLAYER 1</small></div><div class="life-frame"><div id="life1" class="life-fill"></div></div><div class="rounds" id="wins1"></div><div class="power-track"><div id="power1"></div></div></div><div class="timer"><strong id="timer">99</strong><small id="round-label">ROUND 1</small></div><div class="life-side p2"><div class="fighter-meta"><span id="name2">VALE</span><small id="p2-label">CPU</small></div><div class="life-frame"><div id="life2" class="life-fill"></div></div><div class="rounds" id="wins2"></div><div class="power-track"><div id="power2"></div></div></div></div>
+      <div id="announcement" class="announcement hidden" role="status"></div><div id="combo1" class="combo hidden"></div><div id="combo2" class="combo right hidden"></div>
+      <div id="game-tools" class="game-tools hidden"><span id="mode-label">ARCADE</span><span id="record-label"></span><button id="hitboxes">HITBOXES <kbd>F2</kbd></button><button id="pause">PAUSE <kbd>P</kbd></button></div>
+      <div id="pause-screen" class="screen centered hidden"><div class="pause-panel"><p class="eyebrow" id="pause-kicker">TAKE A BREATHER</p><h2 id="pause-title">PAUSED<span>.</span></h2><p id="result-text"></p><div id="training-options" class="hidden"><label>Training dummy<select id="dummy"><option value="stand">Stand</option><option value="guard">Guard</option><option value="crouch">Crouch</option></select></label></div><button id="resume" class="primary">RESUME ↗</button><button id="next-opponent" class="primary hidden">NEXT OPPONENT ↗</button><button id="rematch" class="secondary">RESTART MATCH</button><button id="frame-step" class="secondary">ADVANCE ONE TICK <kbd>N</kbd></button><button id="return-menu" class="text-button">RETURN TO MENU</button></div></div>
+      <div id="fatal" class="screen centered hidden"><div class="pause-panel"><h2>Graphics unavailable</h2><p id="fatal-message"></p></div></div>
+    </section>
+    <section class="touch-controls" aria-label="Touch controls"><div class="dpad"><button data-input="up" aria-label="Jump">▲</button><button data-input="left" aria-label="Move left">◀</button><button data-input="down" aria-label="Crouch">▼</button><button data-input="right" aria-label="Move right">▶</button></div><div class="touch-center"><span>HOLD BACK<br>TO GUARD</span><button id="touch-pause" aria-label="Pause game">Ⅱ</button></div><div class="attack-pad"><button data-input="x">X<small>LIGHT</small></button><button data-input="y">Y<small>MEDIUM</small></button><button data-input="z">Z<small>HEAVY</small></button><button data-input="a">A<small>LOW</small></button><button data-input="b">B<small>KICK</small></button><button data-input="c" class="super">C<small>SUPER</small></button></div></section>
+    <footer class="statusbar"><div><span class="live-dot"></span><strong id="engine-status">WEBGL 2</strong><span class="divider"></span><span>60 TICKS / SEC</span></div><span class="desktop-hint"><kbd>W A S D</kbd> MOVE <kbd>J K L</kbd> PUNCH <kbd>U I O</kbd> KICK</span><button id="debug-toggle">ENGINE INSPECTOR ↗</button></footer>
+    <aside id="inspector" class="hidden"><div><strong>LIVE ENGINE INSPECTOR</strong><span> Tick, state and animation values come from simulation.</span></div><pre id="debug-data"></pre></aside>
+    <p class="milestone-note">PLAYABLE FOUNDATION <span>Two original fighters. External M.U.G.E.N characters, team modes and screenpacks are still in development.</span></p>
+  </main>
+  <dialog id="modal"><div class="modal-top"><span id="modal-label">SYSTEM</span><button id="close-modal" aria-label="Close dialog">✕</button></div><div id="modal-body"></div></dialog>
+  <div id="toast" role="status" class="hidden"></div><script type="module" src="src/app.js"></script>
+</body></html>

@@ -1,0 +1,1 @@
+{"name":"mugen-reborn","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.mjs","check":"node --check dist/src/app.js && node --check dist/src/engine.js && node --check dist/src/formats.js && node --check dist/src/render.js"}}
