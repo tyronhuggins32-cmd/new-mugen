@@ -7,6 +7,10 @@ on:
       - "mugen-fluid-v3.js"
       - "yusuke-motion.js"
       - "yusuke-directional-v8.js"
+      - "mugen-yusuke-reference-v13.js"
+      - "yusuke-attack-lab-v13.html"
+      - "tests/yusuke-reference-v13.cjs"
+      - "tests/browser-reference-v13.cjs"
       - "yusuke-alpha-v9.js"
       - "mugen-vfx-v8.js"
       - "tests/yusuke-alpha-v9.cjs"
@@ -56,6 +60,8 @@ jobs:
         run: node tests/thorfinn-browser.cjs
       - name: Verify fluid render updates in Chromium
         run: node tests/browser-fluid.cjs
+      - name: Verify cinematic Yusuke moves, flash rush and aerial pursuit in Chromium
+        run: node tests/browser-reference-v13.cjs
       - name: Upload failure diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
