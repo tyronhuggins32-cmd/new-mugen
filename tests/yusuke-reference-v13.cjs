@@ -30,6 +30,7 @@ for(const id of ids){
 }
 assert.ok(combat.moves.risingBreaker.hits[0].launchVelocity<0);
 assert.ok(combat.moves.skyPursuit.airOnly);
+assert.ok(combat.moves.meteorFinish.airOnly,"Meteor Finish is an aerial descent");
 assert.ok(combat.moves.spiritVoid.cinematic);
 assert.equal(combat.moves.spiritVoid.hits.length,15,
  "reference-video finish needs fifteen separate confirmed damage beats");
@@ -74,6 +75,12 @@ assert.equal(hits.length,combat.moves.flashRush.hits.length,
 assert.ok(hits.every(x=>x.hit.damage>0&&x.hit.damage<=50));
 assert.ok(fighter.x<foe.x-140,"rush never overlaps the opponent");
 assert.equal(combat.stats(game).active,false,"finished sequences expire");
+combat.reset(game);hits.length=0;
+fighter.state="attack-risingBreaker";fighter.stateTime=0;fighter.x=480;
+fighter.grounded=true;fighter.vy=0;foe.x=650;
+for(let i=0;i<35;i++){fighter.stateTime=i/60;combat.tick(game,1/60);}
+assert.ok(fighter.vy<=-750 && fighter.y<540,
+ "confirmed rising launcher must put Yusuke in the air for later Sky Pursuit");
 combat.reset(game);hits.length=0;
 fighter.state="attack-flashRush";fighter.stateTime=0;fighter.x=480;
 foe.x=2200;
