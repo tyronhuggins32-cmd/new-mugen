@@ -14,6 +14,7 @@ const assert=require('node:assert/strict');
    `      window.thorfinnSmoke = {get game(){return arcadeGame;},
       get selection(){return selectedFighterDefinition;},
       get atlas(){return thorfinnSpriteSheet;},
+      get combatAtlas(){return thorfinnCombatSpriteSheet;},
       pressFightControl,releaseFightControl};
       function beginFight() {`);
   assert.notEqual(exposed,html,'test seam must be injected before battle starts');
@@ -30,11 +31,15 @@ const assert=require('node:assert/strict');
   const data=await page.evaluate(()=>({
    id:window.thorfinnSmoke?.selection?.id,
    width:window.thorfinnSmoke?.atlas?.naturalWidth,
-   height:window.thorfinnSmoke?.atlas?.naturalHeight
+   height:window.thorfinnSmoke?.atlas?.naturalHeight,
+   combatWidth:window.thorfinnSmoke?.combatAtlas?.naturalWidth,
+   combatHeight:window.thorfinnSmoke?.combatAtlas?.naturalHeight
   }));
   assert.equal(data.id,'thorfinn_karlsefni');
   assert.equal(data.width,2048);
   assert.equal(data.height,1960);
+  assert.equal(data.combatWidth,3072);
+  assert.equal(data.combatHeight,1600);
   await page.locator('#choose-character').click();
   await page.waitForFunction(()=>window.thorfinnSmoke.game?.state==='play',{timeout:10000});
   const result=await page.evaluate(()=>{
@@ -98,13 +103,57 @@ const assert=require('node:assert/strict');
    }
    if(Math.max(...visibleCounts)-Math.min(...visibleCounts)>250)
      throw Error('Thorfinn visibility varies with simulation interpolation');
-   return {health:game.player.health,energy:game.player.energy,fighter:game.player.name};
+
+   // Every attack and recoil must select the ORIGINAL new combat-sheet
+   // texture, not the old idle/movement stand-in. These are real canvas
+   // draw calls, tested with the same renderer used in a live fight.
+   const originalDrawImage=spriteCtx.drawImage.bind(spriteCtx);
+   const captured=[];
+   spriteCtx.drawImage=(...args)=>{
+     captured.push(args);
+     return originalDrawImage(...args);
+   };
+   const checkPose=(state,seconds,y,first,last)=>{
+     game.player.setState(state);
+     game.player.stateTime=seconds;
+     game.player.y=y;
+     game.player.vy=0;
+     captured.length=0;
+     spriteCtx.clearRect(0,0,scratch.width,scratch.height);
+     game.player.drawThorfinnSprite(spriteCtx,performance.now(),0);
+     const hit=captured.find(args=>args[0]===window.thorfinnSmoke.combatAtlas);
+     if(!hit)throw Error('Missing combat sheet draw for '+state+' at y='+y);
+     const index=Math.round(hit[1]/384)+Math.round(hit[2]/320)*8;
+     if(index<first||index>last)
+       throw Error(state+' selected wrong combat frame '+index+
+         ' instead of authored '+first+'..'+last);
+     const pixels=spriteCtx.getImageData(0,0,800,700).data;
+     let body=0;
+     for(let i=3;i<pixels.length;i+=4)if(pixels[i]>=245)body++;
+     if(body<1000)throw Error('New authored sprite has transparent body: '+state);
+     if(spriteCtx.getImageData(0,0,1,1).data[3]!==0)
+       throw Error('White source JPEG background visible in '+state);
+     return index;
+   };
+   const examined=[
+     checkPose('attack-light',.09,600,14,25),
+     checkPose('attack-cross',.09,600,14,25),
+     checkPose('attack-gun',.23,600,26,35),
+     checkPose('attack-shotgun',.28,600,26,35),
+     checkPose('hit',.17,600,4,7),
+     checkPose('attack-light',.09,480,0,3),
+     checkPose('attack-cross',.11,480,8,13)
+   ];
+   if(new Set(examined).size<5)throw Error('Too few distinct fighting poses');
+
+   return {health:game.player.health,energy:game.player.energy,fighter:game.player.name,
+      poses:examined};
   });
   assert.equal(result.fighter,'Thorfinn');
   assert.deepEqual(errors,[],'Thorfinn generated no browser exceptions');
   await page.locator('#battle-back').click();
   await page.locator('.roster-card[data-character="yusuke_urameshi"]').click();
   assert.equal((await page.locator('#selected-character-name').textContent()).trim(),'Yusuke');
-  console.log('PASS: Thorfinn loads as a unique second fighter, draws, fights with dagger hitboxes, and returns to Yusuke');
+  console.log('PASS: Thorfinn loads 56 movement and 36 creator-authored combat sprites, selects real light, cross, lunge, whirlwind, air combo and hit cels, renders opaque bodies over transparent backgrounds and returns to Yusuke');
  } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
