@@ -129,13 +129,56 @@ const path = require("node:path");
     const cleanedCanvas=Boolean(cleanedSources.combat?.getContext &&
       cleanedSources.movement?.getContext);
     const cleanedWidths=[cleanedSources.combat?.width,cleanedSources.movement?.width];
+
+    // Inspect the actual Canvas2D sprites as the game draws idle, stagger,
+    // knockback and every six-stage Square action. A fallback image at the
+    // wrong scale must not replace the 200px premium fighter with a giant.
+    g.reset();g.state="play";
+    const screen=canvas.getContext("2d");
+    const originalDraw=screen.drawImage.bind(screen);
+    let captured=[];
+    screen.drawImage=function(...args){
+      if(args.length===9){
+        const image=args[0],width=image?.naturalWidth||image?.width;
+        if(width===2048||width===1536){
+          const [sx,sy,sw,sh]=args.slice(1,5);
+          const [dw,dh]=args.slice(7,9);
+          if(sw>0&&sh>0&&Number.isFinite(dh)){
+            const actual=window.MugenYusukePalette?.visibleHeight(image,
+              {x:sx,y:sy,w:sw,h:sh}) || sh;
+            captured.push({height:Math.abs(actual*dh/sh),countHeight:Math.abs(dh)});
+          }
+        }
+      }
+      return originalDraw(...args);
+    };
+    const characterSizes={};
+    for(const [state,elapsed,reaction] of [
+      ["idle",.3,null],["hit",.03,"stagger"],
+      ["hit",.07,"knockback"],["attack-light",.1,null],
+      ["attack-cross",.12,null],["attack-body",.16,null],
+      ["attack-upper",.19,null],["attack-gun",.14,null],
+      ["attack-shotgun",.16,null]
+    ]){
+      g.player.state=state;g.player.stateTime=elapsed;
+      g.player.hitReaction=reaction||"stagger";
+      g.player.y=window.testEngine.arena.floor;
+      g.player.vx=0;g.player.facing=1;
+      captured=[];
+      g.player.drawYusukeSprite(screen,2300+elapsed*1000,1);
+      characterSizes[state+(reaction?"-"+reaction:"")]={
+        count:captured.length,
+        maxHeight:Math.max(0,...captured.map(item=>item.height))
+      };
+    }
+    screen.drawImage=originalDraw;
     const names=["light","cross","body","upper","gun","shotgun","powerKick"];
     const premiumAttackPoses=names.map(type=>{
       const pose=window.MugenPremium?.choosePose(g.player,type,premiumMeta,
         window.testEngine.premiumImages,.5);
       return pose && pose.part==="combat" && pose.frame?.w>0;
     });
-    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,squareCount,squareTextureHeight,squareSequences,squareGhostFree,
+    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,squareCount,squareTextureHeight,squareSequences,squareGhostFree,characterSizes,
       specialFallbackClean,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
       shotgunImpacts,shotgunDamage,retreatMoved,backdashMoved,backdashMirrored,atlasFrameCount:window.MugenMotion.clips.run.count,
       motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
@@ -150,6 +193,15 @@ const path = require("node:path");
   assert.notEqual(result.first,result.second,"movement should modify actual rendered pixels continuously");
   assert.deepEqual(result.atlasCounts,[16,16],"existing premium sheets remain aligned");
   assert.equal(result.squareCount,24,"Square kit builds 24 new cels");
+  const idleHeight=result.characterSizes.idle?.maxHeight;
+  assert.ok(idleHeight>=155&&idleHeight<=235,
+    "real alpha-cleaned idle figure must stay within normal fighter proportions");
+  for(const [pose,measure] of Object.entries(result.characterSizes)){
+    assert.ok(measure.count===1,
+      pose+" draws a single fighter sprite, never a duplicate giant silhouette");
+    assert.ok(measure.maxHeight>100&&measure.maxHeight<idleHeight*1.24+12,
+      pose+" stays within the same visible on-screen size as idle Yusuke");
+  }
   assert.equal(result.squareTextureHeight,3072,"Square PNG texture has six rows");
   assert.equal(result.squareGhostFree,true,
     "each Square attack and its walk exit must show one complete sprite without double outlines");
