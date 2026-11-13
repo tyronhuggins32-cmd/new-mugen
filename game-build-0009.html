@@ -2543,6 +2543,7 @@
           this.comboBonusDamage = 0;
           this.knockbackDrag = 5.2;
           this.dashTimer = 0;
+          this.dashDirection = facing;
           this.dashCooldown = 0;
         }
 
@@ -2709,20 +2710,27 @@
             return;
           }
 
-          // Forward burst and vulnerable spirit charge. Both use the same fixed 60 Hz physics.
+          // R1 uses the held direction (left or right); no direction still
+          // dashes toward the enemy. Latch the vector for the whole burst so
+          // releasing the stick/button mid-dash cannot reverse direction.
           if (this.dashTimer > 0 && this.grounded) {
             this.dashTimer = Math.max(0, this.dashTimer - dt);
-            this.vx = this.facing * 1030;
+            const backstep = this.dashDirection !== this.facing;
+            this.vx = this.dashDirection * (backstep ? 815 : 1030);
             this.setState("walk");
             this.applyPhysics(dt);
             return;
           }
           if (input.dashPressed && this.grounded && this.dashCooldown === 0 && !this.cpu) {
-            this.dashTimer = .145;
+            this.setFacing(opponent.x >= this.x ? 1 : -1);
+            const stick = Number(Boolean(input.right)) - Number(Boolean(input.left));
+            this.dashDirection = stick || this.facing;
+            this.dashTimer = this.dashDirection === this.facing ? .145 : .17;
             this.dashCooldown = .48;
-            this.vx = this.facing * 1030;
+            this.vx = this.dashDirection * (this.dashDirection === this.facing ? 1030 : 815);
             this.setState("walk");
             this.applyPhysics(dt);
+            playCombatSfx("dash", .55);
             return;
           }
           if (input.charge && this.grounded && !this.cpu) {
@@ -2737,9 +2745,10 @@
 
 
           const retreating = direction === -this.facing;
-          const threatened = (opponent.currentAttack() && Math.abs(opponent.x - this.x) < 250)
-            || game.projectiles.some(p => p.owner !== this && Math.abs(p.x - this.x) < 240);
-          if ((input.block || (retreating && threatened)) && this.grounded) {
+          // Retreat and guard are independent commands. Automatic guarding on
+          // backward input used to consume the backwalk, especially up close.
+          // L1 / down remains the explicit way to block.
+          if (input.block && this.grounded) {
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             this.setState("block");
             this.vx *= Math.max(0, 1 - dt * movement.groundFriction);
