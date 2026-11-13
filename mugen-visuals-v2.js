@@ -370,5 +370,5 @@
     ctx.restore();
   }
 
-  return {drawArena,animBlend,poseTransform,drawCpuAccent,onHit,tick,drawEchoes,drawHits,drawCharge,drawProjectileFX,clamp,lerp};
+  global.MugenVisuals = {drawArena,animBlend,poseTransform,drawCpuAccent,onHit,tick,drawEchoes,drawHits,drawCharge,drawProjectileFX,clamp,lerp};
 })(window);
