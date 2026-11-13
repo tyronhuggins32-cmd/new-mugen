@@ -36,7 +36,10 @@
   }
   function onHit(game,attacker,defender,attack,blocked,x,y){
     if(!game||!attacker)return;
-    if(root.MugenComboFX && !root.MugenComboFX.allows(attacker))return;
+    // Existing Square strikes still wait for COMBO 5. Unbound reference
+    // specials have authored impact VFX immediately when explicitly invoked.
+    if(!attack?.referenceHit && root.MugenComboFX &&
+      !root.MugenComboFX.allows(attacker))return;
     const heavy=!!attack?.heavyImpact && !blocked;
     // Three readable categories, centered at the collision coordinate.
     // Guard overrides attack strength; one primary effect per connected hit.
