@@ -11,7 +11,7 @@ const path = require("node:path");
   const errors=[];
   page.on("pageerror",error=>errors.push(error.stack || error.message));
   const html=fs.readFileSync(path.resolve(__dirname,"../game-build-0009.html"),"utf8");
-  await page.route("**/game-build-0009.html",route=>route.fulfill({
+  await page.route("**/game-build-0009.html*",route=>route.fulfill({
     contentType:"text/html",
     body:html.replace("      function beginFight() {",
       "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get directionalAtlas() { return directionalAtlas; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, get premiumArt() { return premiumArt; }, get premiumImages() { return {combat:premiumCombatSheet,movement:premiumMotionSheet}; }, arena }; \n      function beginFight() {")
