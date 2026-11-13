@@ -34,6 +34,8 @@ jobs:
         run: node tests/fluid-v3.cjs
       - name: Cinematic Spirit Gun, punch assist, swept collision and spacing
         run: node tests/cinematic-v5.cjs
+      - name: V8 aerial crossing, accurate strike boxes and authored VFX
+        run: node tests/air-and-vfx-v8.cjs
       - name: Visual effects and sprite interpolation checks
         run: node tests/visuals.cjs
       - name: DualSense controller checks
