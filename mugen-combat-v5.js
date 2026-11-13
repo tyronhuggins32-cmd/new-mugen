@@ -7,15 +7,75 @@
   const MIN_SPACING = 142;
   const CONTACT_ASSIST = 25;
   const PUNCHES = new Set(["light", "cross", "body", "upper", "heavy"]);
+  // Body hurtboxes follow the actual stance. Pushbox rules below are
+  // deliberately separate: an airborne fighter must be able to cross over
+  // an opponent's head without disappearing into their body.
+  function hurtbox(f) {
+    const air = !f.grounded;
+    const low = !air && (f.state === "crouch" || f.state === "crouchWalk");
+    const recoil = !air && f.state === "hit";
+    const width = (f.width || 84) * (air ? .77 : low ? .88 : .91);
+    const height = (f.height || 194) * (air ? .72 : low ? .57 : recoil ? .82 : .95);
+    return { x: f.x - width/2, y: f.y - height, width, height };
+  }
+
+  // Move-specific boxes based on the visible arm/foot extent of the
+  // 0.5-scale V7 Yusuke cels, not generic full-body rectangles.
+  // High punches deliberately pass over crouching opponents.
+  const HITBOXES = Object.freeze({
+    light:     {forward:48, reach:88, above:175, height:52},
+    cross:     {forward:43, reach:102, above:174, height:64},
+    body:      {forward:40, reach:89, above:129, height:79},
+    upper:     {forward:25, reach:99, above:224, height:172},
+    heavy:     {forward:35, reach:110, above:192, height:125},
+    powerKick: {forward:46, reach:107, above:155, height:92}
+  });
+  function attackHitbox(f, attack, type) {
+    if (!f || !attack || attack.projectile) return null;
+    const preset = HITBOXES[type];
+    if (!preset) return null;
+    const dir = f.facing < 0 ? -1 : 1;
+    const air = !f.grounded;
+    const forward = preset.forward + (air ? 10 : 0);
+    const reach = preset.reach * (air ? .86 : 1);
+    const above = air ? Math.min(126,preset.above) : preset.above;
+    const height = air ? Math.min(83,preset.height) : preset.height;
+    return {x:dir>0?f.x+forward:f.x-forward-reach,
+      y:f.y-above, width:reach, height};
+  }
+
+  function airCrossOver(a,b) {
+    // Airborne combatants may cross. Mark the crossover as soon as the
+    // jumper clears the grounded fighter's shoulders, then preserve that
+    // permission until landing; otherwise landing frames snap the fighter
+    // back across the opponent and produce the reported invisible wall.
+    if (!a.grounded && !b.grounded) return true;
+    if (a.grounded === b.grounded) return false;
+    const jumping = a.grounded ? b : a;
+    const grounded = a.grounded ? a : b;
+    if (jumping._crossOverActive) return true;
+    const shoulderLine = grounded.hurtbox.y + 102;
+    if (jumping.y <= shoulderLine) {
+      jumping._crossOverActive = true;
+      return true;
+    }
+    return false;
+  }
 
   // Body boxes define height overlap. Stage spacing remains readable even
   // when characters are not yet physically overlapping one another.
   function separate(a, b, arena, distance = MIN_SPACING) {
     if (!a || !b || !arena) return false;
+    if (airCrossOver(a,b)) return false;
     const abox = a.hurtbox, bbox = b.hurtbox;
     if (!abox || !bbox ||
         abox.y + abox.height <= bbox.y || bbox.y + bbox.height <= abox.y) return false;
-    const spacing = Math.max(distance, (a.width + b.width) / 2);
+    const airborne = !a.grounded || !b.grounded;
+    // Grounded combat needs room. An early jumping silhouette only needs
+    // a slim pushbox before the crossover lock opens, not a 142px wall.
+    const spacing = airborne
+      ? Math.max(52, (a.width + b.width) * .46)
+      : Math.max(distance, (a.width + b.width) / 2);
     const left = a.x <= b.x ? a : b;
     const right = left === a ? b : a;
     const deficit = spacing - (right.x - left.x);
@@ -33,9 +93,12 @@
     }
     left.x -= leftMove;
     right.x += rightMove;
-    // The players cannot push past one another just by holding forwards.
-    if (left.vx > 0) left.vx = 0;
-    if (right.vx < 0) right.vx = 0;
+    // Only grounded bodies halt one another. Airborne horizontal momentum
+    // must survive separation so a jump can actually clear the rival.
+    if (!airborne) {
+      if (left.vx > 0) left.vx = 0;
+      if (right.vx < 0) right.vx = 0;
+    }
     return true;
   }
 
@@ -51,7 +114,10 @@
     const signedDistance = (defender.x - attacker.x) * direction;
     const minSpacing = opts.minSpacing || MIN_SPACING;
     const maxAssist = opts.maxAssist || CONTACT_ASSIST;
-    const reach = 18 + attack.range + defender.width / 2 - 6;
+    const box = attackHitbox(attacker,attack,kind);
+    const tip = box ? (direction>0?box.x+box.width:box.x)
+                    : attacker.x + direction*(18 + attack.range);
+    const reach = (tip-attacker.x)*direction + defender.width*.48;
     if (signedDistance < minSpacing || signedDistance > reach + maxAssist ||
         signedDistance <= reach) return false;
     const desired = Math.max(minSpacing, reach - 1);
@@ -60,42 +126,6 @@
     if (move <= 0) return false;
     attacker.x += direction * move;
     return true;
-  }
-
-  // Hit geometry follows the actual ~200px premium fighter silhouette:
-  // narrow shoulders, crouched guard, and an airborne body at real world Y.
-  // This avoids invisible full-width boxes and permits proper jump-over.
-  function hurtbox(fighter) {
-    if (!fighter || !Number.isFinite(fighter.x) || !Number.isFinite(fighter.y)) return null;
-    const guarded = fighter.state === "block" || fighter.state === "crouch";
-    const bodyWidth = Number(fighter.width) || 84;
-    const bodyHeight = Number(fighter.height) || 194;
-    const width = bodyWidth * (guarded ? .72 : .85);
-    const height = bodyHeight * (guarded ? .73 : .94);
-    return { x:fighter.x-width/2, y:fighter.y-height, width, height };
-  }
-
-  // For each punch, place the active area at the hand/leg strike altitude,
-  // not a giant rectangular column from the fighter's feet to their head.
-  // Attack data still controls reach, frame windows, damage and stun.
-  const strikeOffsets=Object.freeze({
-    light:{from:143,lead:23}, cross:{from:151,lead:24},
-    body:{from:110,lead:23}, upper:{from:190,lead:24},
-    heavy:{from:182,lead:24}, powerKick:{from:154,lead:29}
-  });
-  function attackHitbox(fighter,attack,type) {
-    if (!fighter || !attack || attack.projectile || !Number.isFinite(attack.range) ||
-        !Number.isFinite(fighter.x) || !Number.isFinite(fighter.y)) return null;
-    const reach=Math.max(20,Math.min(200,attack.range));
-    const h=Math.max(30,Math.min(155,Number(attack.height)||92));
-    const offset=strikeOffsets[type] || {from:h+24,lead:18};
-    const facing=fighter.facing<0?-1:1;
-    const lead=offset.lead;
-    return {
-      x:facing>0?fighter.x+lead:fighter.x-lead-reach,
-      y:fighter.y-offset.from,
-      width:reach,height:h
-    };
   }
 
   // Ray-vs-expanded-AABB gives the first collision point on the projectile
@@ -130,6 +160,7 @@
   }
 
   root.MugenCombatV5 = Object.freeze({
-    MIN_SPACING, CONTACT_ASSIST, separate, assistPunch, hurtbox, attackHitbox, sweepCircle, cameraZoom
+    MIN_SPACING, CONTACT_ASSIST, hurtbox, attackHitbox,
+    airCrossOver, separate, assistPunch, sweepCircle, cameraZoom
   });
 })(typeof window === "undefined" ? globalThis : window);
