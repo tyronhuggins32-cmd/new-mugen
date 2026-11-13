@@ -24,8 +24,8 @@
   }
 
   function choosePose(fighter, attackType, meta, images, progress=0) {
-    if (!fighter || !meta || !images?.combat?.naturalWidth
-        || !images?.movement?.naturalWidth) return null;
+    if (!fighter || !meta || !(images?.combat?.naturalWidth||images?.combat?.width)
+        || !(images?.movement?.naturalWidth||images?.movement?.width)) return null;
     let kind="movement", id=0;
     const time=Math.max(0, fighter.stateTime || 0);
     const grounded=fighter.grounded;
