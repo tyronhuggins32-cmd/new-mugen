@@ -813,28 +813,28 @@
     {
       "id": "street_brawl_chain",
       "name": "Jab → Cross → Body → Uppercut",
-      "input": "J",
+      "input": "□ / J",
       "type": "normal",
       "description": "Tap J in rhythm for a four-punch sequence. Pausing or getting hit resets the chain."
     },
     {
       "id": "spirit_punch",
       "name": "Spirit Punch",
-      "input": "K",
+      "input": "△ / K",
       "type": "normal",
       "description": "Alternates a spirit-coated uppercut and power kick for heavy knockback."
     },
     {
       "id": "spirit_gun",
       "name": "Spirit Gun",
-      "input": "L",
+      "input": "○ / L",
       "type": "special",
       "description": "Concentrates spirit energy in Yusuke's index finger, then releases a fast, compact energy bullet with a separate impact burst."
     },
     {
       "id": "spirit_shotgun",
       "name": "Spirit Shotgun",
-      "input": "J → J → J → L",
+      "input": "□ ×3 → ○ / J ×3 → L",
       "type": "special",
       "description": "Three punches prime a fist-fired Spirit Shotgun. Press Spirit Gun before the punch chain expires."
     },
