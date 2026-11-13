@@ -1660,12 +1660,12 @@
 
         <section class="roster-panel rb-roster" aria-label="Playable fighter roster">
           <div class="rb-roster-head"><div><span>SELECT A FIGHTER</span><strong>CHARACTER GRID</strong></div><div><small>AVAILABLE</small><b>01 / 08</b></div></div>
-          <p class="panel-label"><span>FIGHTER ROSTER</span><strong>1 READY</strong></p>
+          <p class="panel-label"><span>FIGHTER ROSTER</span><strong>2 READY</strong></p>
           <div class="roster-grid">
             <button class="roster-card selected" type="button" data-character="yusuke_urameshi" aria-current="true" aria-label="Select Yusuke Urameshi">
               <img src="characters/yusuke/portrait.webp" alt="Yusuke Urameshi"><span>YUSUKE</span>
             </button>
-            <div class="roster-card locked" aria-label="Unreleased fighter slot 2"><span>EMPTY</span></div>
+            <button class="roster-card" type="button" data-character="gumball_watterson" aria-label="Select Gumball Watterson"><img src="characters/gumball/profile-reference.png" alt="Gumball Watterson"><span>GUMBALL</span></button>
             <div class="roster-card locked" aria-label="Unreleased fighter slot 3"><span>EMPTY</span></div>
             <div class="roster-card locked" aria-label="Unreleased fighter slot 4"><span>EMPTY</span></div>
             <div class="roster-card locked" aria-label="Unreleased fighter slot 5"><span>EMPTY</span></div>
@@ -1674,7 +1674,7 @@
             <div class="roster-card locked" aria-label="Unreleased fighter slot 8"><span>EMPTY</span></div>
           </div>
           <div class="select-status">
-            <div class="select-status-row"><span>Playable</span><strong>01 fighter</strong></div>
+            <div class="select-status-row"><span>Playable</span><strong>02 fighters</strong></div>
             <div class="select-status-row"><span>More fighters</span><strong>IN DEVELOPMENT</strong></div>
           </div>
         </section>
@@ -1780,6 +1780,9 @@
   <script src="mugen-fluid-v3.js?v=1"></script>
   <script src="yusuke-motion.js?v=3"></script>
   <script src="dualsense-controller.js?v=1"></script>
+  <script src="characters/gumball/gumball.js?v=1"></script>
+  <script src="characters/gumball/gumball-combat.js?v=1"></script>
+  <script src="characters/gumball/gumball-ultimate.js?v=1"></script>
   <script>
     (() => {
       "use strict";
@@ -1849,7 +1852,9 @@
       const arcadeControls = document.querySelector("#arcade-controls");
       const fightControls = document.querySelector("#fight-controls");
       const arcadeBack = document.querySelector("#arcade-back");
-      const rosterChoice = document.querySelector(".roster-card.selected");
+      let rosterChoice = document.querySelector(".roster-card.selected");
+      let selectedFighterId="yusuke_urameshi";
+      const rosterCards=[...document.querySelectorAll(".roster-card[data-character]")];
       const chooseCharacter = document.querySelector("#choose-character");
       const modal = document.querySelector("#options-modal");
       const fighterConfirmModal = document.querySelector("#fighter-confirm-modal");
@@ -2016,14 +2021,14 @@
         return row;
       }
 
-      function renderCharacter(character) {
+      function renderCharacter(character, options={}) {
         const { profile, selectStats, moves } = character;
         characterArt.classList.remove("missing");
         rosterPortrait.classList.remove("missing");
         characterStage.classList.remove("art-missing");
-        characterArt.src = embeddedYusukePortrait;
+        characterArt.src = options.portrait || embeddedYusukePortrait;
         characterArt.alt = `${character.displayName} charging his Spirit Gun`;
-        rosterPortrait.src = embeddedYusukePortrait;
+        rosterPortrait.src = options.portrait || embeddedYusukePortrait;
         selectedCharacterName.textContent = character.shortName;
         selectedCharacterTitle.textContent = profile.title;
         characterSeries.textContent = character.series;
@@ -2148,6 +2153,19 @@
         });
       }
 
+      const GUMBALL_PROFILE_URL="characters/gumball/profile-reference.png";
+      function gumballRosterDefinition(){
+        const p=window.GumballCharacter.profile;
+        return {displayName:p.name,shortName:"Gumball",series:p.series,profile:{title:p.role,archetype:p.archetype,description:"Unpredictable Elmore speed fighter with elastic cartoon physics and aerial combo routes."},selectStats:p.stats,moves:p.specialMoves.map(m=>({name:m.name,input:m.input}))};
+      }
+      function selectRosterFighter(id){
+        selectedFighterId=id==="gumball_watterson"?"gumball_watterson":"yusuke_urameshi";
+        rosterCards.forEach(card=>{const active=card.dataset.character===selectedFighterId;card.classList.toggle("selected",active);if(active)card.setAttribute("aria-current","true");else card.removeAttribute("aria-current");});
+        rosterChoice=rosterCards.find(card=>card.dataset.character===selectedFighterId)||rosterCards[0];
+        const portrait=selectedFighterId==="gumball_watterson"?GUMBALL_PROFILE_URL:"characters/yusuke/portrait.webp";rosterPortrait.src=portrait;
+        if(selectedFighterId==="gumball_watterson"){renderCharacter(gumballRosterDefinition(),{portrait});characterArt.alt="Gumball Watterson profile reference";characterReady=true;chooseCharacter.disabled=false;startBattleButton.disabled=false;}
+        else{renderCharacter(activeCharacterDefinition||embeddedYusukeDefinition,{portrait});characterReady=Boolean(activeCharacterDefinition);chooseCharacter.disabled=!characterReady;startBattleButton.disabled=!characterReady;}
+      }
       async function loadCharacterDefinition() {
         characterReady = false;
         combatAtlasReady = false;
@@ -2448,7 +2466,8 @@
 
       class Fighter {
         constructor({ name, x, facing, cpu = false, palette }) {
-          const body = cpu ? null : yusukeCombat?.body;
+          this.characterId=!cpu&&selectedFighterId==="gumball_watterson"?"gumball_watterson":"yusuke_urameshi";
+          const body=cpu?null:this.characterId==="gumball_watterson"?{width:92,height:208}:yusukeCombat?.body;
           this.name = name;
           this.x = x;
           this.y = arena.floor;
@@ -2526,6 +2545,23 @@
         }
 
         beginAttack(type) {
+          if(this.characterId==="gumball_watterson"&&!this.cpu){
+            const cfg=window.GumballCharacter;
+            if(type==="light"){
+              if(this.punchWindow<=0)this.resetCombo();
+              type=["jab","cross","body","uppercut"][this.punchStep%4];
+              this.punchStep++;this.squarePresses=Math.min(3,this.squarePresses+1);
+              this.punchWindow=cfg.combo.window;
+              if(this.squarePresses>=cfg.combo.requiredLights){this.comboActive=true;this.comboTime=2.2;}
+            }else if(type==="heavy"){type="heavyKick";this.punchStep=0;this.squarePresses=0;this.punchWindow=0;}
+            else if(type==="gun"){type=this.energy>=18?"elmoreRush":"stretchJab";}
+            const attack=cfg.attacks[type];
+            if(!attack||(attack.cost&&this.energy<attack.cost))return false;
+            if(attack.cost)this.energy-=attack.cost;
+            this.state="attack-"+type;this.stateTime=0;this.attackConnected=false;this.projectileSpawned=false;
+            this.actionBuffer=null;this.actionBufferTime=0;playTone(305,.07);return true;
+          }
+        beginAttack(type) {
           // Square punches create a real chain. The first two are normal;
           // only the THIRD valid Square press unlocks the combo multiplier.
           // Triangle is evaluated at activation time, not at button mapping:
@@ -2572,8 +2608,8 @@
         }
 
         activeHitbox() {
-          const type = this.currentAttack();
-          const attack = attackData[type];
+          const type=this.currentAttack();
+          const attack=this.characterId==="gumball_watterson"&&!this.cpu?window.GumballCharacter.attacks[type]:attackData[type];
           if (!attack || attack.projectile || this.stateTime < attack.activeStart || this.stateTime > attack.activeEnd) return null;
           const width = attack.range;
           return {
@@ -2585,7 +2621,8 @@
         }
 
         update(dt, input, opponent, game) {
-          const movement = yusukeCombat.movement;
+          const isGumball=this.characterId==="gumball_watterson"&&!this.cpu;
+          const movement=isGumball?window.GumballCharacter.movement:yusukeCombat.movement;
           this.punchWindow = Math.max(0, this.punchWindow - dt);
           this.comboTime = Math.max(0, this.comboTime - dt);
           if (this.comboTime === 0 && this.comboActive) this.resetCombo();
@@ -2619,9 +2656,9 @@
 
           const attackType = this.currentAttack();
           if (attackType) {
-            const attack = attackData[attackType];
+            const attack=isGumball?window.GumballCharacter.attacks[attackType]:attackData[attackType];
             const queuedAttack = input.gunPressed
-              ? "gun"
+              ? (isGumball?"elmoreRush":"gun")
               : input.heavyPressed ? "heavy" : input.lightPressed ? "light" : null;
             if (queuedAttack) {
               this.actionBuffer = queuedAttack;
@@ -2639,7 +2676,7 @@
               this.setState("idle");
               this.actionBuffer = null;
               this.actionBufferTime = 0;
-              if (bufferedAttack && (!attackData[bufferedAttack]?.projectile || this.grounded)) this.beginAttack(bufferedAttack);
+              if (bufferedAttack && (isGumball || !attackData[bufferedAttack]?.projectile || this.grounded)) this.beginAttack(bufferedAttack);
             }
             this.applyPhysics(dt);
             return;
@@ -2957,7 +2994,18 @@
           context.restore();
         }
 
+        drawGumballFallback(context,time,alpha=1){
+          const x=this.x,y=this.y;
+          context.save();context.globalAlpha=.32;context.fillStyle="#000";context.beginPath();context.ellipse(x,arena.floor+8,52,12,0,0,Math.PI*2);context.fill();context.restore();
+          context.save();context.translate(x,y);context.scale(this.facing,1);context.fillStyle="#4dabe8";context.strokeStyle="#111827";context.lineWidth=6;
+          context.beginPath();context.ellipse(0,-146,58,68,0,0,Math.PI*2);context.fill();context.stroke();
+          context.fillStyle="#f1b4cf";context.beginPath();context.ellipse(0,-210,51,31,Math.PI,Math.PI*2);context.fill();context.stroke();
+          context.fillStyle="#101b30";context.beginPath();context.ellipse(-21,-151,8,12,0,0,Math.PI*2);context.ellipse(21,-151,8,12,0,0,Math.PI*2);context.fill();
+          context.strokeStyle="#101827";context.lineWidth=5;context.beginPath();context.moveTo(-27,-119);context.quadraticCurveTo(0,-103,27,-119);context.stroke();
+          context.fillStyle="#d5c5b6";context.fillRect(-34,-90,68,54);context.fillStyle="#282d42";context.fillRect(-37,-37,28,31);context.fillRect(9,-37,28,31);context.fillStyle="#e5d7cd";context.fillRect(-47,-8,39,10);context.fillRect(6,-8,39,10);context.restore();
+        }
         draw(context, time, alpha = 1) {
+          if(this.characterId==="gumball_watterson"&&!this.cpu){if(window.GumballCombat?.draw(this,context,time,alpha)){window.GumballCombat.drawMoveVfx(this,context,time);}else this.drawGumballFallback(context,time,alpha);return;}
           if (yusukeSpriteSheet.complete && yusukeSpriteSheet.naturalWidth > 0) {
             this.drawYusukeSprite(context, time, alpha);
             return;
@@ -3178,7 +3226,7 @@
           document.querySelector("#pause-fight").textContent = "Pause (P)";
           clearFightInput();
           this.player = new Fighter({
-            name: activeCharacterDefinition.shortName,
+            name:selectedFighterId==="gumball_watterson"?"Gumball":activeCharacterDefinition.shortName,
             x: 340,
             facing: 1,
             palette: { body: "#08744f", trim: "#5ae7ff", arm: "#0b654b", armDark: "#064535", leg: "#0a654b", legDark: "#064032", shoe: "#d9f4ec", skin: "#d59a75", hair: "#080b0e" }
@@ -3268,7 +3316,7 @@
           }
           if (this.superSequence) {
             this.updateImpacts(dt);
-            window.MugenCinematics?.update(this, dt);
+            if(this.superSequence?.kind==="gumball-reality-break")window.GumballUltimate?.update(this,dt);else window.MugenCinematics?.update(this,dt);
             this.updateHud();
             return;
           }
@@ -3307,7 +3355,8 @@
 
           this.timer = Math.max(0, this.timer - dt);
           const playerInput = humanInput();
-          if (playerInput.ultimatePressed && window.MugenCinematics?.begin(this)) {
+          if(selectedFighterId==="gumball_watterson"&&playerInput.ultimatePressed&&window.GumballUltimate?.begin(this)){this.updateHud();tappedControls.clear();return;}
+          if(playerInput.ultimatePressed&&window.MugenCinematics?.begin(this)){
             playTone(660, .25);
             this.updateHud();
             tappedControls.clear();
@@ -3357,7 +3406,8 @@
           if (!hitbox || attacker.attackConnected || defender.invulnerability > 0 || !rectanglesOverlap(hitbox, defender.hurtbox)) return;
           attacker.attackConnected = true;
           const type = attacker.currentAttack();
-          return () => this.damageFighter(attacker, defender, attackData[type], defender.x, defender.y - 105);
+          const attack=attacker.characterId==="gumball_watterson"&&!attacker.cpu?window.GumballCharacter.attacks[type]:attackData[type];
+          return () => this.damageFighter(attacker,defender,attack,defender.x,defender.y-105);
         }
 
         spawnProjectile(owner, kind = "spiritGun") {
@@ -3470,6 +3520,8 @@
               + (attacker.comboHits - 1) * (yusukeCombat.combo?.extraPerHit ?? .2));
             attacker.comboMultiplier = Math.round(multiplier * 100) / 100;
           }
+          const gumball=attacker.characterId==="gumball_watterson"&&!attacker.cpu;
+          if(gumball&&!blocked&&attacker.comboActive)multiplier=Math.min(window.GumballCharacter.combo.maxScale,window.GumballCharacter.combo.scaleStart+attacker.comboHits*window.GumballCharacter.combo.scaleStep);
           const baseDamage = attack.damage * instinctBoost;
           const damage = baseDamage * multiplier * (blocked ? .25 : 1);
           if (!blocked && attacker.comboActive) attacker.comboBonusDamage += damage - baseDamage;
@@ -3814,6 +3866,7 @@
           window.MugenFluid?.drawFront(this, context, time);
           context.restore();
           window.MugenCinematics?.render(this, context, time);
+          window.GumballUltimate?.render(this,context,time);
         }
       }
 
@@ -3932,11 +3985,9 @@
         if (event.target === modal) closeOptionsPanel();
       });
       arcadeBack.addEventListener("click", returnToMenu);
-      rosterChoice.addEventListener("click", () => {
-        playTone(300);
-        chooseCharacter.focus();
-      });
-      chooseCharacter.addEventListener("click", beginFight);
+      rosterCards.forEach(card=>card.addEventListener("click",()=>{selectRosterFighter(card.dataset.character);playTone(300);chooseCharacter.focus();}));
+      rosterChoice.addEventListener("click",()=>{playTone(300);chooseCharacter.focus();});
+      chooseCharacter.addEventListener("click",()=>{document.querySelector(".matchup-fighter").textContent=selectedFighterId==="gumball_watterson"?"Gumball":"Yusuke";beginFight();});
       returnRoster.addEventListener("click", closeFighterConfirm);
       startBattleButton.addEventListener("click", beginFight);
       battleBack.addEventListener("click", exitFightToSelect);
