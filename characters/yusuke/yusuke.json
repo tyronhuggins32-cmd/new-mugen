@@ -12,7 +12,7 @@
     "description": "Dark Tournament Yusuke fights like a fearless street brawler: sharp punches and kicks build spirit energy, then Spirit Gun punishes retreats and Spirit Shotgun catches evasive opponents."
   },
   "engineStats": {
-    "life": 1000,
+    "life": 5000,
     "attack": 107,
     "defense": 100,
     "walkSpeed": 5.3,
@@ -628,7 +628,7 @@
     }
   },
   "combat": {
-    "maxHealth": 1000,
+    "maxHealth": 5000,
     "startEnergy": 64,
     "energyRegen": 6.5,
     "body": {
@@ -857,7 +857,7 @@
   },
   "passives": {
     "fightingInstinct": {
-      "healthThreshold": 300,
+      "healthThreshold": 1500,
       "damageBoost": 1.1,
       "energyRegenBoost": 1.35,
       "description": "When badly hurt, Yusuke's fighting instinct raises his damage and spirit recovery."
