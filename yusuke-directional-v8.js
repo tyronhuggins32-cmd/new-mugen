@@ -34,7 +34,7 @@
  ]);
  const layouts=Object.freeze({movement,combat});
  function compose(part,image,meta) {
-  if(!image || !(image.naturalWidth||image.width) || !meta?.frames?.length ||
+  if(!image || !(image.naturalWidth || image.width) || !meta?.frames?.length ||
     !meta.frames.every(f=>f.w>0&&f.h>0&&f.w<=470&&f.h<=458))return null;
   const source=layouts[part];
   const canvas=document.createElement("canvas");
@@ -68,8 +68,8 @@
  }
  function build(meta,images){
   if(typeof document==="undefined" || !document.createElement ||
-    !(images?.movement?.naturalWidth||images?.movement?.width) ||
-    !(images?.combat?.naturalWidth||images?.combat?.width) ||
+    !(images?.movement?.naturalWidth || images?.movement?.width) ||
+    !(images?.combat?.naturalWidth || images?.combat?.width) ||
     meta?.movement?.scale!==.5 || meta?.combat?.scale!==.5)return null;
   try{
    const moved=compose("movement",images.movement,meta.movement);
@@ -162,7 +162,7 @@
    const count=q<.6?2:3;
    ctx.strokeStyle=color;ctx.lineCap="round";
    for(let i=0;i<count;i++){
-    const row=i*24+(i%2?3:-3); // anchored lanes, no random-looking jitter
+    const row=i*24+(i%2?3:-3); // fixed dash lanes, no random jitter
     ctx.globalAlpha=.19*(1-i/count);
     ctx.lineWidth=1+i%2;
     const x=f.x-dir*(36+i*7);
