@@ -2635,11 +2635,12 @@
           }
           this.invulnerability = Math.max(0, this.invulnerability - dt);
           this.dashCooldown = Math.max(0, this.dashCooldown - dt);
+          this.perfectDodge=Math.max(0,(this.perfectDodge||0)-dt);
           this.actionBufferTime = Math.max(0, this.actionBufferTime - dt);
           if (this.actionBufferTime === 0) this.actionBuffer = null;
           const instinct = !this.cpu ? activeCharacterDefinition.passives?.fightingInstinct : null;
           const instinctive = instinct && this.health <= instinct.healthThreshold;
-          const regenRate = this.cpu ? 7 : yusukeCombat.energyRegen * (instinctive ? instinct.energyRegenBoost : 1);
+          const regenRate=this.cpu?7:isGumball?8:yusukeCombat.energyRegen*(instinctive?instinct.energyRegenBoost:1);
           this.energy = Math.min(100, this.energy + dt * regenRate);
           this.stateTime += dt;
           this.turnTimer = Math.max(0, this.turnTimer - dt);
@@ -2693,13 +2694,9 @@
             this.applyPhysics(dt);
             return;
           }
-          if (input.dashPressed && this.grounded && this.dashCooldown === 0 && !this.cpu) {
-            this.dashTimer = .145;
-            this.dashCooldown = .48;
-            this.vx = this.facing * 1030;
-            this.setState("walk");
-            this.applyPhysics(dt);
-            return;
+          if(input.dashPressed&&this.grounded&&this.dashCooldown===0&&!this.cpu){
+            if(isGumball){this.invulnerability=.16;this.perfectDodge=.2;}
+            this.dashTimer=.145;this.dashCooldown=isGumball?.36:.48;this.vx=this.facing*(isGumball?1150:1030);this.setState(isGumball?"dodge":"walk");this.applyPhysics(dt);return;
           }
           if (input.charge && this.grounded && !this.cpu) {
             this.setState("charge");
@@ -2723,6 +2720,7 @@
             return;
           }
 
+          if(this.perfectDodge>0&&input.counterPressed){this.perfectDodge=0;this.beginAttack("stretchJab");this.applyPhysics(dt);return;}
           if (this.state === "block") this.setState("idle");
 
           if (input.gunPressed && this.grounded && this.beginAttack("gun")) {
@@ -2756,7 +2754,7 @@
         }
 
         applyPhysics(dt) {
-          if (!this.grounded || this.vy < 0) this.vy += yusukeCombat.movement.gravity * dt;
+          if (!this.grounded || this.vy < 0) this.vy += this.characterId==="gumball_watterson"&&!this.cpu?window.GumballCharacter.movement.gravity*dt:yusukeCombat.movement.gravity*dt;
           this.x += this.vx * dt;
           this.y += this.vy * dt;
           this.x = Math.max(arena.left, Math.min(arena.right, this.x));
