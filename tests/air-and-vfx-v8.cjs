@@ -14,7 +14,7 @@ function fighter(x,y=600,grounded=y===600){
  return f;
 }
 const ground=fighter(690);
-const air=fighter(500,600,false);
+const air=fighter(635,600,false);
 air.y=550;
 assert.ok(physics.separate(air,ground,arena),"low jumping feet still collide with pushbox");
 assert.ok(air.vx>0,"horizontal jumping velocity must not stop on collision");
