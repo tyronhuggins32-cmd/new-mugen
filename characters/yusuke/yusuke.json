@@ -1367,18 +1367,20 @@
   },
   "movementSprites": {
     "source": "spriteSheet",
-    "generation": "cached-foot-aligned-inbetweens",
-    "renderer": "yusuke-motion.js",
-    "fps": 30,
-    "generatedFrames": 120,
+    "generation": "virtual-60hz-timeline-with-continuous-pose-deformation",
+    "renderer": "yusuke-motion.js + mugen-fluid-v3.js",
+    "fps": 60,
+    "timelineFrames": 133,
+    "additionalTexturePixels": 0,
     "animations": {
-      "idle": 30,
-      "run": 30,
-      "walkStart": 12,
-      "walkStop": 12,
+      "idle": 54,
+      "run": 28,
+      "walkStart": 8,
+      "walkStop": 9,
       "jumpRise": 12,
       "jumpFall": 12,
-      "landing": 12
-    }
+      "landing": 10
+    },
+    "note": "133 virtual animation samples, not 133 newly drawn frames. Art is warped in render time at device refresh rate without expensive pre-rendering."
   }
 }
