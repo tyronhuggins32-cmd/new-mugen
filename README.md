@@ -260,3 +260,19 @@ The playable Yusuke now loads the paired color-matched sprites
 
 These are **16 hand-authored pose sprites**, not 16 full independent animation sequences. Smoother high-frame-rate combat still benefits from adding genuine in-between drawings for every attack.
 
+## Yusuke directional combat and aerial sprites (reference-video pass, 13 November 2026)
+
+The reference is a vertical Jump Force MUGEN combat recording. Its useful animation cues are **retreat versus advance**, rush-in acceleration, airborne directional movement, fast punch chains, heavy knockback and visible follow-through. The update recreates the *combat language*, not the characters, flame artwork, timing of the original footage or audio.
+
+The game loads the existing polished, matched **V7 premium 2D PNGs** first. `yusuke-directional-v8.js` then derives **24 additional transparent sprite cels** from those exact pixels at native pixel resolution, without introducing a second costume design or changing Yusuke's 0.5 premium rendering scale:
+
+- **12 directional cels:** three advance, three retreat, two rush, forward/backward aerial direction, low guard and pivot recovery.
+- **12 combat cels:** jab windup/contact, cross windup/contact, body strike, uppercut windup/release, air strike/kick, dash finisher, finishing impact and stagger.
+- Horizontal facing continues to mirror correctly for both left- and right-facing characters. Forward/backward animation uses the sign of velocity relative to facing, rather than reusing the forward run art while retreating.
+- **40 FPS** sprite-step sampling stays separate from the fixed **60 Hz** physics/collision engine. Animation clips have short state handoffs with texture-aware blending; changes do not reset the punch chain, damage or Spirit Energy rules.
+- **Cosmetic** directional speed ribbons, quick chase streaks, and attack anticipation arcs support the kinetic feel without adding damaging hitboxes. They are computed at render time and create no accumulating particle pools.
+- Each supplementary canvas is a **2048 × 1536 transparent atlas with twelve 512-pixel cells**. Both are generated once on character load and have a safe fallback to the original V7 premium art if the extra canvases are unavailable. Generated frames are *pixel-preserving derivatives*, not 24 independent hand-drawn anatomy passes.
+
+**Get the usable sprite PNGs:** Open `yusuke-sprite-studio.html` from the same web server as the game. Preview each atlas, export the two transparent PNGs and export the JSON frame bounds/pivots. The fighter's original 16 premium cels and 28 legacy fallback cels are preserved. Native MUGEN SFF authoring still requires importing the PNGs as frames; this game remains its own browser engine.
+
+**Verification:** `node tests/yusuke-directional-v8.cjs` checks atlas dimensions, 24 source-pixel cels, sprite pivots, forward/back direction, aerial and combo selections, and fallback. `node tests/browser-fluid.cjs` checks the generated sprites in real Chromium. Actual controller/phone performance and subjective art quality still benefit from real device review.
