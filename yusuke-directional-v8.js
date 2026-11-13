@@ -70,7 +70,7 @@
   }catch(e){return null;}
  }
  const frameAt=(keys,time,rate=FPS)=>keys[Math.floor(Math.max(0,time)*rate)%keys.length];
- const phase=(p,wind,release,k0,k1)=>p<wind?k0:p<release?k1:11;
+ const phase=(p,wind,release,k0,k1)=>p<wind?k0:p<release?k1:0;
  function choosePose(fighter,attack,atlas,progress=0) {
   if(!fighter || !atlas?.movement?.image || !atlas?.combat?.image)return null;
   const grounded=Boolean(fighter.grounded);
