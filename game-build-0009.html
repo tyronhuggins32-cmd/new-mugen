@@ -3500,6 +3500,13 @@
         }
 
         drawSpiritProjectile(context, projectile, time) {
+          if (window.MugenVisuals?.drawProjectileFX) {
+            const t = this.renderAlpha ?? 1;
+            const x = (projectile.prevX ?? projectile.x) + (projectile.x - (projectile.prevX ?? projectile.x)) * t;
+            const y = (projectile.prevY ?? projectile.y) + (projectile.y - (projectile.prevY ?? projectile.y)) * t;
+            window.MugenVisuals.drawProjectileFX(context, projectile, x, y, time);
+            return;
+          }
           const shotgun = projectile.kind === "spiritShotgun";
           const cyan = projectile.owner.cpu ? "#ff355d" : "#39bcff";
           const radius = projectile.radius;
