@@ -1790,6 +1790,7 @@
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="mugen-sfx-v8.js?v=1"></script>
+  <script src="yusuke-alpha-cleanup-v9.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=1"></script>
   <script src="yusuke-directional-v8.js?v=1"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
@@ -1846,6 +1847,8 @@
       let premiumArt = null;
       let premiumReady = false;
       let directionalAtlas = null;
+      let cleanedPremiumCombat = null;
+      let cleanedPremiumMovement = null;
       const yusukeKickSheet = new Image();
       yusukeKickSheet.decoding = "async";
       const yusukeSpiritGunSheet = new Image();
@@ -2208,6 +2211,9 @@
         kickAtlasReady = false;
         premiumReady = false;
         premiumArt = null;
+        directionalAtlas = null;
+        cleanedPremiumCombat = null;
+        cleanedPremiumMovement = null;
         yusukeMotionAtlas = null;
         chooseCharacter.disabled = true;
         startBattleButton.disabled = true;
@@ -2267,17 +2273,22 @@
               loadSpriteAsset(premiumCombatSheet,metadata.combat,"Yusuke premium combat"),
               loadSpriteAsset(premiumMotionSheet,metadata.movement,"Yusuke premium movement")
             ]);
+            // Use the same repaired V8 source for authored and derivative
+            // poses, preventing white matte and silhouette edge discontinuities.
+            cleanedPremiumCombat = window.MugenArtCleanup?.prepare(
+              premiumCombatSheet, metadata.combat) || premiumCombatSheet;
+            cleanedPremiumMovement = window.MugenArtCleanup?.prepare(
+              premiumMotionSheet, metadata.movement) || premiumMotionSheet;
             premiumArt = metadata;
             premiumReady = true;
-            // Source-matched 12-direction + 12-combat transparent cels. Optional
-            // runtime atlases, sourced only from the paired V7 fighter artwork.
-            // If canvas allocation fails, the same premium PNG poses remain.
             directionalAtlas = window.MugenDirectional?.build(metadata,
-              {combat:premiumCombatSheet,movement:premiumMotionSheet}) || null;
+              {combat:cleanedPremiumCombat,movement:cleanedPremiumMovement}) || null;
           } catch (error) {
             premiumReady = false;
             premiumArt = null;
             directionalAtlas = null;
+            cleanedPremiumCombat = null;
+            cleanedPremiumMovement = null;
             console.warn("Premium character art unavailable; using all original sprites.",error);
           }
 
@@ -2296,7 +2307,8 @@
           // Avoid a GPU filter/upload hitch when the first enemy attack begins.
           if (window.MugenFluid?.tintForCpu) {
             [yusukeSpriteSheet, yusukeCombatSheet, yusukeSpiritGunSheet, yusukeKickSheet,
-              premiumCombatSheet, premiumMotionSheet,
+              cleanedPremiumCombat || premiumCombatSheet,
+              cleanedPremiumMovement || premiumMotionSheet,
               directionalAtlas?.combat?.image, directionalAtlas?.movement?.image,
               yusukeMotionAtlas?.derivedImage]
               .filter(image => image && (image.naturalWidth || image.width) > 0)
@@ -2912,7 +2924,8 @@
             ? (window.MugenDirectional?.choosePose(this, attackType,
                 directionalAtlas, attackProgress)
               || window.MugenPremium?.choosePose(this, attackType, premiumArt,
-                {combat:premiumCombatSheet,movement:premiumMotionSheet},
+                {combat:cleanedPremiumCombat || premiumCombatSheet,
+                 movement:cleanedPremiumMovement || premiumMotionSheet},
                 attackProgress))
             : null;
           const combatPose = premiumPose ||
@@ -3089,7 +3102,9 @@
                 ox, oy, sprite.w * scale, sprite.h * scale);
             }
           };
-          const handoff = premiumPose?.transitionFrame ? premiumPose : motionPose;
+          // Crossfading two unrelated high-detail silhouettes created pale
+          // double outlines. Draw one solid premium cel at every state edge.
+          const handoff = premiumPose ? null : motionPose;
           if (handoff?.transitionFrame && handoff.transitionMix < .96) {
             // Crossfade on animation *state* boundaries, preserving the right
             // source texture for old and new frames rather than flashing atlas
