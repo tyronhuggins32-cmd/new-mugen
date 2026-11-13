@@ -1,0 +1,16 @@
+name: Mugen regression checks
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Combat engine regression tests
+        run: node tests/engine.cjs
+      - name: Yusuke sprite expansion checks
+        run: node tests/yusuke-sprites.cjs
