@@ -189,3 +189,16 @@ The game generates these once into **one optional 1024 × 1024 RGBA atlas** (rou
 Idle now occasionally shifts into an attentive focus stance, running includes a compact acceleration and braking sequence, and jumping flows back into a planted landing. Sprite transitions remember both the previous frame **and its source texture**, including transitions back from attacks, so combat and movement art cannot accidentally blend against the wrong atlas. The canonical 24-frame sheet remains the fallback when a browser cannot allocate the supplementary canvas. The CPU's darker palette is cached once for the derived atlas as well.
 
 To verify: `node tests/yusuke-motion.cjs` checks the derived frame count, 1024² budget, source-image pixel provenance, 256px pivots, 60 Hz timing, idle/running usage, cross-sheet transitions and low-memory fallback. Follow with the other GitHub Actions regression tests. Screenshot review and real PS5/iPhone performance still require device QA.
+
+## Spirit Shotgun anime-reference VFX (November 2026)
+
+The Spirit Shotgun now follows the user-supplied ~29-second anime clip as a **visual direction reference**. It does not embed video frames or third-party audio. The effect runs in the original 60 Hz canvas renderer through `mugen-shotgun-v4.js`:
+
+- Yusuke braces, charges a blue-white Spirit Energy flash around his **clenched fist**, then releases an expanding cone of light.
+- **40 cosmetic energy fragments** radiate in a broad fan, visually distinct from the narrow Spirit Gun beam.
+- **7 collision pellets** remain the real hitboxes, with one registered hit per volley. The extra visual fragments never modify hit detection, energy, or damage.
+- Confirmed hits generate **34 clustered, short-lived impact marks**, an expanding ring, and a blue energy burst inspired by the clip's peppered target-area effect.
+- The color palette and existing sprite proportions remain consistent across Yusuke's charge and combat poses. Effects expire automatically after a fraction of a second to limit GPU/CPU work.
+- **Controls stay intact:** Triangle uses Spirit Shotgun only when Spirit Energy is strictly above 50%, with the existing 30-energy cost. At 50% or lower, Triangle is the knockback Power Kick. The combo damage meter still activates only after three Square presses.
+
+Checks: `node tests/shotgun-v4.cjs` covers windup, fan shape, visual-only pellet count, clustered impacts and cleanup; `node tests/browser-fluid.cjs` tests the render path and one-volley damage in Chromium. The extra effects do not create additional damaging hitboxes.
