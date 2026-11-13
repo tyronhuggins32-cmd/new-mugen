@@ -22,7 +22,7 @@ for(const [name,clip] of Object.entries(c.animations)){
   assert.ok(clip.frames.every(n=>Number.isInteger(n)&&n>=0&&n<96),name+" frame bounds");
 }
 const combat=fs.readFileSync("characters/gumball/gumball-combat.js","utf8");
-assert.match(combat,/gumball-sprites\.png/);
+assert.match(combat,/sprite\.src/);
 assert.match(combat,/drawMoveVfx/);
 assert.match(combat,/hitStopHeavy/);
 const ultimate=fs.readFileSync("characters/gumball/gumball-ultimate.js","utf8");
@@ -32,6 +32,10 @@ const game=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(game,/data-character="gumball_watterson"/);
 assert.match(game,/GumballUltimate/);
 assert.match(game,/GumballCombat/);
+assert.match(game,/KeyQ: "counter"/);
+assert.match(game,/counterPressed: consumeTap\("counter"\)/);
+assert.match(game,/this\.hitStop = gumballAttack/);
+assert.match(game,/CARTOON COMBO/);
 const fighter=game.slice(game.indexOf("class Fighter"),game.indexOf("class CPUController"));
 assert.equal((fighter.match(/beginAttack\(type\) \{/g)||[]).length,1,"single fighter attack dispatcher");
 console.log("PASS: Gumball profile, five specials, 13 phased hitboxes, animation clips, combat adapter and ultimate wiring.");
