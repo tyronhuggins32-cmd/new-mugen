@@ -586,3 +586,16 @@ body:not([data-screen="fight"]) .modal-backdrop .ready-card button:focus-visible
 .rebirth-home[data-mode="options"] .rb-briefing .mode-card{border-color:#dcff85;}
 /* Keep embedded art and dynamic identity on top of the atmospheric overlays. */
 .rebirth-select .character-art.missing{display:none;}
+
+/* Menu music: only shown when the browser blocks unprompted audio. */
+.rb-audio-start[hidden]{display:none!important}
+.rb-audio-start{
+  position:relative;z-index:12;display:flex;align-items:center;justify-content:center;gap:.8rem;
+  margin:.5rem auto;padding:.7rem 1.25rem;border:1px solid #b9ff7d;border-radius:999px;
+  background:linear-gradient(100deg,#123c39,#294e24);color:#f4ffcb;
+  font-size:.8rem;font-weight:900;letter-spacing:.13em;cursor:pointer;
+  box-shadow:0 0 14px rgba(131,252,168,.25);
+}
+.rb-audio-start small{font-size:.7rem;font-weight:600;letter-spacing:0;color:#c5e8d2}
+.rb-audio-start:hover,.rb-audio-start:focus-visible{outline:2px solid #ffdb66;outline-offset:3px}
+@media(max-width:560px){.rb-audio-start{font-size:.72rem;gap:.4rem;max-width:96%;flex-wrap:wrap;text-align:center}}
