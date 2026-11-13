@@ -149,6 +149,8 @@
   const q=root.MugenFluid?.getStats?.(game)?.quality??1;
   ctx.save();
   for(const f of [game.player,game.cpu]){
+   const attack=f.currentAttack?.();
+   if(root.MugenComboFX && !root.MugenComboFX.allows(f,attack))continue;
    const speed=Math.abs(f.vx||0);
    const active=(f.dashTimer||0)>0 || (f.state==="walk"&&speed>310) ||
      (!f.grounded && speed>210);
@@ -177,6 +179,7 @@
   for(const f of [game.player,game.cpu]){
    const attack=f.currentAttack?.();
    if(!["light","cross","body","upper","powerKick"].includes(attack))continue;
+   if(root.MugenComboFX && !root.MugenComboFX.allows(f,attack))continue;
    const duration=attack==="light"?.19:attack==="cross"?.25:attack==="body"?.29:attack==="upper"?.39:.47;
    const p=clamp((f.stateTime||0)/duration);
    if(p<.16||p>.87)continue;
