@@ -1501,7 +1501,7 @@
       #fx { display: none; }
     }
   </style>
-  <link rel="stylesheet" href="arcade-layout.css?v=13">
+  <link rel="stylesheet" href="arcade-layout.css?v=14">
 </head>
 <body>
   <canvas id="fx" aria-hidden="true"></canvas>
@@ -1513,7 +1513,7 @@
   <div class="frame">
     <header class="topbar">
       <div class="build-mark" id="build-mark">Fighter System // Build 0009</div>
-      <div><span class="online-dot"></span><span id="screen-status">Menu Online</span></div>
+      <div class="controller-status-row"><span id="controller-status" aria-live="polite">PS5 CONTROLLER: PRESS A BUTTON</span><span class="online-dot"></span><span id="screen-status">Menu Online</span></div>
     </header>
 
     <main class="screen" id="main-menu-screen">
@@ -1664,23 +1664,6 @@
         <div class="combo-panel"><strong id="combo-label">0 HITS · +0 DAMAGE</strong><div class="combo-track"><span id="combo-fill"></span></div><div class="combo-time"><span id="combo-window"></span></div><small id="shotgun-ready">SHOTGUN: PUNCH ×3 → SPIRIT</small></div>
         <div class="round-banner" id="round-banner" aria-hidden="true"><strong id="round-banner-text">Fight!</strong></div>
 
-        <div class="touch-controls" aria-label="Touch fighting controls">
-          <div class="touch-group movement">
-            <button class="touch-button" type="button" data-control="left" aria-label="Move left">◀</button>
-            <button class="touch-button" type="button" data-control="right" aria-label="Move right">▶</button>
-            <button class="touch-button" type="button" data-control="jump" aria-label="Jump">▲</button>
-            <button class="touch-button" type="button" data-control="block" aria-label="Block">◆</button>
-          </div>
-          <div class="touch-group actions">
-            <button class="touch-button" type="button" data-control="light" aria-label="Light attack">J</button>
-            <button class="touch-button" type="button" data-control="heavy" aria-label="Heavy attack">K</button>
-            <button class="touch-button" type="button" data-control="gun" aria-label="Spirit Gun, or Shotgun after three punches">霊</button>
-            <button class="touch-button" type="button" data-control="dash" aria-label="Dash forward">D</button>
-            <button class="touch-button" type="button" data-control="charge" aria-label="Hold to charge spirit energy">+</button>
-            <button class="touch-button" type="button" data-control="ultimate" aria-label="MAX Spirit Gun when meter is full">MAX</button>
-          </div>
-        </div>
-
         <div class="battle-result" id="battle-result" role="dialog" aria-modal="true" aria-labelledby="battle-result-title">
           <div class="result-card">
             <small id="battle-result-kicker">Arcade Match Complete</small>
@@ -1742,6 +1725,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="mugen-cinematics.js?v=1"></script>
+  <script src="dualsense-controller.js?v=1"></script>
   <script>
     (() => {
       "use strict";
@@ -1943,7 +1927,7 @@
         }
         playTone(520, 0.1);
         fighterConfirmModal.classList.add("open");
-        returnRoster.focus();
+        startBattleButton.focus({ preventScroll: true });
       }
 
       function closeFighterConfirm() {
@@ -3659,6 +3643,70 @@
         fullscreenToggle.textContent = active ? "Exit" : "Enter";
       });
 
+
+      // DualSense: polls the browser Gamepad API on the existing animation loop.
+      const controllerStatus = document.querySelector("#controller-status");
+      const gamepadControls = window.MugenGamepad?.create({
+        getGamepads: () => navigator.getGamepads?.() || [],
+        screen: () => activeScreen,
+        isPaused: () => arcadeGame?.paused,
+        isResultOpen: () => battleResult.classList.contains("open"),
+        press: pressFightControl,
+        release: releaseFightControl,
+        onConnection: (connected, pad) => {
+          const sony = /(DualSense|Wireless Controller|Sony|PlayStation)/i.test(pad?.id || "");
+          controllerStatus.textContent = connected ? (sony ? "DUALSENSE CONNECTED" : "GAMEPAD CONNECTED")
+            : "PS5 CONTROLLER: PRESS A BUTTON";
+          controllerStatus.classList.toggle("connected", connected);
+        },
+        onDisconnect: () => {
+          if (activeScreen === "fight") {
+            arcadeGame?.setPaused(true);
+            showToast("Controller disconnected. Reconnect to resume.");
+          }
+        },
+        navigate: direction => {
+          const targets = modal.classList.contains("open")
+            ? [soundToggle, particlesToggle, fullscreenToggle, closeOptions]
+            : fighterConfirmModal.classList.contains("open")
+              ? [returnRoster, startBattleButton]
+              : battleResult.classList.contains("open")
+                ? [rematchButton, document.querySelector("#result-select-button")]
+                : [];
+          if (targets.length) {
+            const index = targets.indexOf(document.activeElement);
+            targets[(index + direction + targets.length) % targets.length].focus({ preventScroll: true });
+          } else if (activeScreen === "menu") {
+            playTone(190);
+            setSelected(selectedIndex + direction, true);
+          } else if (activeScreen === "arcade") {
+            chooseCharacter.focus({ preventScroll: true });
+          }
+        },
+        confirm: () => {
+          if (modal.classList.contains("open")) {
+            const targets = [soundToggle, particlesToggle, fullscreenToggle, closeOptions];
+            (targets.includes(document.activeElement) ? document.activeElement : closeOptions).click();
+          } else if (fighterConfirmModal.classList.contains("open")) {
+            const targets = [returnRoster, startBattleButton];
+            (targets.includes(document.activeElement) ? document.activeElement : startBattleButton).click();
+          } else if (battleResult.classList.contains("open")) {
+            const other = document.querySelector("#result-select-button");
+            (document.activeElement === other ? other : rematchButton).click();
+          } else if (activeScreen === "menu") confirmSelection();
+          else if (activeScreen === "arcade") lockInFighter();
+          else if (activeScreen === "fight" && arcadeGame?.paused) arcadeGame.setPaused(false);
+        },
+        back: () => {
+          if (modal.classList.contains("open")) closeOptionsPanel();
+          else if (fighterConfirmModal.classList.contains("open")) closeFighterConfirm();
+          else if (battleResult.classList.contains("open")) exitFightToSelect();
+          else if (activeScreen === "arcade") returnToMenu();
+          else if (activeScreen === "fight" && arcadeGame?.paused) exitFightToSelect();
+        },
+        pause: () => { if (activeScreen === "fight") arcadeGame?.setPaused(!arcadeGame.paused); }
+      });
+
       const sparks = Array.from({ length: 42 }, () => ({
         x: Math.random(),
         y: Math.random(),
@@ -3677,6 +3725,7 @@
 
       let lastTime = performance.now();
       function draw(time) {
+        gamepadControls?.update(time);
         const delta = Math.min(time - lastTime, 32);
         lastTime = time;
         ctx.clearRect(0, 0, innerWidth, innerHeight);
