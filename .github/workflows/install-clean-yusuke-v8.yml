@@ -17,10 +17,11 @@ jobs:
         run: PYTHONPATH=. python3 tests/sprite-edge-v8.py
       - name: Rebuild both V8 transparent atlases
         run: python3 tools/repair_yusuke_alpha_v8.py
-      - name: Check resulting artwork and active pose metadata
+      - name: Check cleaned art, production metadata and built game fallback
         run: |
           node tests/premium-v6.cjs
           node tests/yusuke-sprites.cjs
+          node tests/air-and-vfx-v8.cjs
       - name: Commit cleaned production assets atomically
         run: |
           git config user.name "github-actions[bot]"
