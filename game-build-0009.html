@@ -1782,6 +1782,7 @@
   <script src="mugen-spiritgun-v5.js?v=1"></script>
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
+  <script src="mugen-combat-sfx-v8.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=1"></script>
   <script src="yusuke-directional-v8.js?v=1"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
@@ -1929,6 +1930,16 @@
         } catch (_) {
           // The menu remains fully usable when browser audio is unavailable.
         }
+      }
+
+      function playCombatSfx(name, intensity = .7) {
+        // Use the existing sound option and Web Audio context. On muted or
+        // restricted browsers the game remains fully playable without sound.
+        if (!soundOn || !window.MugenCombatSFX?.play) return false;
+        try {
+          audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+          return window.MugenCombatSFX.play(audioContext, name, intensity);
+        } catch (_) { return false; }
       }
 
       function setSelected(index, focus = false) {
@@ -2621,8 +2632,15 @@
           this.actionBufferTime = 0;
           if (type === "heavy") this.attackVariant = (this.attackVariant + 1) % Math.max(1, attack.animations?.length || 2);
           const punchPitch = { light: 290, cross: 245, body: 184, upper: 150 };
-          playTone(punchPitch[type] ?? (type === "powerKick" ? 113 : type === "shotgun" ? 410 : 480),
-            attack.projectile ? .12 : .06);
+          // Quiet whooshes mark the initial swing; hit impacts sound only
+          // after collision so a whiff never produces a false contact cue.
+          if (["light", "cross", "body", "upper", "powerKick"].includes(type)) {
+            if (!playCombatSfx("swing", type === "powerKick" ? .82 : .52))
+              if (!window.MugenCombatSFX) playTone(punchPitch[type] ?? 115, .06);
+          } else {
+            playTone(punchPitch[type] ?? (type === "shotgun" ? 410 : 480),
+              attack.projectile ? .12 : .06);
+          }
           return true;
         }
 
@@ -2789,6 +2807,8 @@
         }
 
         applyPhysics(dt) {
+          const startedAirborne = this.y < arena.floor - .5;
+          const landingSpeed = this.vy;
           if (!this.grounded || this.vy < 0) this.vy += yusukeCombat.movement.gravity * dt;
           this.x += this.vx * dt;
           this.y += this.vy * dt;
@@ -2796,6 +2816,7 @@
           if (this.y >= arena.floor) {
             this.y = arena.floor;
             this.vy = 0;
+            if (startedAirborne && landingSpeed > 450) playCombatSfx("land", .42);
             if (this.state === "jump") this.setState("idle");
           }
         }
@@ -3674,7 +3695,9 @@
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
           this.shake = blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light;
-          playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
+          const impactSound = blocked ? "block" : heavyHit ? "heavy" : "hit";
+          if (!playCombatSfx(impactSound, blocked ? .4 : heavyHit ? .88 : .6))
+            if (!window.MugenCombatSFX) playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
         }
 
         addImpact(x, y, color, count) {
