@@ -152,7 +152,9 @@ assert.match(html,/MugenMotion\?\.createAtlas/);
 assert.match(html,/MugenMotion\?\.selectPose/);
 assert.match(html,/MugenMotion\?\.rememberPose/);
 assert.match(html,/handoff\.transitionImage/);
-assert.match(html,/const handoff = premiumPose\?\.transitionFrame \? premiumPose : motionPose/);
+assert.match(html,/const handoff = premiumPose\?\.part === "square" \? null/);
+assert.match(html,/: premiumPose\?\.transitionFrame \? premiumPose/);
+assert.match(html,/: premiumPose \? null : motionPose/);
 
 assert.match(html,/previousSheet/);
 assert.match(html,/window\.MugenFluid\?\.drawCel/);

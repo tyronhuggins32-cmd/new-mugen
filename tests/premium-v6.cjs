@@ -52,6 +52,19 @@ check("attack-body","body","combat",3);
 check("attack-upper","upper","combat",4);
 check("attack-gun","gun","combat",6);
 check("attack-shotgun","shotgun","combat",2);
+
+const cleanedSources={combat:{width:2048,height:1024},movement:{width:2048,height:1024}};
+for(const [state,attack,part] of [
+ ["idle",null,"movement"],["attack-gun","gun","combat"],
+ ["attack-shotgun","shotgun","combat"],["block",null,"combat"]
+]){
+ fighter.state=state;
+ const clean=premium.choosePose(fighter,attack,data,cleanedSources,.5);
+ assert.ok(clean && clean.part===part,
+   "alpha-cleaned premium canvases must remain valid for idle/guard/specials");
+ assert.equal(clean.image,cleanedSources[part]);
+}
+
 check("attack-powerKick","powerKick","combat",7);
 check("hit",null,"combat",5);
 fighter.state="walk";fighter.stateTime=.2;
@@ -95,7 +108,7 @@ assert.ok(renderedWidths.every(w=>w<=1520),"only visible camera segment is blitt
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(html,/mugen-rooftop-v6\.js\?v=1/);
-assert.match(html,/yusuke-premium-v6\.js\?v=1/);
+assert.match(html,/yusuke-premium-v6\.js\?v=2/);
 assert.match(html,/width: 2600/);
 assert.match(html,/premiumArt = metadata/);
 assert.match(html,/premiumReady = true/);

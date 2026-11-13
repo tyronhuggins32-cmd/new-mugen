@@ -1790,9 +1790,9 @@
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="mugen-sfx-v8.js?v=1"></script>
-  <script src="yusuke-premium-v6.js?v=1"></script>
+  <script src="yusuke-premium-v6.js?v=2"></script>
   <script src="yusuke-alpha-v9.js?v=1"></script>
-  <script src="yusuke-directional-v8.js?v=3"></script>
+  <script src="yusuke-directional-v8.js?v=4"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
@@ -2304,7 +2304,7 @@
             [yusukeSpriteSheet, yusukeCombatSheet, yusukeSpiritGunSheet, yusukeKickSheet,
               premiumCombatSheet, premiumMotionSheet,
               directionalAtlas?.combat?.image, directionalAtlas?.movement?.image,
-              yusukeMotionAtlas?.derivedImage]
+              directionalAtlas?.square?.image, yusukeMotionAtlas?.derivedImage]
               .filter(image => image && (image.naturalWidth || image.width) > 0)
               .forEach(image => window.MugenFluid.tintForCpu(image, true));
           }
@@ -3111,7 +3111,11 @@
                 ox, oy, sprite.w * scale, sprite.h * scale);
             }
           };
-          const handoff = premiumPose?.transitionFrame ? premiumPose : motionPose;
+          // Draw one complete clean silhouette for each Square phase.
+          // Extra transition crossfades reintroduce pale double arms.
+          const handoff = premiumPose?.part === "square" ? null
+            : premiumPose?.transitionFrame ? premiumPose
+            : premiumPose ? null : motionPose;
           if (handoff?.transitionFrame && handoff.transitionMix < .96) {
             // Crossfade on animation *state* boundaries, preserving the right
             // source texture for old and new frames rather than flashing atlas
