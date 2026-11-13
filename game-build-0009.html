@@ -2582,7 +2582,10 @@
         }
 
         get hurtbox() {
-          return window.MugenCombatV5?.hurtbox(this) || {
+          // Collision module exposes spacing/sweep helpers, not a hurtbox()
+          // method. Never call a missing optional member as a function.
+          return (typeof window.MugenCombatV5?.hurtbox === "function"
+            ? window.MugenCombatV5.hurtbox(this) : null) || {
             x: this.x - this.width / 2, y: this.y - this.height,
             width: this.width, height: this.height
           };
