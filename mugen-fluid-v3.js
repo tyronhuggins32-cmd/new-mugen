@@ -93,22 +93,18 @@
       return true;
     }
     const pose = bend(fighter, time);
-    // By slicing equally in source space, seams remain pixel-aligned; the feet
-    // (bottom slice) never inherit head recoil or torso sway.
-    const strips = 8;
-    for (let i = 0; i < strips; i++) {
-      const y0 = Math.floor(frame.h * i / strips);
-      const y1 = i === strips - 1 ? frame.h : Math.floor(frame.h * (i + 1) / strips);
-      const t = (i + .5) / strips;
-      const flex = Math.sin(Math.PI * (1 - t) * .87);
-      const upper = Math.pow(1 - t, 1.9);
-      const shift = pose.lean * flex + pose.sway * upper + pose.recoil * (1 - t);
-      const lift = pose.rise * upper;
-      const y = dy + (y0 / frame.h) * dh - lift;
-      const h = (y1 - y0) / frame.h * dh + .4;
-      ctx.drawImage(image, frame.x, frame.y + y0, frame.w, y1 - y0,
-        dx + shift, y, dw, h);
-    }
+    // A single transformed source rect never exposes transparent gaps
+    // between torso/arm strips. Anchor the shear to the planted foot pivot.
+    // This also protects old fallback sprites when the premium atlas is absent.
+    const footX=dx+(Number.isFinite(frame.ax)?frame.ax/frame.w:.5)*dw;
+    const footY=dy+dh;
+    const lean=clamp((pose.lean+pose.sway*.48+pose.recoil*.5)/(Math.abs(dh)||1),-.095,.095);
+    ctx.save();
+    ctx.translate(footX,footY);
+    ctx.transform(1,0,-lean,1,0,0);
+    ctx.drawImage(image,frame.x,frame.y,frame.w,frame.h,
+      dx-footX,dy-footY-pose.rise*.45,dw,dh);
+    ctx.restore();
     return true;
   }
 
