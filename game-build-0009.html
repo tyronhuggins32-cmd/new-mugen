@@ -3352,7 +3352,10 @@
           const frame = sprite.frames[index] || sprite.frames[0];
           const scale = sprite.scale || 1;
           context.save();
-          context.globalAlpha *= alpha;
+          // The draw() alpha argument is simulation interpolation, not an
+          // opacity channel. Keep the separate Thorfinn character visible
+          // throughout the 60Hz render cycle.
+          context.globalAlpha = 1;
           context.fillStyle = "rgba(7,11,15,.3)";
           context.beginPath();
           context.ellipse(this.x, arena.floor + 7, 48, 10, 0, 0, Math.PI * 2);
