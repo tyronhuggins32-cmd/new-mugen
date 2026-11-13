@@ -100,8 +100,8 @@ assert.match(html,/premiumReady = true/);
 assert.match(html,/MugenPremium\?\.choosePose\(/);
 assert.match(html,/const tween = premiumPose \|\| motionPose \? null/,
   "do not sample legacy body frames against premium PNG textures");
-assert.match(html,/const sourceFrames = premiumPose \? premiumArt\[premiumPose.part\]\.frames/,
-  "premium frames must use matching source metadata, not old atlases");
+assert.match(html,/const sourceFrames = premiumPose \? premiumPose\.frames \|\| premiumArt\[premiumPose.part\]\.frames/,
+  "premium and derived frames must use matching source metadata, never legacy atlas coordinates");
 assert.match(html,/MugenRooftop\.render\(context, time, arena, this\)/);
 assert.match(html,/x: arena\.width \/ 2 - 300/);
 assert.match(html,/x: arena\.width \/ 2 \+ 300/);
