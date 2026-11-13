@@ -6,7 +6,7 @@ const root = path.resolve(__dirname,"..");
 const html = fs.readFileSync(path.join(root,"game-build-0009.html"),"utf8");
 const css = fs.readFileSync(path.join(root,"mugen-rebirth-ui.css"),"utf8");
 const menuCss = fs.readFileSync(path.join(root,"mugen-street-menu.css"),"utf8");
-const index = html.indexOf('<main class="screen neon-home rebirth-home sf-menu"');
+const index = html.indexOf('<main class="screen sf4-menu"');
 const selectIndex = html.indexOf('<main class="arcade-screen neon-select rebirth-select"');
 const fightIndex = html.indexOf('<main class="fight-screen"');
 assert.ok(index>0&&selectIndex>index&&fightIndex>selectIndex,"both redesigned screens precede fight");
@@ -16,16 +16,17 @@ for(const [,script] of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
   if(script.trim())new Function(script);
 }
 function count(source,pat){return (source.match(pat)||[]).length;}
-assert.equal(count(home,/class="menu-item(?: active)?"/g),5,"five modes still listed");
+assert.equal(count(home,/class="menu-item(?: active)?"/g),10,"ten compact modes match the reference density");
 assert.equal(count(select,/class="roster-card(?: selected| locked)?"/g),8,"one active + seven reserved roster cells");
-assert.ok(home.includes('MAIN <span>MENU</span>'),"large hand-painted menu masthead");
-assert.ok(home.includes('class="sf-paint"')&&home.includes('class="menu neon-mode-list rb-choices sf-nav"'),"painted fighting-game menu and navigation");
-assert.ok(home.includes('NEW MUGEN <span>RISING</span>'),"original branding");
-assert.ok(home.includes('class="sf-description"')&&home.includes('class="rb-briefing-badge"'),"dynamic mode briefing preserved");
+assert.ok(home.includes('>MAIN MENU</h1>'),"large white title at top right");
+assert.ok(home.includes('class="sf4-paint"')&&home.includes('class="menu sf4-choices"'),"full-bleed painting and left-hand mode list");
+assert.ok(home.includes('NEW MUGEN RISING'),"original branding");
+assert.ok(home.includes('class="sf4-description"')&&home.includes('class="rb-briefing-badge"'),"dynamic mode description preserved");
 assert.ok(home.includes('id="menu-music-activation"'),"autoplay fallback is reachable");
 assert.ok(home.includes('characters/yusuke/portrait.webp'),"current Yusuke portrait reused");
 assert.ok(home.includes('data-mode="arcade"')&&home.includes('data-mode="options"'));
-assert.equal(count(home,/class="sf-status">SOON/g),3,"unavailable modes labeled SOON");
+assert.ok(home.includes('data-mode="multiplayer"')&&home.includes('data-mode="manual"')&&home.includes('data-mode="quit"'),"reference-density game mode labels");
+assert.ok(html.includes('quit: {title:"Quit Game"'),"new modes have descriptions");
 assert.ok(select.includes('class="select-layout rb-select-layout"'),"poster, data, roster rebuilt as one grid");
 assert.ok(select.includes('character-stage rb-poster')&&select.includes('character-details rb-fighter-card'));
 assert.ok(select.includes('roster-panel rb-roster'),"wide roster strip");
@@ -43,7 +44,10 @@ for(const id of requiredIds) {
 }
 assert.match(html,/href="mugen-rebirth-ui\.css\?v=\d+"/,"character selection CSS preserved");
 assert.match(html,/href="mugen-street-menu\.css\?v=\d+"/,"new menu CSS linked");
-assert.ok(menuCss.includes('#main-menu-screen.sf-menu')&&menuCss.includes('prefers-reduced-motion:reduce'),"menu responsive/motion rules present");
+assert.ok(menuCss.includes('#main-menu-screen.sf4-menu')&&menuCss.includes('prefers-reduced-motion:reduce'),"menu responsive/motion rules present");
+assert.ok(menuCss.includes('assets/menu/ink-sunset.svg'),"original sunset art linked");
+assert.ok(menuCss.includes('.frame > .topbar')&&menuCss.includes('.frame > .footer'),"old app chrome removed only on menu");
+assert.ok(menuCss.includes('.sf4-choices .menu-item::before'),"extended brushstroke selection bar present");
 assert.ok(menuCss.includes('body:not([data-screen="fight"])'),"menu styling excluded from gameplay");
 assert.ok(html.includes('src="mugen-menu-music.js?v=5"'),"existing menu music controller untouched");
 assert.ok(!html.includes('href="neon-arcade-ui.css?v=1"'),"previous skin not stacked");
@@ -57,4 +61,4 @@ assert.ok(html.includes('rosterChoice.addEventListener("click"'),"fighter handle
 assert.ok(html.includes('chooseCharacter.addEventListener("click", beginFight)'),"fight flow untouched");
 assert.ok(html.includes('fighterConfirmModal.classList.add("open")'),"confirmation flow retained");
 assert.ok(!select.includes('data-control="light"'),"no touchscreen controls reintroduced");
-console.log("PASS: painted main menu, looping music integration, 5 modes, original fighter selection, 8 slots, responsive CSS, fight DOM and DualSense flow.");
+console.log("PASS: reference-composed main menu, looping music, 10 modes, fighter selection, 8 slots, responsive styling, fight DOM and DualSense flow.");
