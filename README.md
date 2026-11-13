@@ -25,9 +25,9 @@ A browser fighting-game prototype featuring Yusuke versus the CPU Demon Scout. R
 | Light / heavy | J / K |
 | Spirit Gun | L |
 | Spirit Shotgun | J, J, J, then L |
-| Spirit Dash | E (or Dash touch button) |
-| Charge spirit energy | Hold I (or + touch button) |
-| MAX Spirit Gun | U at 100 energy (or glowing MAX touch button) |
+| Spirit Dash | E on keyboard / R1 on DualSense |
+| Charge spirit energy | Hold I on keyboard / L2 on DualSense |
+| MAX Spirit Gun | U on keyboard / R2 on DualSense (100 energy) |
 | Pause / resume | P or Pause button |
 | Character select | Esc or B |
 
@@ -101,3 +101,19 @@ The playable Yusuke now loads `characters/yusuke/yusuke-combat-expansion.png` as
 - **Tests:** `node tests/engine.cjs` and `node tests/yusuke-sprites.cjs` run in the new GitHub Actions regression workflow.
 
 This game remains a custom browser fighter, not native MUGEN. To use individual PNGs in an actual MUGEN SFF, they must be imported as separately indexed frames.
+
+
+## Visual overhaul v2 (November 2026)
+
+The original reference video targets detailed 2D anime fighting with full-size characters and strong impact feedback. This pass works on the existing character artwork rather than adding fake smoothness through speed alone.
+
+- **Fixed-step/render separation:** gameplay physics still runs at 60 Hz, but fighters and Spirit Gun projectiles now interpolate their positions when rendered at 90/120/144 Hz. This reduces high-refresh micro-stutter.
+- **Animation transitions:** sprite frames are blended briefly near a frame boundary instead of snapping abruptly. Idle breathing, weight shifts, running lean, aerial tilt, and attack squash/stretch are visual-only and do not change hurtboxes.
+- **Sprite-based opponent:** the CPU opponent now uses the sprite animation pipeline with a dark demonic palette treatment, replacing the old stick-like geometric fallback. It shares Yusuke pose art for now and is not a new independent character sheet.
+- **Visual effects:** sprint/dash afterimages, layered radial hit sparks and shockwaves, smoother projectile streaks, charging wisps and a smoother decaying camera impulse.
+- **Stage:** the Spirit Skyline rooftop has cached multi-depth city silhouettes, atmospheric lighting, perspective-tiled flooring and animated light/fog. Static geometry is drawn once per size to avoid repeatedly constructing all windows during every combat frame.
+- **iPhone framing:** controller-driven fights rotate into a landscape-style arena on portrait iPhones instead of shrinking the entire 16:9 game to a tiny horizontal strip. The actual touch interface stays removed. Landscape devices use the largest available aspect-correct arena.
+
+Run `node tests/visuals.cjs` for canvas-stub regression checks and `node tests/engine.cjs`, `node tests/yusuke-sprites.cjs` and `node tests/gamepad.cjs` for gameplay/art/controller checks. GitHub Actions runs all four automatically. These tests validate code behavior; screenshot comparisons and physical iPhone/PS5 controller performance still require browser/device QA.
+
+The limited number of actual drawings in the sprite atlases remains the largest animation-quality ceiling. This work creates smoother in-betweens and transitions but does not claim to add hundreds of hand-drawn character frames or recreate the reference video frame-for-frame.
