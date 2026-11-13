@@ -2550,6 +2550,7 @@
             this.squarePresses = Math.min(3, this.squarePresses + 1);
             this.punchWindow = yusukeCombat.combo?.window ?? 1.05;
             if (this.squarePresses >= (yusukeCombat.combo?.squarePressesRequired ?? 3)) {
+              if (!this.comboActive) playTone(740, .09);
               this.comboActive = true;
               this.comboTime = yusukeCombat.combo?.displayTime ?? 2.2;
             }
@@ -2570,8 +2571,8 @@
           this.actionBuffer = null;
           this.actionBufferTime = 0;
           if (type === "heavy") this.attackVariant = (this.attackVariant + 1) % Math.max(1, attack.animations?.length || 2);
-          playTone(["light","cross","body","upper"].includes(type) ? 260
-            : type === "powerKick" ? 120 : type === "shotgun" ? 415 : 480,
+          const punchPitch = { light: 290, cross: 245, body: 184, upper: 150 };
+          playTone(punchPitch[type] ?? (type === "powerKick" ? 113 : type === "shotgun" ? 410 : 480),
             attack.projectile ? .12 : .06);
           return true;
         }
@@ -2968,6 +2969,28 @@
               context.moveTo(26, punchY + 12); context.quadraticCurveTo(72, punchY - 7, attackType === "cross" ? 140 : 113, punchY);
             }
             context.stroke();
+            if (this.comboActive) {
+              // Two inexpensive speed-line layers turn an unlocked punch
+              // into a distinctly brighter rush without changing sprite scale.
+              const energy = Math.sin(attackProgress * Math.PI);
+              const y = attackType === "body" ? -85 : attackType === "upper" ? -170 : -128;
+              const reach = attackType === "cross" ? 138 : attackType === "upper" ? 78 : 112;
+              context.save();
+              context.globalCompositeOperation = "lighter";
+              context.lineCap = "round";
+              context.strokeStyle = "#ffe29a";
+              context.globalAlpha = energy * .7;
+              for (let streak = 0; streak < 3; streak++) {
+                const offset = streak * 10;
+                context.lineWidth = Math.max(1, 4 - streak);
+                context.beginPath();
+                context.moveTo(24 + offset, y + 22 + offset);
+                context.quadraticCurveTo(70 + offset, y - offset,
+                  reach + offset * .3, y - 6 + offset);
+                context.stroke();
+              }
+              context.restore();
+            }
           }
           context.restore();
         }
