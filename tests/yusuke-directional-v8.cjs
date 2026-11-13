@@ -9,7 +9,8 @@ const director=root.MugenDirectional;
 assert.ok(director,"directional atlas module should load");
 assert.equal(director.fps,40);
 assert.equal(director.layouts.movement.length,16);
-assert.equal(director.layouts.combat.length,16);
+assert.equal(director.layouts.combat.length,32);
+assert.ok(director.squareFrame && director.square);
 const meta=JSON.parse(fs.readFileSync("characters/yusuke/premium-atlas.json","utf8"));
 const draws=[],allocated=[];
 const document={createElement(tag){
@@ -30,15 +31,16 @@ assert.equal(allocated.length,2,"movement and combat textures built once");
 for(const part of ["movement","combat"]){
  const sheet=atlas[part];
  assert.equal(sheet.image.width,2048);
- assert.equal(sheet.image.height,2048);
- assert.equal(sheet.frames.length,16);
+ assert.equal(sheet.image.height,part==="combat"?4096:2048);
+ assert.equal(sheet.frames.length,part==="combat"?32:16);
  assert.equal(sheet.scale,.5);
  for(const f of sheet.frames){
-  assert.ok(f.x>=0&&f.y>=0&&f.w>0&&f.h>0&&f.x+f.w<=2048&&f.y+f.h<=2048);
+  assert.ok(f.x>=0&&f.y>=0&&f.w>0&&f.h>0&&
+    f.x+f.w<=2048&&f.y+f.h<=(part==="combat"?4096:2048));
   assert.ok(f.ax>=0&&f.ax<=f.w);
  }
 }
-assert.equal(draws.length,32,"all derived cels preserve each body as one complete source sprite");
+assert.equal(draws.length,48,"all 48 movement/combat cels preserve the whole premium fighter silhouette");
 assert.ok(draws.every(args=>args.length===9),
   "no partial sprite-strip cropping is allowed: it creates white seams");
 assert.ok(draws.every(args=>images.movement===args[0]||images.combat===args[0]));
@@ -72,6 +74,26 @@ fighter.grounded=true;fighter.state="attack-cross";fighter.stateTime=.05;
 pose=choose("cross",.45);assert.equal(pose.clip,"cross");
 fighter.state="attack-upper";
 pose=choose("upper",.58);assert.equal(pose.clip,"upper");
+// Confirm every Square action now plays FOUR different full-body cels,
+ // not the one-to-two-key slideshow that used to skip entire phases.
+for(const [attack,start] of [["light",16],["cross",20],["body",24],["upper",28]]){
+ const observed=[.04,.22,.45,.86].map(p=>{
+   fighter.grounded=true;fighter.state="attack-"+attack;fighter.stateTime=p*.29;
+   const selected=choose(attack,p);
+   assert.equal(selected.part,"combat");
+   assert.equal(selected.image,atlas.combat.image);
+   assert.equal(selected.transitionFrame,null,"Square attacks must never ghost two full-body images");
+   assert.ok(Number.isFinite(selected.motion.forward));
+   return selected.index;
+ });
+ assert.deepEqual(observed,[start,start+1,start+2,start+3],
+   attack+" must show its own anticipation, acceleration, contact and recovery");
+ assert.ok(Math.abs(director.squareFrame(attack,0).motion.forward)<.001);
+ assert.ok(Math.abs(director.squareFrame(attack,1).motion.forward)<.001,
+   "attack carry starts and ends at planted stance, preventing combo body snapping");
+ assert.ok(director.layouts.combat[start].src===0 && director.layouts.combat[start+3].src===0,
+   "adjacent combo attacks must share the same source silhouette at the handoff");
+}
 fighter.state="attack-heavy";
 pose=choose("heavy",.52);assert.equal(pose.clip,"heavy");
 assert.equal(pose.index,13,"heavy strike has a dedicated contact pose");
@@ -107,14 +129,17 @@ assert.equal(allocated.length,2,"rendering never allocates new textures");
 const studio=fs.readFileSync("yusuke-sprite-studio.html","utf8");
 assert.ok(studio.includes('"yusuke-directional-"+part+"-v8.png"'),
  "studio exports each transparent sheet with a stable file name");
-assert.ok(studio.includes("columns:4,rows:4"),"sprite studio must export the 4x4 atlas");
+assert.ok(studio.includes("columns:4,rows:{movement:4,combat:8}"),
+  "sprite studio must export 4x4 movement and 4x8 combat atlas geometry");
+assert.ok(studio.includes("squareUpper:[28,29,30,31]"),
+  "all four uppercut phases must be exported for MUGEN import");
 assert.ok(studio.includes("yusuke-directional-v8-frames.json"),
  "studio exports frame crop metadata for external import");
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/yusuke-directional-v8\.js\?v=2/);
+assert.match(html,/yusuke-directional-v8\.js\?v=3/);
 assert.match(html,/MugenDirectional\?\.build/);
 assert.match(html,/MugenDirectional\?\.choosePose/);
 assert.match(html,/premiumPose\.frames \|\| premiumArt/);
 new vm.Script([...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
   .map(x=>x[1]).find(x=>x.includes("function selectYusukeCombatPose")));
-console.log("PASS: 32 source-matched directional/combat cels, backdash both facings, 40 FPS and fallback.");
+console.log("PASS: 48 source-matched cels, 4 Square phases per punch, seam-free handoffs, backdash, 40FPS and fallback.");
