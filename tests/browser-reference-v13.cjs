@@ -93,15 +93,18 @@ const assert=require("node:assert/strict");
   assert.ok(result.drew>=1,"game draws reference premium art atlas for live Yusuke");
   assert.equal(result.flashed,true);
   assert.equal(result.immediate,"flashRush");
-  assert.ok(result.flash.hits>=2 && result.flash.remaining<5000,
+  assert.equal(result.flash.hits,5,"all five flash-step damage beats must connect");
+  assert.ok(result.flash.remaining<5000,
    "flashstep must connect multiple real damage calls against CPU");
   assert.ok(result.flash.advanced,"flashstep advances toward target");
   assert.equal(result.groundAirDenied,true);
   assert.equal(result.airAllowed,true);
+  assert.equal(result.airHits,4,"the aerial pursuit needs four real hits");
   assert.equal(result.deniedVoid,true,"cinematic energy cost is enforced");
   assert.equal(result.startedVoid,true);
   assert.equal(result.cinematicSeen,true);
-  assert.ok(result.voidHits>=14 && result.finalHealth<5000,
+  assert.equal(result.voidHits,15,"cinematic must resolve exactly fifteen timed contacts");
+  assert.ok(result.finalHealth<5000,
    "cinematic must deal a sequenced set of real hits and finish");
   assert.ok(result.heavyHits>=1);
   assert.equal(errors.length,0,errors.join("\n"));
