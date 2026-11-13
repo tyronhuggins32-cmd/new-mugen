@@ -146,8 +146,10 @@
     actor.energy<move.cost||(move.airOnly&&actor.grounded))return false;
   const ok=actor.beginAttack?.(name,actor.energy);
   if(!ok)return false;
-  // Fixed-step tick constructs its own attack state. Trigger has no
-  // controller binding, and does not modify global keys or gamepad logic.
+  // Expose the selected preview immediately; fixed-step tick owns all
+  // timed damage events and can still reset this on the next frame.
+  const s=state(game),target=actor===game.player?game.cpu:game.player;
+  s.active=[{actor,target,id:name,move,progress:0}];
   return true;
  }
  function withinReach(actor,target,hit){
