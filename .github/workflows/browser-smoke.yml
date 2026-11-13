@@ -1,0 +1,48 @@
+name: Real browser fight smoke
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "game-build-0009.html"
+      - "mugen-fluid-v3.js"
+      - "yusuke-motion.js"
+      - "mugen-visuals-v2.js"
+      - "tests/combat.cjs"
+      - "tests/browser-fluid.cjs"
+      - ".github/workflows/browser-smoke.yml"
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Chromium browser runner
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.1
+          npx playwright install --with-deps chromium
+      - name: Start game web server
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 >/tmp/new-mugen-browser.log 2>&1 &
+          echo $! > /tmp/new-mugen-browser.pid
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8000/index.html >/dev/null && exit 0
+            sleep 1
+          done
+          exit 1
+      - name: Play through browser combat
+        run: node tests/combat.cjs
+      - name: Verify fluid render updates in Chromium
+        run: node tests/browser-fluid.cjs
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: new-mugen-browser-debug
+          path: |
+            /tmp/mugen-fight.png
+            /tmp/mugen-mobile.png
+            /tmp/new-mugen-browser.log
+          if-no-files-found: ignore
