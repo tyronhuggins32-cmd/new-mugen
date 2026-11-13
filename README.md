@@ -88,3 +88,16 @@ The browser build uses the standard Web Gamepad API. Pair your controller to the
 In menus: D-pad/left stick up/down navigates; X confirms; Circle goes back. While a fight is paused, Circle returns to character select; while active, Circle fires Spirit Gun. After a match, X can select rematch and Circle returns to character select. The Options pause behavior releases held attack inputs to avoid accidental attacks upon resuming. Disconnecting the active gamepad pauses the game. Keyboard input remains a fallback if the controller is unavailable; touch input is no longer necessary.
 
 This mapping is designed for DualSense's standard browser layout. It is covered by synthetic input regression tests (`node tests/gamepad.cjs`). Real Bluetooth pairing and button mapping must still be verified on a physical PS5 controller and target browser.
+
+
+## Yusuke sprite expansion: twelve additional poses (November 2026)
+
+The playable Yusuke now loads `characters/yusuke/yusuke-combat-expansion.png` as an *additional*, separate 1536 × 768 transparent art atlas. The original 24-frame sheet and existing eight-frame Spirit Gun/Shotgun sheet are still present and serve as fallbacks. `characters/yusuke/yusuke.json` contains exact frame bounds and twelve animation definitions.
+
+- **New sprite art:** ready step, straight cross, crouch brace, rising uppercut, spirit dash, low slide, rising knee, jumping side kick, high guard, stagger back, low recovery, and Spirit Gun charge.
+- **Live presentation:** cross and body attacks, uppercuts, heavy strikes, aerial attacks, guard, hit reactions, spirit charging and forward dash use new art when available. Original special-projectile firing frames remain in use.
+- **Unchanged mechanics:** attack hitboxes, damage, cooldowns, PS5/DualSense mapping, and enemy AI are not modified by this art pass.
+- **Fail-safe loading:** if the extra image cannot load or its dimensions mismatch, the original sprites still render.
+- **Tests:** `node tests/engine.cjs` and `node tests/yusuke-sprites.cjs` run in the new GitHub Actions regression workflow.
+
+This game remains a custom browser fighter, not native MUGEN. To use individual PNGs in an actual MUGEN SFF, they must be imported as separately indexed frames.
