@@ -689,7 +689,7 @@
       },
       "shotgun": {
         "duration": 0.54,
-        "spawnTime": 0.24,
+        "spawnTime": 0.26,
         "cost": 30,
         "projectile": "spiritShotgun",
         "animation": "spiritGun"
@@ -784,7 +784,7 @@
         "hitstun": 0.28,
         "life": 0.8,
         "energyGain": 4,
-        "spread": 0.27,
+        "spread": 0.4,
         "heavyImpact": true
       }
     },
@@ -801,7 +801,18 @@
       "releaseGap": 34,
       "muzzleScale": 0.42,
       "impactScale": 1.2,
-      "pulseRate": 0.021
+      "pulseRate": 0.021,
+      "shotgun": {
+        "chargeDuration": 0.26,
+        "visualPellets": 40,
+        "visualSpread": 0.64,
+        "flashDuration": 0.22,
+        "fanDuration": 0.7,
+        "impactPellets": 34,
+        "impactDuration": 0.49,
+        "visualOnly": true,
+        "reference": "User-supplied Spirit Shotgun anime clip; expanding blue-white fist muzzle flash, dense fan of separated shots, clustered small impact marks"
+      }
     },
     "effects": {
       "hitAnimationDuration": 0.3,
@@ -854,7 +865,7 @@
       "name": "Spirit Shotgun",
       "input": "△ / Triangle at >50% Spirit",
       "type": "special",
-      "description": "Releases seven spreading blue Spirit Energy pellets from a clenched fist. Costs 30 Spirit and does not require any Square presses."
+      "description": "Triangle at strictly more than 50% Spirit: Yusuke gathers blue Spirit Energy around his fist and unleashes a blinding fan of seven damaging Spirit Shotgun pellets with forty visual-only fragments and clustered impacts. Costs 30 Spirit."
     },
     {
       "id": "spirit_gun",
@@ -1413,6 +1424,38 @@
           {
             "frame": 2,
             "at": 0.86
+          }
+        ]
+      },
+      "shotgunFist": {
+        "keyframes": [
+          {
+            "frame": 0,
+            "at": 0
+          },
+          {
+            "frame": 11,
+            "at": 0.13
+          },
+          {
+            "frame": 11,
+            "at": 0.32
+          },
+          {
+            "frame": 0,
+            "at": 0.4
+          },
+          {
+            "frame": 1,
+            "at": 0.5
+          },
+          {
+            "frame": 1,
+            "at": 0.7
+          },
+          {
+            "frame": 0,
+            "at": 0.95
           }
         ]
       }
