@@ -1,0 +1,614 @@
+{
+  "formatVersion": 3,
+  "id": "thorfinn_karlsefni",
+  "displayName": "Thorfinn",
+  "shortName": "Thorfinn",
+  "series": "Vinland Saga",
+  "slot": 2,
+  "status": "selectable",
+  "portrait": "characters/thorfinn/portrait.svg",
+  "profile": {
+    "title": "Dual-Dagger Warrior",
+    "archetype": "Lightning Footwork / Close-Range Blades",
+    "description": "Thorfinn uses swift movement, twin daggers, and tightly timed rush attacks. His prototype moveset emphasizes grounded combos, aerial pressure, and precise spacing."
+  },
+  "engineStats": {
+    "life": 5000,
+    "attack": 110,
+    "defense": 94,
+    "walkSpeed": 5.7,
+    "backWalkSpeed": 4.8,
+    "jumpVelocity": -15
+  },
+  "selectStats": {
+    "power": 840,
+    "speed": 940,
+    "range": 740,
+    "defense": 710
+  },
+  "spriteSheet": {
+    "src": "characters/thorfinn/sprites.svg",
+    "width": 960,
+    "height": 960,
+    "scale": 1,
+    "frames": [
+      {
+        "x": 0,
+        "y": 0,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 160,
+        "y": 0,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 320,
+        "y": 0,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 480,
+        "y": 0,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 640,
+        "y": 0,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 800,
+        "y": 0,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 0,
+        "y": 240,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 160,
+        "y": 240,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 320,
+        "y": 240,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 480,
+        "y": 240,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 640,
+        "y": 240,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 800,
+        "y": 240,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 0,
+        "y": 480,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 160,
+        "y": 480,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 320,
+        "y": 480,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 480,
+        "y": 480,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 640,
+        "y": 480,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 800,
+        "y": 480,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 0,
+        "y": 720,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 160,
+        "y": 720,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 320,
+        "y": 720,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 480,
+        "y": 720,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 640,
+        "y": 720,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      },
+      {
+        "x": 800,
+        "y": 720,
+        "w": 160,
+        "h": 240,
+        "ax": 80
+      }
+    ],
+    "animations": {
+      "idle": {
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          2,
+          1
+        ],
+        "fps": 13,
+        "loop": true
+      },
+      "guard": {
+        "frames": [
+          8
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "run": {
+        "frames": [
+          4,
+          5,
+          6,
+          7
+        ],
+        "fps": 20,
+        "loop": true
+      },
+      "jumpRise": {
+        "frames": [
+          10
+        ],
+        "fps": 12,
+        "loop": false
+      },
+      "jumpFall": {
+        "frames": [
+          11
+        ],
+        "fps": 12,
+        "loop": false
+      },
+      "hit": {
+        "keyframes": [
+          {
+            "frame": 21,
+            "at": 0
+          }
+        ]
+      },
+      "light": {
+        "keyframes": [
+          {
+            "frame": 12,
+            "at": 0
+          },
+          {
+            "frame": 13,
+            "at": 0.5
+          }
+        ]
+      },
+      "cross": {
+        "keyframes": [
+          {
+            "frame": 13,
+            "at": 0
+          }
+        ]
+      },
+      "body": {
+        "keyframes": [
+          {
+            "frame": 14,
+            "at": 0
+          }
+        ]
+      },
+      "upper": {
+        "keyframes": [
+          {
+            "frame": 15,
+            "at": 0
+          }
+        ]
+      },
+      "heavyUppercut": {
+        "keyframes": [
+          {
+            "frame": 16,
+            "at": 0
+          }
+        ]
+      },
+      "heavyKick": {
+        "keyframes": [
+          {
+            "frame": 17,
+            "at": 0
+          }
+        ]
+      },
+      "airKick": {
+        "keyframes": [
+          {
+            "frame": 23,
+            "at": 0
+          }
+        ]
+      },
+      "spiritGun": {
+        "keyframes": [
+          {
+            "frame": 19,
+            "at": 0
+          },
+          {
+            "frame": 18,
+            "at": 0.55
+          }
+        ]
+      }
+    }
+  },
+  "combat": {
+    "maxHealth": 5000,
+    "startEnergy": 42,
+    "energyRegen": 6,
+    "body": {
+      "width": 82,
+      "height": 192
+    },
+    "movement": {
+      "groundSpeed": 515,
+      "airSpeed": 492,
+      "jumpVelocity": -1180,
+      "gravity": 2350,
+      "groundFriction": 18,
+      "airFriction": 1,
+      "attackFriction": 18,
+      "turnDuration": 0.085
+    },
+    "input": {
+      "attackBuffer": 0.16
+    },
+    "attacks": {
+      "light": {
+        "duration": 0.19,
+        "activeStart": 0.038,
+        "activeEnd": 0.133,
+        "damage": 23,
+        "range": 130,
+        "height": 84,
+        "knockback": 110,
+        "hitstun": 0.17,
+        "energyGain": 9,
+        "animation": "light",
+        "airAnimation": "airKick"
+      },
+      "heavy": {
+        "duration": 0.325,
+        "activeStart": 0.085,
+        "activeEnd": 0.198,
+        "damage": 49,
+        "range": 155,
+        "height": 116,
+        "knockback": 485,
+        "hitstun": 0.34,
+        "energyGain": 14,
+        "spiritCoated": true,
+        "animations": [
+          "heavyUppercut",
+          "heavyKick"
+        ],
+        "airAnimation": "airKick",
+        "heavyImpact": true
+      },
+      "gun": {
+        "duration": 0.48,
+        "activeStart": 0.17,
+        "activeEnd": 0.31,
+        "damage": 67,
+        "range": 174,
+        "height": 108,
+        "knockback": 475,
+        "hitstun": 0.43,
+        "cost": 22,
+        "animation": "spiritGun",
+        "heavyImpact": true
+      },
+      "shotgun": {
+        "duration": 0.58,
+        "activeStart": 0.2,
+        "activeEnd": 0.39,
+        "damage": 82,
+        "range": 204,
+        "height": 122,
+        "knockback": 670,
+        "hitstun": 0.5,
+        "cost": 30,
+        "animation": "spiritGun",
+        "heavyImpact": true
+      },
+      "cross": {
+        "duration": 0.25,
+        "activeStart": 0.068,
+        "activeEnd": 0.158,
+        "damage": 28,
+        "range": 143,
+        "height": 106,
+        "knockback": 140,
+        "hitstun": 0.23,
+        "energyGain": 10,
+        "animation": "cross",
+        "airAnimation": "airKick",
+        "heavyImpact": false
+      },
+      "body": {
+        "duration": 0.29,
+        "activeStart": 0.085,
+        "activeEnd": 0.185,
+        "damage": 33,
+        "range": 139,
+        "height": 74,
+        "knockback": 100,
+        "hitstun": 0.23,
+        "energyGain": 10,
+        "animation": "body",
+        "airAnimation": "airKick",
+        "heavyImpact": false
+      },
+      "upper": {
+        "duration": 0.39,
+        "activeStart": 0.112,
+        "activeEnd": 0.24,
+        "damage": 45,
+        "range": 147,
+        "height": 106,
+        "knockback": 410,
+        "hitstun": 0.36,
+        "energyGain": 10,
+        "animation": "upper",
+        "airAnimation": "airKick",
+        "heavyImpact": true
+      },
+      "powerKick": {
+        "duration": 0.47,
+        "activeStart": 0.16,
+        "activeEnd": 0.292,
+        "damage": 52,
+        "range": 178,
+        "height": 111,
+        "knockback": 1150,
+        "launchVelocity": -515,
+        "knockbackDrag": 1.45,
+        "hitstun": 0.57,
+        "energyGain": 8,
+        "animation": "heavyKick",
+        "heavyImpact": true,
+        "spiritCoated": false,
+        "cost": 0
+      }
+    },
+    "projectile": {
+      "player": {
+        "speed": 1120,
+        "radius": 16,
+        "damage": 78,
+        "knockback": 650,
+        "hitstun": 0.46,
+        "life": 1.45,
+        "energyGain": 4,
+        "heavyImpact": true,
+        "launchVelocity": -230
+      },
+      "cpu": {
+        "speed": 720,
+        "radius": 17,
+        "damage": 47,
+        "knockback": 400,
+        "hitstun": 0.37,
+        "life": 1.9,
+        "energyGain": 5,
+        "heavyImpact": true,
+        "launchVelocity": -160
+      },
+      "shotgun": {
+        "pellets": 7,
+        "speed": 820,
+        "radius": 8,
+        "damage": 39,
+        "knockback": 420,
+        "hitstun": 0.28,
+        "life": 0.8,
+        "energyGain": 4,
+        "spread": 0.4,
+        "heavyImpact": true
+      }
+    },
+    "projectileVfx": {
+      "travelFrame": 2,
+      "spriteScale": 0.5,
+      "trailLength": 58,
+      "trailWidth": 11,
+      "trailGap": 13,
+      "afterimages": 3,
+      "afterimageGap": 21,
+      "muzzleOffsetX": 84,
+      "muzzleOffsetY": -158,
+      "releaseGap": 16,
+      "muzzleScale": 0.42,
+      "impactScale": 1.2,
+      "pulseRate": 0.021,
+      "shotgun": {
+        "chargeDuration": 0.26,
+        "visualPellets": 40,
+        "visualSpread": 0.64,
+        "flashDuration": 0.22,
+        "fanDuration": 0.7,
+        "impactPellets": 34,
+        "impactDuration": 0.49,
+        "visualOnly": true,
+        "reference": "User-supplied Spirit Shotgun anime clip; expanding blue-white fist muzzle flash, dense fan of separated shots, clustered small impact marks"
+      },
+      "gun": {
+        "chargeDuration": 0.3,
+        "coreRadius": 16,
+        "tracerLength": 175,
+        "impactDuration": 0.44,
+        "reference": "Fingertip Spirit Gun charged in user's Yu Yu Hakusho reference frame, single precise shot and brilliant on-contact explosion"
+      }
+    },
+    "effects": {
+      "hitAnimationDuration": 0.3,
+      "hitStop": {
+        "block": 0.025,
+        "light": 0.045,
+        "heavy": 0.075
+      },
+      "shake": {
+        "block": 3,
+        "light": 6,
+        "heavy": 12
+      }
+    },
+    "roundTime": 180,
+    "combo": {
+      "squarePressesRequired": 3,
+      "window": 1.05,
+      "displayTime": 2.2,
+      "firstMultiplier": 1.2,
+      "extraPerHit": 0.2,
+      "maxMultiplier": 2.6
+    },
+    "spacing": 140,
+    "punchAssist": 25,
+    "collision": {
+      "groundedCenterSpacing": 140,
+      "crossoverHeightAboveHead": 61,
+      "crouchHeightFactor": 0.57,
+      "airHeightFactor": 0.72,
+      "note": "Ground pushboxes prevent stacking, airborne cross-over is legal once feet rise above opponent's shoulder line; hurtboxes and move hitboxes use pose-specific bounds."
+    }
+  },
+  "moves": [
+    {
+      "id": "dagger_chain",
+      "name": "Twin Dagger Chain",
+      "input": "□ / Square",
+      "type": "normal",
+      "description": "Fast dagger cuts flow into an upper slash, with a combo multiplier after three presses."
+    },
+    {
+      "id": "launching_slash",
+      "name": "Launching Slash",
+      "input": "△ / Triangle · ≤50 meter",
+      "type": "normal",
+      "description": "Forward cleave with heavy knockback and air launch."
+    },
+    {
+      "id": "whirlwind_blades",
+      "name": "Whirlwind Blades",
+      "input": "△ / Triangle · >50 meter",
+      "type": "special",
+      "description": "Close-range double-blade burst. Costs 30 meter."
+    },
+    {
+      "id": "dagger_lunge",
+      "name": "Dagger Lunge",
+      "input": "○ / Circle",
+      "type": "special",
+      "description": "Fast penetrating knife thrust. Costs 22 meter."
+    },
+    {
+      "id": "dash",
+      "name": "Evasive Dash / Backdash",
+      "input": "R1 + direction",
+      "type": "movement",
+      "description": "Quick repositioning in both directions."
+    },
+    {
+      "id": "focus",
+      "name": "Battle Focus",
+      "input": "Hold L2",
+      "type": "utility",
+      "description": "Recover focus meter while standing still."
+    }
+  ]
+}
