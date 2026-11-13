@@ -92,3 +92,9 @@ body[data-screen="arcade"] .select-playbar .choose-button { position: static; wi
  .touch-group.actions { gap: 4px; }
  .touch-button[data-control="ultimate"] { font-size: 10px; }
 }
+
+.touch-button[data-control="ultimate"].ready {
+ color: #fff; border-color: #fff6c4;
+ background: linear-gradient(140deg, #95773f, #673d22);
+ box-shadow: 0 0 16px #ffe88d88, inset 0 0 14px #fff4bd66;
+}
