@@ -652,9 +652,9 @@
       "light": {
         "duration": 0.19,
         "activeStart": 0.038,
-        "activeEnd": 0.102,
+        "activeEnd": 0.133,
         "damage": 20,
-        "range": 101,
+        "range": 116,
         "height": 84,
         "knockback": 110,
         "hitstun": 0.17,
@@ -696,10 +696,10 @@
       },
       "cross": {
         "duration": 0.25,
-        "activeStart": 0.07,
-        "activeEnd": 0.14,
+        "activeStart": 0.068,
+        "activeEnd": 0.158,
         "damage": 26,
-        "range": 112,
+        "range": 133,
         "height": 106,
         "knockback": 140,
         "hitstun": 0.23,
@@ -710,10 +710,10 @@
       },
       "body": {
         "duration": 0.29,
-        "activeStart": 0.09,
-        "activeEnd": 0.17,
+        "activeStart": 0.085,
+        "activeEnd": 0.185,
         "damage": 30,
-        "range": 96,
+        "range": 120,
         "height": 74,
         "knockback": 100,
         "hitstun": 0.23,
@@ -724,10 +724,10 @@
       },
       "upper": {
         "duration": 0.39,
-        "activeStart": 0.12,
-        "activeEnd": 0.22,
+        "activeStart": 0.112,
+        "activeEnd": 0.24,
         "damage": 42,
-        "range": 110,
+        "range": 132,
         "height": 106,
         "knockback": 410,
         "hitstun": 0.36,
@@ -758,22 +758,24 @@
       "player": {
         "speed": 1120,
         "radius": 16,
-        "damage": 51,
-        "knockback": 475,
-        "hitstun": 0.35,
+        "damage": 78,
+        "knockback": 650,
+        "hitstun": 0.46,
         "life": 1.45,
         "energyGain": 4,
-        "heavyImpact": true
+        "heavyImpact": true,
+        "launchVelocity": -230
       },
       "cpu": {
         "speed": 720,
         "radius": 17,
-        "damage": 36,
-        "knockback": 315,
-        "hitstun": 0.32,
+        "damage": 47,
+        "knockback": 400,
+        "hitstun": 0.37,
         "life": 1.9,
         "energyGain": 5,
-        "heavyImpact": true
+        "heavyImpact": true,
+        "launchVelocity": -160
       },
       "shotgun": {
         "pellets": 7,
@@ -798,7 +800,7 @@
       "afterimageGap": 21,
       "muzzleOffsetX": 84,
       "muzzleOffsetY": -158,
-      "releaseGap": 34,
+      "releaseGap": 16,
       "muzzleScale": 0.42,
       "impactScale": 1.2,
       "pulseRate": 0.021,
@@ -812,6 +814,13 @@
         "impactDuration": 0.49,
         "visualOnly": true,
         "reference": "User-supplied Spirit Shotgun anime clip; expanding blue-white fist muzzle flash, dense fan of separated shots, clustered small impact marks"
+      },
+      "gun": {
+        "chargeDuration": 0.3,
+        "coreRadius": 16,
+        "tracerLength": 175,
+        "impactDuration": 0.44,
+        "reference": "Fingertip Spirit Gun charged in user's Yu Yu Hakusho reference frame, single precise shot and brilliant on-contact explosion"
       }
     },
     "effects": {
@@ -835,7 +844,9 @@
       "firstMultiplier": 1.2,
       "extraPerHit": 0.2,
       "maxMultiplier": 2.6
-    }
+    },
+    "spacing": 142,
+    "punchAssist": 25
   },
   "passives": {
     "fightingInstinct": {
