@@ -1,5 +1,5 @@
 /* Yusuke Reference Combat V13
- * Six ORIGINAL Yusuke attacks choreographed from the uploaded MUGEN fight's
+ * Eight ORIGINAL Yusuke attacks choreographed from the uploaded MUGEN fight's
  * rhythmic rushes, launchers, aerial chases and dark-screen finisher.
  * No keyboard/gamepad bindings. The creator assigns those separately.
  * Uses intact alpha-cleaned premium source paintings, 8 poses per attack.
@@ -7,7 +7,7 @@
  */
 (function(root){
  "use strict";
- const CELL=512,COLUMNS=6,ROWS=8;
+ const CELL=512,COLUMNS=8,ROWS=8;
  const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
  const K=(part,src,lean=0,twist=0,lift=0,sx=1,sy=1)=>
    Object.freeze({part,src,lean,twist,lift,sx,sy});
@@ -68,6 +68,36 @@
    cels:Object.freeze([K(M,0),K(C,4,-17,-8),K(C,7,-15,-7,-8),
     K(C,7,9,6,-13),K(C,7,25,11,-8),K(C,4,19,7),
     K(C,5,-10,-5),K(M,0)])
+  }),
+  rapidBarrage:Object.freeze({
+   title:"Rapid Punch Barrage",
+   description:"Ten alternating close punches and a decisive finishing strike.",
+   duration:1.02,cost:0,airOnly:false,cinematic:false,rush:650,bound:false,
+   hits:Object.freeze([
+    ...Array.from({length:10},(_,i)=>H(.19+i*.066,12+(i%3)*2,205,30,.16)),
+    H(.91,40,220,355,.4,true,-105)
+   ]),
+   cels:Object.freeze([
+    K(M,0),K(C,0,-18,-8,0,.976,.993),
+    K(C,1,21,9,-2,1.032,.993),K(C,2,-10,-4),
+    K(C,1,22,8,-2,1.034,.99),K(C,2,24,10,-2,1.038,.99),
+    K(C,5,-10,-4),K(M,0)
+   ])
+  }),
+  spiritWave:Object.freeze({
+   title:"Spirit Wave",
+   description:"A focused mid-range blue Spirit Energy wave with three real contacts.",
+   duration:1.36,cost:35,airOnly:false,cinematic:false,rush:0,wave:true,bound:false,
+   hits:Object.freeze([
+    H(.69,38,820,45,.2),H(.81,40,820,60,.25),
+    H(.98,72,820,540,.42,true,-180)
+   ]),
+   cels:Object.freeze([
+    K(M,0),K(C,6,-14,-7),K(C,6,-20,-11,-2,.973,.993),
+    K(C,6,-12,-6,-3),K(C,7,12,5,-5),
+    K(C,7,23,10,-7,1.035,.994),
+    K(C,5,-8,-3),K(M,0)
+   ])
   })
  });
  const ids=Object.keys(moves);
@@ -154,12 +184,15 @@
   s.active=[{actor,target,id:name,move,progress:0}];
   return true;
  }
- function withinReach(actor,target,hit){
+ function withinReach(actor,target,hit,move){
   if(!actor||!target||target.health<=0)return false;
   const dir=actor.facing<0?-1:1;
   const forward=(target.x-actor.x)*dir;
   const vertical=Math.abs((target.y||0)-(actor.y||0));
-  return forward>=22&&forward<=hit.range&&vertical<=255;
+  // Spirit Wave travels horizontally across mid-body height. It cannot hit
+  // airborne enemies far above the drawn beam merely because they are in range.
+  const verticalLimit=move?.wave?115:255;
+  return forward>=22&&forward<=hit.range&&vertical<=verticalLimit;
  }
  function drive(actor,target,move,dt,arena){
   if(!move.rush||!actor||!target)return;
@@ -194,7 +227,7 @@
    s.active.push({actor,target,id,move,progress:clamp(actor.stateTime/move.duration),count:memo.connected});
    while(memo.index<move.hits.length && actor.stateTime>=move.hits[memo.index].at){
     const hit=move.hits[memo.index++];
-    if(!withinReach(actor,target,hit))continue;
+    if(!withinReach(actor,target,hit,move))continue;
     const face=actor.facing<0?-1:1;
     const impactX=target.x-face*30,impactY=target.y-118;
     const attack={
@@ -234,8 +267,8 @@
     ctx.fillStyle="rgba(2,7,29,"+(.20+.36*Math.sin(Math.PI*p)).toFixed(3)+")";
     ctx.fillRect(0,0,w,h);
    }
-   if(id==="flashRush"||id==="skyPursuit"||id==="spiritCyclone"){
-    const n=id==="flashRush"?6:4;
+   if(id==="flashRush"||id==="skyPursuit"||id==="spiritCyclone"||id==="rapidBarrage"){
+    const n=id==="rapidBarrage"?7:id==="flashRush"?6:4;
     ctx.lineCap="round";
     for(let i=0;i<n;i++){
      const offset=17+i*14,span=48+i*15;
@@ -255,6 +288,59 @@
   if(!s.active.length&&!s.events.length)return;
   ctx.save();
   for(const v of s.active){
+   if(v.id==="rapidBarrage"){
+    // Small directional fist trails emphasize each real punch without
+    // hiding the defender under randomly distributed flashes.
+    const {actor,progress:p}=v,dir=actor.facing<0?-1:1;
+    const rhythm=(p*11)%1,opacity=Math.sin(Math.PI*rhythm);
+    ctx.save();ctx.translate(actor.x+dir*69,actor.y-137);
+    ctx.scale(dir,1);ctx.globalAlpha=opacity*.27;
+    ctx.strokeStyle=actor.cpu?"#ff92b8":"#92ecff";
+    ctx.lineWidth=2.2;ctx.lineCap="round";
+    for(let i=0;i<2;i++){
+     const dy=(i-.5)*25;
+     ctx.beginPath();ctx.moveTo(-39,dy);
+     ctx.quadraticCurveTo(4,dy-18,50,dy-8);ctx.stroke();
+    }
+    ctx.restore();continue;
+   }
+   if(v.id==="spiritWave"){
+    const {actor,progress:p}=v,dir=actor.facing<0?-1:1;
+    const originX=actor.x+dir*79,originY=actor.y-134;
+    ctx.save();ctx.translate(originX,originY);ctx.scale(dir,1);
+    if(p<.48){
+     const charge=clamp(p/.48),radius=15+52*charge;
+     ctx.globalAlpha=.18+.56*charge;
+     ctx.strokeStyle="#6fe6ff";ctx.lineWidth=2+2*charge;
+     for(let ring=0;ring<2;ring++){
+      ctx.beginPath();ctx.arc(0,0,radius*(.55+ring*.43),0,Math.PI*2);ctx.stroke();
+     }
+    }else{
+     // Three contact windows share ONE coherent moving beam. All its
+     // light is cosmetic; only scheduled hits in tick() deal damage.
+     const phase=clamp((p-.48)/.26),out=clamp((1-p)/.15),
+       strength=Math.min(1,phase*4,out*4);
+     const width=820*phase,halfHeight=37+10*strength;
+     const beam=ctx.createLinearGradient(0,-halfHeight,0,halfHeight);
+     beam.addColorStop(0,"rgba(29,154,255,0)");
+     beam.addColorStop(.32,"rgba(54,209,255,.72)");
+     beam.addColorStop(.5,"rgba(232,255,255,.98)");
+     beam.addColorStop(.68,"rgba(54,209,255,.72)");
+     beam.addColorStop(1,"rgba(29,154,255,0)");
+     ctx.globalAlpha=.82*strength;ctx.fillStyle=beam;
+     ctx.fillRect(0,-halfHeight,width,halfHeight*2);
+     ctx.strokeStyle="#8fedff";ctx.lineWidth=2;
+     ctx.globalAlpha=.45*strength;
+     ctx.beginPath();ctx.moveTo(0,-halfHeight*.72);
+     ctx.lineTo(width,-halfHeight*.56);ctx.stroke();
+     ctx.beginPath();ctx.moveTo(0,halfHeight*.72);
+     ctx.lineTo(width,halfHeight*.56);ctx.stroke();
+     ctx.globalAlpha=.74*strength;ctx.strokeStyle="#e5ffff";
+     ctx.lineWidth=3;
+     ctx.beginPath();ctx.arc(width,0,21+24*strength,0,Math.PI*2);ctx.stroke();
+    }
+    ctx.restore();continue;
+   }
    if(v.id!=="spiritVoid")continue;
    const {actor,target,progress:p}=v,dir=actor.facing||1;
    const originX=actor.x+dir*72,originY=actor.y-145;
