@@ -1,0 +1,50 @@
+name: Import Thorfinn jump and crouch sprite sheets
+on:
+  push:
+    branches: ["feature/thorfinn-motion-alpha-v3"]
+    paths: [".github/workflows/import-thorfinn-v3.yml"]
+permissions:
+  contents: write
+jobs:
+  pack-sprites:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install image packaging dependency
+        run: python -m pip install pillow==11.3.0
+      - name: Retrieve exact uploaded original files and verify signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fLsS --retry 3 --retry-all-errors 'https://d2ol7oe51mr4n9.cloudfront.net/user_3J3FsehSSM8aaRaK5HcNwjYb3e6/150cce25-bdc0-480a-b6e3-5291db3af31f.png' -o characters/thorfinn/source-crouch-walk-8frames.png
+          curl -fLsS --retry 3 --retry-all-errors 'https://d2ol7oe51mr4n9.cloudfront.net/user_3J3FsehSSM8aaRaK5HcNwjYb3e6/0fd6f599-f1b6-46bb-825b-d2e28c4af73d.png' -o characters/thorfinn/source-jump-8frames.png
+          echo 'da5b1294045f0d307f716d10a8bf697fa51a19984a2f27e94636d4818fcf5f90  characters/thorfinn/source-crouch-walk-8frames.png' | sha256sum -c -
+          echo 'afd17aafbf89c779dfcc208d99cc145eb741a3313b71050245de1397e3c1bf1f  characters/thorfinn/source-jump-8frames.png' | sha256sum -c -
+      - name: Build clean 56 frame sheet from real creator art
+        run: python tools/pack-thorfinn-v3.py
+      - name: Verify alpha transparency and exact frame count
+        shell: bash
+        run: |
+          python - <<'PY'
+          from PIL import Image
+          a=Image.open('characters/thorfinn/thorfinn-atlas-v3.webp').convert('RGBA')
+          assert a.size==(2048,1960),a.size
+          assert a.getchannel('A').getextrema()==(0,255)
+          for n in range(56):
+              sub=a.crop(((n%8)*256,(n//8)*280,((n%8)+1)*256,((n//8)+1)*280))
+              assert sub.getchannel('A').getbbox(),f'Frame {n} blank'
+          print('PASS: 56 nonempty RGBA frames with real transparent pixels')
+          PY
+      - name: Commit transparent source and finished atlas into the feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add characters/thorfinn/source-crouch-walk-8frames.png characters/thorfinn/source-jump-8frames.png characters/thorfinn/thorfinn-atlas-v3.webp
+          git rm .github/workflows/import-thorfinn-v3.yml
+          git commit -m 'Import and alpha-clean original 16 extra Thorfinn motion frames'
+          git push origin HEAD:feature/thorfinn-motion-alpha-v3
