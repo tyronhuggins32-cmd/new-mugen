@@ -2548,29 +2548,28 @@
           if(this.characterId==="gumball_watterson"&&!this.cpu){
             const cfg=window.GumballCharacter;
             if(type==="light"){
+              if(!this.grounded)return false;
               if(this.punchWindow<=0)this.resetCombo();
               type=["jab","cross","body","uppercut"][this.punchStep%4];
               this.punchStep++;this.squarePresses=Math.min(3,this.squarePresses+1);
               this.punchWindow=cfg.combo.window;
               if(this.squarePresses>=cfg.combo.requiredLights){this.comboActive=true;this.comboTime=2.2;}
-            }else if(type==="heavy"){type="heavyKick";this.punchStep=0;this.squarePresses=0;this.punchWindow=0;}
-            else if(type==="gun"){type=this.energy>=18?"elmoreRush":"stretchJab";}
+            }else if(type==="heavy"){
+              type="heavyKick";this.punchStep=0;this.squarePresses=0;this.punchWindow=0;
+            }else if(type==="gun"){
+              type=this.energy>=18?"elmoreRush":"stretchJab";
+            }
             const attack=cfg.attacks[type];
             if(!attack||(attack.cost&&this.energy<attack.cost))return false;
             if(attack.cost)this.energy-=attack.cost;
             this.state="attack-"+type;this.stateTime=0;this.attackConnected=false;this.projectileSpawned=false;
             this.actionBuffer=null;this.actionBufferTime=0;playTone(305,.07);return true;
           }
-        beginAttack(type) {
           // Square punches create a real chain. The first two are normal;
           // only the THIRD valid Square press unlocks the combo multiplier.
           // Triangle is evaluated at activation time, not at button mapping:
           // >50 Spirit = fist-fired shotgun; <=50 = launching power kick.
-          if(this.characterId==="gumball_watterson"&&!this.cpu){
-            if(type==="light"){if(this.punchWindow<=0)this.resetCombo();type=["jab","cross","body","uppercut"][this.punchStep%4];this.punchStep++;this.squarePresses=Math.min(3,this.squarePresses+1);this.punchWindow=window.GumballCharacter.combo.window;if(this.squarePresses>=3){this.comboActive=true;this.comboTime=2.2;}}
-            else if(type==="heavy"){type="heavyKick";this.punchStep=0;this.squarePresses=0;this.punchWindow=0;}
-            else if(type==="gun"){type=this.energy>=18?"elmoreRush":"stretchJab";}
-          } else if (type === "heavy" && !this.cpu) {
+          if (type === "heavy" && !this.cpu) {
             type = this.energy > 50 ? "shotgun" : "powerKick";
           }
           if (type === "light" && !this.cpu && this.grounded) {
@@ -2589,7 +2588,7 @@
             this.squarePresses = 0;
             this.punchWindow = 0;
           }
-          const attack=this.characterId==="gumball_watterson"&&!this.cpu?window.GumballCharacter.attacks[type]:attackData[type];
+          const attack = attackData[type];
           if (!attack) return false;
           if (attack.cost && this.energy < attack.cost) return false;
           if (attack.cost) this.energy -= attack.cost;
