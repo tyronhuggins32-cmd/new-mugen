@@ -17,7 +17,7 @@ const window={};
 vm.runInNewContext(source,{window,document,Math});
 const combat=window.MugenReferenceV13;
 assert.ok(combat,"cinematic reference move library must load");
-const ids=["flashRush","risingBreaker","skyPursuit","spiritCyclone","spiritVoid","meteorFinish"];
+const ids=["flashRush","risingBreaker","skyPursuit","spiritCyclone","spiritVoid","meteorFinish","rapidBarrage","spiritWave"];
 assert.deepEqual(Object.keys(combat.moves),ids);
 for(const id of ids){
  const move=combat.moves[id];
@@ -36,10 +36,10 @@ assert.equal(combat.moves.spiritVoid.hits.length,15,
  "reference-video finish needs fifteen separate confirmed damage beats");
 const src={combat:{width:2048,naturalWidth:2048},movement:{width:2048,naturalWidth:2048}};
 const atlas=combat.build(meta,src);
-assert.equal(atlas.frames.length,48);
-assert.deepEqual([atlas.image.width,atlas.image.height],[3072,4096]);
+assert.equal(atlas.frames.length,64);
+assert.deepEqual([atlas.image.width,atlas.image.height],[4096,4096]);
 assert.equal(canvases.length,1);
-assert.equal(draws.length,48);
+assert.equal(draws.length,64);
 assert.ok(draws.every(x=>x.length===9&&(x[0]===src.combat||x[0]===src.movement)),
  "single-piece original sprites, no strip slicing or white gaps");
 const fighter={state:"attack-flashRush",grounded:true,facing:1,x:480,y:540,vx:0,vy:0,
@@ -94,11 +94,11 @@ assert.equal(combat.trigger(game,"spiritVoid"),true,"cinematic is callable, not 
 assert.equal(combat.stats(game).move,"spiritVoid");
 combat.reset(game);
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/mugen-yusuke-reference-v13\.js\?v=1/);
+assert.match(html,/mugen-yusuke-reference-v13\.js\?v=2/);
 assert.match(html,/MugenReferenceV13\?\.tick\(this,dt\)/);
 assert.match(html,/MugenReferenceV13\?\.choosePose/);
 assert.match(html,/YusukeAttackLab/);
 assert.doesNotMatch(html,/Key[A-Z]:\s*"flashRush"/);
 const gallery=fs.readFileSync("yusuke-attack-lab-v13.html","utf8");
 for(const id of ids)assert.match(gallery,new RegExp(id));
-console.log("PASS: six unbound source-derived reference moves, 48 complete cels, scheduled hits, rush spacing, airborne restrictions and cinematic staging.");
+console.log("PASS: eight unbound source-derived reference moves, 64 complete cels, scheduled hits, rush spacing, airborne restrictions and cinematic staging.");

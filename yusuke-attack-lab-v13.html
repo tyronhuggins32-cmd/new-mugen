@@ -18,7 +18,7 @@ button strong{display:block}button small{color:#a7cbd2}.panel{border:1px solid #
 </style></head><body>
 <header><small>NEW MUGEN / UNBOUND YUSUKE MOVE PREVIEWS</small>
 <h1>Yusuke Combat Lab</h1>
-<p>Six playable-engine attack sequences based on the uploaded tournament video's chase, launcher, barrage, and dramatic finishing rhythm. <strong>No controller or keyboard attacks are assigned yet.</strong> Select a move to view its eight sprite poses before choosing your controls.</p>
+<p>Eight playable-engine attack sequences based on the uploaded tournament video's chase, launcher, barrage, and dramatic finishing rhythm. <strong>No controller or keyboard attacks are assigned yet.</strong> Select a move to view its eight sprite poses before choosing your controls.</p>
 <a href="./index.html">Return to game</a> · <a href="./yusuke-sprite-studio.html">Sprite exporter</a>
 </header>
 <div class="layout"><nav class="actions" aria-label="Unassigned reference attacks">
@@ -28,17 +28,21 @@ button strong{display:block}button small{color:#a7cbd2}.panel{border:1px solid #
 <button data-move="spiritCyclone" aria-pressed="false"><strong>Spirit Cyclone</strong><small>Four compact energy-assisted impacts</small></button>
 <button data-move="spiritVoid" aria-pressed="false"><strong>Spirit Void</strong><small>Darkened arena, charged fifteen-hit finish</small></button>
 <button data-move="meteorFinish" aria-pressed="false"><strong>Meteor Finish</strong><small>Descending knockback finisher</small></button>
+<button data-move="rapidBarrage" aria-pressed="false"><strong>Rapid Punch Barrage</strong><small>Ten rapid punches and one powerful finishing strike</small></button>
+<button data-move="spiritWave" aria-pressed="false"><strong>Spirit Wave</strong><small>Focused mid-range energy beam with three hit windows</small></button>
 </nav>
 <section class="panel"><canvas id="stage" width="640" height="340" aria-label="Yusuke pose preview"></canvas>
 <div id="timeline" aria-label="Eight keyed frames"></div>
 <h2 id="title">Loading fighter art</h2><p id="notes">Each move has eight intact premium-sourced animation poses.</p>
 <p id="status" role="status">Loading original alpha-cleaned sprites…</p>
+<div class="downloads"><button type="button" id="export-sprites" disabled>Export transparent 64-cel PNG</button>
+<button type="button" id="export-metadata" disabled>Export attack frames + hit timings (JSON)</button></div>
 <p class="note">Preview controls are for reviewing animation only. They do not bind moves to Square, Triangle, Circle, R1, keyboard keys, or controller combinations. This asset previews the new visuals; actual damage is handled in the fighting engine.</p>
 </section></div>
 <script src="./yusuke-premium-v6.js?v=2"></script>
 <script src="./yusuke-alpha-v9.js?v=1"></script>
 <script src="./mugen-yusuke-palette-v11.js?v=1"></script>
-<script src="./mugen-yusuke-reference-v13.js?v=1"></script>
+<script src="./mugen-yusuke-reference-v13.js?v=2"></script>
 <script>
 (async()=>{
  const show=document.querySelector("#status"),
@@ -59,6 +63,33 @@ button strong{display:block}button small{color:#a7cbd2}.panel{border:1px solid #
   };
   const atlas=ref.build(meta,{combat:clean("combat"),movement:clean("movement")});
   if(!atlas)throw Error("The preview sprite atlas could not be allocated.");
+  // Download real, alpha-transparent sprite data without binding controls.
+  const save=(blob,filename)=>{
+   if(!blob)return;
+   const url=URL.createObjectURL(blob),a=document.createElement("a");
+   a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),3500);
+  };
+  const spriteExport=document.querySelector("#export-sprites");
+  spriteExport.disabled=false;
+  spriteExport.onclick=()=>atlas.image.toBlob(
+   blob=>save(blob,"yusuke-reference-eight-attacks-v14.png"),"image/png");
+  const dataExport=document.querySelector("#export-metadata");
+  dataExport.disabled=false;
+  dataExport.onclick=()=>{
+   const animationClips=Object.entries(ref.moves).map(([id,move],order)=>({
+    id,title:move.title,description:move.description,unbound:true,
+    duration:move.duration,energyCost:move.cost,airOnly:move.airOnly,
+    hits:move.hits.map(hit=>({...hit})),frameOffset:order*8,frameCount:8,
+    frames:atlas.frames.slice(order*8,order*8+8)
+   }));
+   save(new Blob([JSON.stringify({version:14,cellSize:[512,512],
+    width:atlas.image.width,height:atlas.image.height,columns:8,rows:8,
+    scale:atlas.scale,frameCount:atlas.frameCount,
+    sprite:"yusuke-reference-eight-attacks-v14.png",
+    attacks:animationClips},null,2)],{type:"application/json"}),
+    "yusuke-reference-eight-attacks-v14.json");
+  };
   let current="flashRush",start=performance.now();
   const buttons=[...document.querySelectorAll("[data-move]")];
   for(let i=0;i<8;i++){const chip=document.createElement("span");ticks.append(chip);}
@@ -69,7 +100,7 @@ button strong{display:block}button small{color:#a7cbd2}.panel{border:1px solid #
    notes.textContent=ref.moves[id].description+" • Unassigned attack";
   }
   buttons.forEach(b=>b.addEventListener("click",()=>select(b.dataset.move)));
-  show.textContent="Ready: six unassigned moves • 48 new source-derived combat cels • 60 Hz preview";
+  show.textContent="Ready: eight unassigned moves • 64 new source-derived combat cels • 60 Hz preview";
   function draw(now){
    const elapsed=(now-start)/1000,move=ref.moves[current],progress=(elapsed% (move.duration+.3))/move.duration;
    ctx.clearRect(0,0,640,340);
