@@ -10,6 +10,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Thorfinn fighter atlas and roster foundation
+        run: node tests/thorfinn.cjs
       - name: Combat engine regression tests
         run: node tests/engine.cjs
       - name: Three-Square combo and Triangle energy threshold

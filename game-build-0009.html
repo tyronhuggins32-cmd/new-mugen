@@ -1666,7 +1666,9 @@
             <button class="roster-card selected" type="button" data-character="yusuke_urameshi" aria-current="true" aria-label="Select Yusuke Urameshi">
               <img src="characters/yusuke/portrait.webp" alt="Yusuke Urameshi"><span>YUSUKE</span>
             </button>
-            <div class="roster-card locked" aria-label="Unreleased fighter slot 2"><span>EMPTY</span></div>
+            <button class="roster-card" type="button" data-character="thorfinn_karlsefni" aria-label="Select Thorfinn" disabled>
+              <img src="characters/thorfinn/portrait.svg" alt="Thorfinn"><span>THORFINN</span>
+            </button>
             <div class="roster-card locked" aria-label="Unreleased fighter slot 3"><span>EMPTY</span></div>
             <div class="roster-card locked" aria-label="Unreleased fighter slot 4"><span>EMPTY</span></div>
             <div class="roster-card locked" aria-label="Unreleased fighter slot 5"><span>EMPTY</span></div>
@@ -1862,6 +1864,11 @@
       let yusukeEffectSheets = Object.create(null);
       let yusukeCombat = null;
       let characterReady = false;
+      let selectedFighterDefinition = null;
+      let thorfinnDefinition = null;
+      let thorfinnReady = false;
+      const thorfinnSpriteSheet = new Image();
+      thorfinnSpriteSheet.decoding = "async";
 
       const items = [...document.querySelectorAll(".menu-item")];
       const modeTitle = document.querySelector("#mode-title");
@@ -1876,6 +1883,8 @@
       const fightControls = document.querySelector("#fight-controls");
       const arcadeBack = document.querySelector("#arcade-back");
       const rosterChoice = document.querySelector(".roster-card.selected");
+      const rosterCards = [...document.querySelectorAll(".roster-card[data-character]")];
+      const thorfinnRoster = document.querySelector('.roster-card[data-character="thorfinn_karlsefni"]');
       const chooseCharacter = document.querySelector("#choose-character");
       const modal = document.querySelector("#options-modal");
       const fighterConfirmModal = document.querySelector("#fighter-confirm-modal");
@@ -2040,7 +2049,7 @@
 
       function lockInFighter() {
         if (!characterReady) {
-          showToast("Yusuke is still loading. Check the character files if this message stays.");
+          showToast("The selected fighter is still loading. Check the character files if this message stays.");
           return;
         }
         playTone(520, 0.1);
@@ -2078,8 +2087,20 @@
         characterArt.classList.remove("missing");
         rosterPortrait.classList.remove("missing");
         characterStage.classList.remove("art-missing");
-        characterArt.src = embeddedYusukePortrait;
-        characterArt.alt = `${character.displayName} charging his Spirit Gun`;
+        characterArt.src = character.portrait || embeddedYusukePortrait;
+        characterArt.alt = `${character.displayName} fighter portrait`;
+        document.querySelector(".rb-poster .player-tag").textContent =
+          `${character.series.toUpperCase()} / FIGHTER ${String(character.slot).padStart(2, "0")}`;
+        document.querySelector(".rb-launch p > span:last-child").textContent =
+          `${character.displayName.toUpperCase()} // FIRST TO TWO ROUNDS`;
+        document.querySelector(".matchup-line .matchup-fighter").textContent = character.displayName;
+        document.querySelector(".matchup-line").setAttribute("aria-label",
+          `${character.displayName} versus Demon Scout`);
+        document.querySelector(".hud-fighter:not(.cpu) .hud-name").innerHTML =
+          `${character.shortName} <span>Player 1</span>`;
+        document.querySelector("#triangle-action").textContent = character.id === "thorfinn_karlsefni"
+          ? "△ TRIANGLE · WHIRLWIND BLADES / LAUNCHING SLASH"
+          : "△ TRIANGLE · SPIRIT SHOTGUN / POWER KICK";
         rosterPortrait.src = embeddedYusukePortrait;
         selectedCharacterName.textContent = character.shortName;
         selectedCharacterTitle.textContent = profile.title;
@@ -2310,6 +2331,7 @@
           }
 
           activeCharacterDefinition = character;
+          selectedFighterDefinition = character;
           yusukeSpriteFrames = character.spriteSheet.frames;
           yusukeAnimations = character.spriteSheet.animations;
           yusukeEffectSheets = character.effectSheets;
@@ -2325,6 +2347,75 @@
           showToast("Yusuke's sprite images could not load.");
           console.error(error);
         }
+      }
+
+      // Thorfinn is its own character and visual atlas. Never substitute
+      // Yusuke's spirit effects or sprites for the second roster slot.
+      async function loadThorfinnDefinition() {
+        thorfinnReady = false;
+        thorfinnRoster.disabled = true;
+        try {
+          const response = await fetch(new URL("characters/thorfinn/thorfinn.json", document.baseURI),
+            {cache:"no-store"});
+          if (!response.ok) throw Error("Thorfinn manifest unavailable: " + response.status);
+          const character = await response.json();
+          const sheet = character.spriteSheet;
+          if (character.id !== "thorfinn_karlsefni" || character.formatVersion < 3 ||
+              !character.combat?.movement || !character.combat?.attacks ||
+              !Array.isArray(character.moves) || !character.profile ||
+              !sheet?.src || !Array.isArray(sheet.frames) || sheet.frames.length < 24) {
+            throw Error("Thorfinn character definition is incomplete");
+          }
+          for (const frame of sheet.frames) {
+            if (![frame.x,frame.y,frame.w,frame.h,frame.ax].every(Number.isFinite) ||
+                frame.x < 0 || frame.y < 0 || frame.w <= 0 || frame.h <= 0 ||
+                frame.x + frame.w > sheet.width || frame.y + frame.h > sheet.height)
+              throw Error("Thorfinn sprite frame outside atlas");
+          }
+          for (const name of ["idle","run","jumpRise","jumpFall","guard","hit",
+            "light","heavyUppercut","heavyKick","airKick","spiritGun"]) {
+            const animation = sheet.animations?.[name];
+            const frames = animation?.frames || animation?.keyframes?.map(key=>key.frame);
+            if (!Array.isArray(frames) || !frames.length ||
+                frames.some(id=>!Number.isInteger(id)||id<0||id>=sheet.frames.length))
+              throw Error("Invalid Thorfinn animation: " + name);
+          }
+          for (const attack of ["light","cross","body","upper","heavy",
+            "powerKick","gun","shotgun"]) {
+            if (!character.combat.attacks[attack])
+              throw Error("Missing Thorfinn attack: " + attack);
+          }
+          await loadSpriteAsset(thorfinnSpriteSheet, sheet, "Thorfinn sprite atlas");
+          thorfinnDefinition = character;
+          thorfinnReady = true;
+          thorfinnRoster.disabled = false;
+          document.querySelector(".rb-roster-head b").textContent = "02 / 08";
+          document.querySelector(".rb-roster .panel-label strong").textContent = "2 READY";
+          document.querySelector(".select-status-row strong").textContent = "02 fighters";
+        } catch(error) {
+          console.warn("Thorfinn is not selectable until his atlas loads.", error);
+          thorfinnRoster.disabled = true;
+          thorfinnRoster.title = "Thorfinn artwork unavailable";
+        }
+      }
+
+      function selectRosterCharacter(id) {
+        const character = id === "thorfinn_karlsefni" ? thorfinnDefinition : activeCharacterDefinition;
+        if (!character || !characterReady || (id === "thorfinn_karlsefni" && !thorfinnReady)) {
+          showToast("This fighter's data or sprite art is not ready.");
+          return false;
+        }
+        selectedFighterDefinition = character;
+        yusukeCombat = character.combat;
+        attackData = Object.freeze(character.combat.attacks);
+        rosterCards.forEach(card => {
+          const selected = card.dataset.character === character.id;
+          card.classList.toggle("selected", selected);
+          if (selected) card.setAttribute("aria-current", "true");
+          else card.removeAttribute("aria-current");
+        });
+        renderCharacter(character);
+        return true;
       }
 
       function showPortraitFallback(image) {
@@ -2353,6 +2444,12 @@
         left: 68,
         right: 2600 - 68
       });
+
+      // Included in the engine slice used by standalone regression tests.
+      function isThorfinnSelected() {
+        return typeof selectedFighterDefinition !== "undefined" &&
+          selectedFighterDefinition?.id === "thorfinn_karlsefni";
+      }
 
       let attackData = Object.freeze({});
 
@@ -3175,7 +3272,59 @@
           context.restore();
         }
 
+        drawThorfinnSprite(context, time, alpha = 1) {
+          const definition = selectedFighterDefinition;
+          const sprite = definition.spriteSheet;
+          const attackName = this.currentAttack();
+          const attack = attackName ? attackData[attackName] : null;
+          const progress = attack ? Math.min(1, this.stateTime / attack.duration) : 0;
+          let animName = "idle";
+          if (this.state === "hit") animName = "hit";
+          else if (attack) {
+            animName = attack.animation || "light";
+            if (attackName === "heavy") animName = attack.animations?.[this.attackVariant] || "heavyUppercut";
+            if (attackName === "shotgun") animName = "spiritGun";
+            if (!this.grounded) animName = attack.airAnimation || "airKick";
+          } else if (this.state === "block") animName = "guard";
+          else if (!this.grounded || this.state === "jump")
+            animName = this.vy < 0 ? "jumpRise" : "jumpFall";
+          else if (this.dashTimer > 0) animName = "run";
+          else if (this.state === "walk") animName = "run";
+          const chosen = sprite.animations[animName] || sprite.animations.idle;
+          let index = animationFrameFrom(chosen, this.stateTime, progress);
+          if (this.dashTimer > 0 && this.state === "walk") index = 22;
+          const frame = sprite.frames[index] || sprite.frames[0];
+          const scale = sprite.scale || 1;
+          context.save();
+          context.globalAlpha *= alpha;
+          context.fillStyle = "rgba(7,11,15,.3)";
+          context.beginPath();
+          context.ellipse(this.x, arena.floor + 7, 48, 10, 0, 0, Math.PI * 2);
+          context.fill();
+          context.translate(this.x, this.y);
+          context.scale(this.facing, 1);
+          context.imageSmoothingEnabled = false;
+          context.drawImage(thorfinnSpriteSheet,frame.x,frame.y,frame.w,frame.h,
+            -(frame.ax || frame.w/2)*scale,-frame.h*scale,
+            frame.w*scale,frame.h*scale);
+          if (attack && !attack.projectile &&
+              this.stateTime >= attack.activeStart && this.stateTime <= attack.activeEnd) {
+            context.globalAlpha *= .8;
+            context.beginPath();
+            context.arc(18*scale,-115*scale,Math.min(120,attack.range*.7),
+              -.95, .32);
+            context.lineWidth = attackName === "shotgun" ? 7 : 4;
+            context.strokeStyle = "#e4ebe7";
+            context.stroke();
+          }
+          context.restore();
+        }
+
         draw(context, time, alpha = 1) {
+          if (!this.cpu && isThorfinnSelected() && thorfinnSpriteSheet.naturalWidth > 0) {
+            this.drawThorfinnSprite(context, time, alpha);
+            return;
+          }
           if (yusukeSpriteSheet.complete && yusukeSpriteSheet.naturalWidth > 0) {
             this.drawYusukeSprite(context, time, alpha);
             return;
@@ -3396,7 +3545,7 @@
           document.querySelector("#pause-fight").textContent = "Pause (P)";
           clearFightInput();
           this.player = new Fighter({
-            name: activeCharacterDefinition.shortName,
+            name: isThorfinnSelected() ? selectedFighterDefinition.shortName : activeCharacterDefinition.shortName,
             x: arena.width / 2 - 300,
             facing: 1,
             palette: { body: "#08744f", trim: "#5ae7ff", arm: "#0b654b", armDark: "#064535", leg: "#0a654b", legDark: "#064032", shoe: "#d9f4ec", skin: "#d59a75", hair: "#080b0e" }
@@ -3533,7 +3682,7 @@
 
           this.timer = Math.max(0, this.timer - dt);
           const playerInput = humanInput();
-          if (playerInput.ultimatePressed && window.MugenCinematics?.begin(this)) {
+          if (!isThorfinnSelected() && playerInput.ultimatePressed && window.MugenCinematics?.begin(this)) {
             playTone(660, .25);
             this.updateHud();
             tappedControls.clear();
@@ -3866,7 +4015,7 @@
           if (this.winner === this.player) {
             battleResultKicker.textContent = "Arcade Match Complete";
             battleResultTitle.textContent = "Victory";
-            battleResultMessage.textContent = "Yusuke defeated the Demon Scout. The next arcade challenger is coming soon.";
+            battleResultMessage.textContent = `${this.player.name} defeated the Demon Scout. The next arcade challenger is coming soon.`;
           } else if (this.winner === this.cpu) {
             battleResultKicker.textContent = "Mission Failed";
             battleResultTitle.textContent = "Defeat";
@@ -4121,6 +4270,22 @@
           context.save();
           if (window.MugenFluid?.beginFrame) window.MugenFluid.beginFrame(this, context, time, arena);
           else if (this.shake > 0) context.translate((Math.sin(time * .11) + Math.sin(time * .067)) * this.shake * .28, (Math.cos(time * .097) + Math.cos(time * .053)) * this.shake * .28);
+          // Thorfinn fights with physical blades: do not draw Yusuke's blue
+          // Spirit Gun, Shotgun, directional aura or other fighter-specific VFX.
+          if (isThorfinnSelected()) {
+            if (window.MugenRooftop?.render) window.MugenRooftop.render(context, time, arena, this);
+            else this.drawArena(context, time);
+            this.player.draw(context,time,this.renderAlpha ?? 1);
+            this.cpu.draw(context,time,this.renderAlpha ?? 1);
+            for (const hit of this.impacts) {
+              context.globalAlpha = Math.min(1,hit.life/hit.maxLife);
+              context.fillStyle = hit.color;
+              context.fillRect(hit.x,hit.y,hit.size,hit.size);
+            }
+            context.globalAlpha = 1;
+            context.restore();
+            return;
+          }
           if (window.MugenRooftop?.render) window.MugenRooftop.render(context, time, arena, this);
           else if (window.MugenVisuals?.drawArena) window.MugenVisuals.drawArena(context, time, arena);
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
@@ -4168,7 +4333,7 @@
 
       function beginFight() {
         if (!characterReady) {
-          showToast("Yusuke has not finished loading.");
+          showToast("The selected fighter has not finished loading.");
           return;
         }
         fighterConfirmModal.classList.remove("open");
@@ -4255,6 +4420,16 @@
             event.preventDefault();
             playTone(145);
             returnToMenu();
+          } else if (["ArrowLeft","ArrowRight","a","A","d","D"].includes(event.key)) {
+            event.preventDefault();
+            const playable = rosterCards.filter(card=>!card.disabled);
+            if (playable.length>1) {
+              const current = playable.findIndex(card=>card.classList.contains("selected"));
+              const direction = ["ArrowLeft","a","A"].includes(event.key) ? -1 : 1;
+              const next = playable[(current + direction + playable.length) % playable.length];
+              selectRosterCharacter(next.dataset.character);
+              next.focus({preventScroll:true});
+            }
           } else if ((event.key === "Enter" || event.key === " ") && document.activeElement !== arcadeBack) {
             event.preventDefault();
             lockInFighter();
@@ -4282,8 +4457,16 @@
       });
       arcadeBack.addEventListener("click", returnToMenu);
       rosterChoice.addEventListener("click", () => {
-        playTone(300);
-        chooseCharacter.focus();
+        if (selectRosterCharacter("yusuke_urameshi")) {
+          playTone(300);
+          chooseCharacter.focus();
+        }
+      });
+      thorfinnRoster.addEventListener("click", () => {
+        if (selectRosterCharacter("thorfinn_karlsefni")) {
+          playTone(300);
+          chooseCharacter.focus();
+        }
       });
       chooseCharacter.addEventListener("click", beginFight);
       returnRoster.addEventListener("click", closeFighterConfirm);
@@ -4370,7 +4553,13 @@
             playTone(190);
             setSelected(selectedIndex + direction, true);
           } else if (activeScreen === "arcade") {
-            chooseCharacter.focus({ preventScroll: true });
+            const playable = rosterCards.filter(card=>!card.disabled);
+            if (playable.length>1) {
+              const current = playable.findIndex(card=>card.classList.contains("selected"));
+              const next = playable[(current+direction+playable.length)%playable.length];
+              selectRosterCharacter(next.dataset.character);
+              next.focus({preventScroll:true});
+            } else chooseCharacter.focus({preventScroll:true});
           }
         },
         confirm: () => {
@@ -4459,6 +4648,7 @@
       resizeCanvas();
       setSelected(0);
       loadCharacterDefinition();
+      loadThorfinnDefinition();
       requestAnimationFrame(draw);
     })();
   </script>
