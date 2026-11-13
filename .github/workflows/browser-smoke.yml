@@ -46,6 +46,8 @@ jobs:
           exit 1
       - name: Play through browser combat
         run: node tests/combat.cjs
+      - name: Play Thorfinn sprite and dagger moves in Chromium
+        run: node tests/thorfinn-browser.cjs
       - name: Verify fluid render updates in Chromium
         run: node tests/browser-fluid.cjs
       - name: Upload failure diagnostics
