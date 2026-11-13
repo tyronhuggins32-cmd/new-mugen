@@ -38,12 +38,23 @@ const assert = require('node:assert/strict');
   ok(g.roundNumber===2 && g.roundWins.every(x=>x===0),'draw replay');
   g.reset();g.player.setState('block');g.player.facing=1;
   g.damageFighter(g.cpu,g.player,{damage:10,facing:1,hitstun:.2,knockback:10},0,0);
-  ok(g.player.health===989,'rear guard bypass');
+  ok(g.player.health===990,'rear guard bypass');
   g.reset();g.player.setState('block');g.player.facing=1;
   g.damageFighter(g.cpu,g.player,{damage:10,facing:-1,hitstun:.2,knockback:10},0,0);
   ok(g.player.health===997.5,'front guard');
+  // Triangle switches on the strict spirit meter threshold.
+  g.reset();g.state='play';g.player.energy=50;
+  ok(g.player.beginAttack('heavy') && g.player.currentAttack()==='powerKick',
+    'Triangle at 50% activates knockback Power Kick');
+  g.reset();g.state='play';g.player.energy=51;
+  ok(g.player.beginAttack('heavy') && g.player.currentAttack()==='shotgun',
+    'Triangle above 50% activates Spirit Shotgun');
+  g.reset();g.state='play';g.player.beginAttack('light');g.updateHud(true);
+  ok(document.querySelector('.combo-panel').hidden,'combo meter is hidden before three Square taps');
+  g.player.beginAttack('light');g.player.beginAttack('light');g.updateHud(true);
+  ok(!document.querySelector('.combo-panel').hidden,'combo meter appears after third Square');
   g.reset();g.state='play';g.start();
-  return 10;
+  return 15;
  });
  await page.keyboard.press('p');
  const pausedTime=await page.evaluate(()=>testEngine.game.timer);
