@@ -2441,12 +2441,12 @@
         // The finger-pointing animation remains exclusive to Spirit Gun.
         if (attackType === "gun") return null;
         if (attackType === "shotgun") return choose("straightCross");
+        if (attackType === "light" && !fighter.grounded) return choose("jumpingKick");
         if (attackType === "light") return choose("lightJab") || choose("straightCross");
         if (attackType === "cross") return choose("straightCross");
         if (attackType === "body") return choose("bodyBlow") || choose("crouchBrace");
         if (attackType === "upper") return choose("risingUppercut");
         if (attackType === "heavy") return choose(fighter.attackVariant === 0 ? "risingUppercut" : "jumpingKick");
-        if (attackType === "light" && !fighter.grounded) return choose("jumpingKick");
         if (fighter.state === "hit") return choose("stagger");
         if (fighter.state === "block") return choose("highGuard");
         if (fighter.state === "charge") return choose("spiritCharge");
