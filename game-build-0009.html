@@ -1560,7 +1560,7 @@
         </div>
         <div class="arcade-badges" aria-label="Match settings">
           <span class="arcade-badge">CPU: Normal</span>
-          <span class="arcade-badge">Stage: Spirit Ruins</span>
+          <span class="arcade-badge">Stage: Spirit Skyline</span>
           <span class="arcade-badge">180 Seconds</span>
         </div>
         <button class="back-button" id="arcade-back" type="button"><span>‹</span> Main Menu</button>
@@ -1621,6 +1621,9 @@
             <li><span>Spirit Punch</span><span class="move-input">K</span></li>
             <li><span>Spirit Gun</span><span class="move-input">L</span></li>
             <li><span>Spirit Shotgun</span><span class="move-input">J ×3 → L</span></li>
+            <li><span>Spirit Dash</span><span class="move-input">E</span></li>
+            <li><span>Spirit Charge</span><span class="move-input">Hold I</span></li>
+            <li><span>MAX Spirit Gun</span><span class="move-input">U · 100 Meter</span></li>
           </ul>
 
           <div class="enemy-preview" aria-label="Next CPU opponent">
@@ -1671,7 +1674,10 @@
           <div class="touch-group actions">
             <button class="touch-button" type="button" data-control="light" aria-label="Light attack">J</button>
             <button class="touch-button" type="button" data-control="heavy" aria-label="Heavy attack">K</button>
-            <button class="touch-button" type="button" data-control="gun" aria-label="Spirit Gun; hold block while pressing for Spirit Shotgun">霊</button>
+            <button class="touch-button" type="button" data-control="gun" aria-label="Spirit Gun, or Shotgun after three punches">霊</button>
+            <button class="touch-button" type="button" data-control="dash" aria-label="Dash forward">D</button>
+            <button class="touch-button" type="button" data-control="charge" aria-label="Hold to charge spirit energy">+</button>
+            <button class="touch-button" type="button" data-control="ultimate" aria-label="MAX Spirit Gun when meter is full">MAX</button>
           </div>
         </div>
 
@@ -1700,7 +1706,7 @@
       </div>
       <div class="controls" id="fight-controls" hidden>
         <span><span class="key">A D / ← →</span> Move</span>
-        <span><span class="key">W</span> Jump · <span class="key">S</span> Block · <span class="key">J</span> Brawl · <span class="key">K</span> Spirit Punch · <span class="key">L</span> Spirit Gun · <span class="key">J×3→L</span> Shotgun</span>
+        <span><span class="key">W</span> Jump · <span class="key">S</span> Block · <span class="key">J</span> Brawl · <span class="key">K</span> Spirit Punch · <span class="key">L</span> Spirit Gun · <span class="key">J×3→L</span> Shotgun · <span class="key">E</span> Dash · <span class="key">I</span> Charge · <span class="key">U</span> MAX Spirit Gun</span>
       </div>
       <div class="copyright">New Mugen // Prototype</div>
     </footer>
@@ -1725,7 +1731,7 @@
         <span class="matchup-vs">VS</span>
         <span class="matchup-fighter cpu">Demon Scout</span>
       </div>
-      <p>Spirit Ruins · CPU difficulty normal · 180 second round</p>
+      <p>Spirit Skyline · CPU difficulty normal · 180 second round</p>
       <div class="ready-actions">
         <button class="close-button" id="return-roster" type="button">Back to roster</button>
         <button class="close-button" id="start-battle" type="button">Start Fight</button>
@@ -1735,6 +1741,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="mugen-cinematics.js?v=1"></script>
   <script>
     (() => {
       "use strict";
@@ -2158,7 +2165,10 @@
         ShiftRight: "block",
         KeyJ: "light",
         KeyK: "heavy",
-        KeyL: "gun"
+        KeyL: "gun",
+        KeyE: "dash",
+        KeyI: "charge",
+        KeyU: "ultimate"
       });
 
       function pressFightControl(control, source = control) {
@@ -2198,7 +2208,10 @@
           jumpPressed: consumeTap("jump"),
           lightPressed: consumeTap("light"),
           heavyPressed: consumeTap("heavy"),
-          gunPressed: consumeTap("gun")
+          gunPressed: consumeTap("gun"),
+          dashPressed: consumeTap("dash"),
+          charge: heldControls.has("charge"),
+          ultimatePressed: consumeTap("ultimate")
         };
       }
 
@@ -2311,6 +2324,8 @@
           this.punchWindow = 0;
           this.comboHits = 0;
           this.comboTime = 0;
+          this.dashTimer = 0;
+          this.dashCooldown = 0;
         }
 
         get grounded() {
@@ -2392,6 +2407,7 @@
           this.comboTime = Math.max(0, this.comboTime - dt);
           if (this.comboTime === 0) this.comboHits = 0;
           this.invulnerability = Math.max(0, this.invulnerability - dt);
+          this.dashCooldown = Math.max(0, this.dashCooldown - dt);
           this.actionBufferTime = Math.max(0, this.actionBufferTime - dt);
           if (this.actionBufferTime === 0) this.actionBuffer = null;
           const instinct = !this.cpu ? activeCharacterDefinition.passives?.fightingInstinct : null;
@@ -2438,6 +2454,29 @@
             return;
           }
 
+          // Forward burst and vulnerable spirit charge. Both use the same fixed 60 Hz physics.
+          if (this.dashTimer > 0 && this.grounded) {
+            this.dashTimer = Math.max(0, this.dashTimer - dt);
+            this.vx = this.facing * 1030;
+            this.setState("walk");
+            this.applyPhysics(dt);
+            return;
+          }
+          if (input.dashPressed && this.grounded && this.dashCooldown === 0 && !this.cpu) {
+            this.dashTimer = .145;
+            this.dashCooldown = .48;
+            this.vx = this.facing * 1030;
+            this.setState("walk");
+            this.applyPhysics(dt);
+            return;
+          }
+          if (input.charge && this.grounded && !this.cpu) {
+            this.setState("charge");
+            this.vx = 0;
+            this.energy = Math.min(100, this.energy + dt * 22);
+            this.applyPhysics(dt);
+            return;
+          }
           const direction = Number(input.right) - Number(input.left);
           if (this.grounded) this.setFacing(opponent.x >= this.x ? 1 : -1);
 
@@ -2899,6 +2938,7 @@
           this.state = "intro";
           this.introTime = 0;
           this.endingTime = 0;
+          this.superSequence = null;
           this.winner = null;
           this.shake = 0;
           this.hitStop = 0;
@@ -2954,6 +2994,12 @@
             this.hitStop = Math.max(0, this.hitStop - dt);
             return;
           }
+          if (this.superSequence) {
+            this.updateImpacts(dt);
+            window.MugenCinematics?.update(this, dt);
+            this.updateHud();
+            return;
+          }
           this.updateImpacts(dt);
           this.shake = Math.max(0, this.shake - dt * 26);
 
@@ -2988,6 +3034,12 @@
 
           this.timer = Math.max(0, this.timer - dt);
           const playerInput = humanInput();
+          if (playerInput.ultimatePressed && window.MugenCinematics?.begin(this)) {
+            playTone(660, .25);
+            this.updateHud();
+            tappedControls.clear();
+            return;
+          }
           const cpuInput = this.controller.update(dt, this.cpu, this.player, this.projectiles);
           this.player.update(dt, playerInput, this.cpu, this);
           this.cpu.update(dt, cpuInput, this.player, this);
@@ -3419,12 +3471,14 @@
           context.clearRect(0, 0, arena.width, arena.height);
           context.save();
           if (this.shake > 0) context.translate((Math.random() - .5) * this.shake, (Math.random() - .5) * this.shake);
-          this.drawArena(context, time);
+          if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
+          else this.drawArena(context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
 
           this.player.draw(context, time);
           this.cpu.draw(context, time);
+          window.MugenCinematics?.aura(this, context, time);
           for (const burst of this.energyBursts) this.drawSpiritBurst(context, burst, time);
           for (const impact of this.impacts) {
             context.globalAlpha = Math.min(1, impact.life / impact.maxLife);
@@ -3433,6 +3487,7 @@
           }
           context.globalAlpha = 1;
           context.restore();
+          window.MugenCinematics?.render(this, context, time);
         }
       }
 
