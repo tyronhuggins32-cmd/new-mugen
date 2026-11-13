@@ -152,7 +152,10 @@ assert.match(html,/MugenMotion\?\.createAtlas/);
 assert.match(html,/MugenMotion\?\.selectPose/);
 assert.match(html,/MugenMotion\?\.rememberPose/);
 assert.match(html,/handoff\.transitionImage/);
-assert.match(html,/const handoff = premiumPose\?\.transitionFrame \? premiumPose : motionPose/);
+assert.match(html,/const handoff = premiumPose\?\.squareFrame/);
+assert.match(html,/: premiumPose\?\.transitionFrame \? premiumPose/);
+assert.match(html,/: premiumPose \? null : motionPose/,
+  "premium Square recovery does not overlay a second low-resolution body");
 
 assert.match(html,/previousSheet/);
 assert.match(html,/window\.MugenFluid\?\.drawCel/);
