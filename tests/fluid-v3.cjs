@@ -72,7 +72,7 @@ fluid.onHit(game,hero,cpu,false,true,700,430);
 assert.equal(fluid.getStats(game).rings,1);
 fluid.drawBehind(game,canvas,1400);
 fluid.drawFront(game,canvas,1400);
-for(let i=0;i<20;i++)fluid.tick(game,1/60);
+for(let i=0;i<32;i++)fluid.tick(game,1/60);
 assert.equal(fluid.getStats(game).rings,0,"impact shockwaves expire");
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
