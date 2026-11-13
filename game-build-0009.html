@@ -2472,6 +2472,7 @@
           this.projectileSpawned = false;
           this.actionBuffer = null;
           this.actionBufferTime = 0;
+          this.actionBufferEnergy = null;
           this.attackVariant = -1;
           this.turnTimer = 0;
           this.lastSpiritVolley = null;
@@ -2525,13 +2526,13 @@
           this.comboBonusDamage = 0;
         }
 
-        beginAttack(type) {
+        beginAttack(type, energyAtPress = this.energy) {
           // Square punches create a real chain. The first two are normal;
           // only the THIRD valid Square press unlocks the combo multiplier.
           // Triangle is evaluated at activation time, not at button mapping:
           // >50 Spirit = fist-fired shotgun; <=50 = launching power kick.
           if (type === "heavy" && !this.cpu) {
-            type = this.energy > 50 ? "shotgun" : "powerKick";
+            type = energyAtPress > 50 ? "shotgun" : "powerKick";
           }
           if (type === "light" && !this.cpu && this.grounded) {
             if (this.punchWindow <= 0) this.resetCombo();
@@ -2586,6 +2587,7 @@
 
         update(dt, input, opponent, game) {
           const movement = yusukeCombat.movement;
+          const energyAtInput = this.energy;
           this.punchWindow = Math.max(0, this.punchWindow - dt);
           this.comboTime = Math.max(0, this.comboTime - dt);
           if (this.comboTime === 0 && this.comboActive) this.resetCombo();
@@ -2625,6 +2627,7 @@
               : input.heavyPressed ? "heavy" : input.lightPressed ? "light" : null;
             if (queuedAttack) {
               this.actionBuffer = queuedAttack;
+              this.actionBufferEnergy = energyAtInput;
               // Keep Square and Triangle taps queued through recovery.
               this.actionBufferTime = Math.max(yusukeCombat.input.attackBuffer,
                 attack.duration - this.stateTime + .07);
@@ -2636,10 +2639,13 @@
             }
             if (this.stateTime >= attack.duration) {
               const bufferedAttack = this.actionBufferTime > 0 ? this.actionBuffer : null;
+              const bufferedEnergy = this.actionBufferEnergy;
               this.setState("idle");
               this.actionBuffer = null;
+              this.actionBufferEnergy = null;
               this.actionBufferTime = 0;
-              if (bufferedAttack && (!attackData[bufferedAttack]?.projectile || this.grounded)) this.beginAttack(bufferedAttack);
+              if (bufferedAttack && (!attackData[bufferedAttack]?.projectile || this.grounded))
+                this.beginAttack(bufferedAttack, bufferedEnergy ?? this.energy);
             }
             this.applyPhysics(dt);
             return;
@@ -2689,7 +2695,7 @@
             this.applyPhysics(dt);
             return;
           }
-          if (input.heavyPressed && this.beginAttack("heavy")) {
+          if (input.heavyPressed && this.beginAttack("heavy", energyAtInput)) {
             this.applyPhysics(dt);
             return;
           }
