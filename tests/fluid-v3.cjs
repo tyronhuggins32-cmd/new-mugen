@@ -104,7 +104,7 @@ const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(html,/MugenFluid\.beginFrame\(this, context, time, arena\)/);
 assert.match(html,/MugenFluid\?\.tick\(this, dt\)/);
 assert.match(html,/MugenFluid\?\.onHit\(this,/);
-assert.match(html,/<script src="mugen-fluid-v3\.js\?v=2"><\/script>/);
+assert.match(html,/<script src="mugen-fluid-v3\.js\?v=3"><\/script>/);
 assert.match(html,/if \(activeScreen === "fight"\)/);
 assert.match(html,/substeps < 5/);
 assert.match(html,/updateHud\(force = false\)/);
