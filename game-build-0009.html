@@ -1794,6 +1794,7 @@
   <script src="mugen-sfx-v8.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=2"></script>
   <script src="yusuke-alpha-v9.js?v=1"></script>
+  <script src="mugen-yusuke-palette-v11.js?v=1"></script>
   <script src="yusuke-directional-v8.js?v=4"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
@@ -1851,6 +1852,10 @@
       let directionalAtlas = null;
       let cleanPremiumCombatSheet = null;
       let cleanPremiumMotionSheet = null;
+      let consistentBaseSheet = null;
+      let consistentCombatSheet = null;
+      let consistentKickSheet = null;
+      let consistentSpiritGunSheet = null;
       const yusukeKickSheet = new Image();
       yusukeKickSheet.decoding = "async";
       const yusukeSpiritGunSheet = new Image();
@@ -2278,6 +2283,22 @@
             }
           }
 
+          // Palette-lock even the old fallback/special PNGs before generating
+          // supplementary animation. All poses retain the same hair and coat.
+          consistentBaseSheet = window.MugenYusukePalette?.prepare(
+            yusukeSpriteSheet,character.spriteSheet.frames) || yusukeSpriteSheet;
+          consistentSpiritGunSheet = window.MugenYusukePalette?.prepare(
+            yusukeSpiritGunSheet, character.effectSheets.spiritGun.fighterFrames ||
+              character.effectSheets.spiritGun.frames) || yusukeSpiritGunSheet;
+          consistentCombatSheet = combatAtlasReady
+            ? window.MugenYusukePalette?.prepare(yusukeCombatSheet,
+                character.combatSpriteSheet.frames) || yusukeCombatSheet
+            : yusukeCombatSheet;
+          consistentKickSheet = kickAtlasReady
+            ? window.MugenYusukePalette?.prepare(yusukeKickSheet,
+                character.powerKickSpriteSheet.frames) || yusukeKickSheet
+            : yusukeKickSheet;
+
           // Load the paired hi-detail sprite families together. Never mix a
           // premium movement set with legacy combat art, as that would make
           // the character visibly change between every state transition.
@@ -2292,10 +2313,14 @@
               loadSpriteAsset(premiumMotionSheet,metadata.movement,"Yusuke premium movement")
             ]);
             premiumArt = metadata;
-            cleanPremiumCombatSheet = window.MugenAlphaMatte?.prepare(
+            const combatNoWhite = window.MugenAlphaMatte?.prepare(
               premiumCombatSheet, metadata.combat.frames) || premiumCombatSheet;
-            cleanPremiumMotionSheet = window.MugenAlphaMatte?.prepare(
+            const movementNoWhite = window.MugenAlphaMatte?.prepare(
               premiumMotionSheet, metadata.movement.frames) || premiumMotionSheet;
+            cleanPremiumCombatSheet = window.MugenYusukePalette?.prepare(
+              combatNoWhite, metadata.combat.frames) || combatNoWhite;
+            cleanPremiumMotionSheet = window.MugenYusukePalette?.prepare(
+              movementNoWhite, metadata.movement.frames) || movementNoWhite;
             directionalAtlas = window.MugenDirectional?.build(metadata,
               {combat:cleanPremiumCombatSheet,movement:cleanPremiumMotionSheet}) || null;
             premiumReady = true;
@@ -2312,7 +2337,8 @@
           // in one 1024x1024 atlas; fall back to original sprite keys if needed.
           try {
             yusukeMotionAtlas = window.MugenMotion?.createAtlas(
-              yusukeSpriteSheet, character.spriteSheet.frames, character.spriteSheet.scale || 1
+              consistentBaseSheet || yusukeSpriteSheet,
+              character.spriteSheet.frames, character.spriteSheet.scale || 1
             ) || null;
           } catch (error) {
             yusukeMotionAtlas = null;
@@ -2322,8 +2348,12 @@
           // Warm CPU palette textures once on the character-selection load.
           // Avoid a GPU filter/upload hitch when the first enemy attack begins.
           if (window.MugenFluid?.tintForCpu) {
-            [yusukeSpriteSheet, yusukeCombatSheet, yusukeSpiritGunSheet, yusukeKickSheet,
-              premiumCombatSheet, premiumMotionSheet,
+            [consistentBaseSheet || yusukeSpriteSheet,
+              consistentCombatSheet || yusukeCombatSheet,
+              consistentSpiritGunSheet || yusukeSpiritGunSheet,
+              consistentKickSheet || yusukeKickSheet,
+              cleanPremiumCombatSheet || premiumCombatSheet,
+              cleanPremiumMotionSheet || premiumMotionSheet,
               directionalAtlas?.combat?.image, directionalAtlas?.movement?.image,
               directionalAtlas?.square?.image, yusukeMotionAtlas?.derivedImage]
               .filter(image => image && (image.naturalWidth || image.width) > 0)
@@ -2606,7 +2636,7 @@
           const index = animationFrameFrom(animation, fighter.stateTime, progress);
           const frame = atlas?.frames?.[index];
           if (frame) return { frame, animation, frames: atlas.frames,
-            scale: atlas.scale || 1.1, image: yusukeKickSheet };
+            scale: atlas.scale || 1.1, image: consistentKickSheet || yusukeKickSheet };
         }
         const extra = combatAtlasReady ? activeCharacterDefinition?.combatSpriteSheet : null;
         if (!extra) return null;
@@ -3028,7 +3058,9 @@
             this, yusukeMotionAtlas, !usesFiringAnimation && !combatPose && !attackType
           );
           const rawSheet = usesFiringAnimation
-            ? yusukeSpiritGunSheet : combatPose ? combatPose.image || yusukeCombatSheet : motionPose?.image || yusukeSpriteSheet;
+            ? consistentSpiritGunSheet || yusukeSpiritGunSheet
+            : combatPose ? combatPose.image || consistentCombatSheet || yusukeCombatSheet
+            : motionPose?.image || consistentBaseSheet || yusukeSpriteSheet;
           let renderSheet = rawSheet;
           // CPU palette is cached once instead of applying a costly per-frame
           // canvas filter to every stripe, trail and interpolated pose.
@@ -3047,9 +3079,13 @@
                 ? ({ light: 3, cross: 5, body: 4, upper: 4 }[attackType])
                 : ({ light: 8, cross: 18, body: 15, upper: 12, powerKick: 26 }[attackType]))
             : attackType === "heavy" ? Math.sin(attackProgress * Math.PI) * 14 : 0;
-          const scale = usesFiringAnimation
+          const requestedScale = usesFiringAnimation
             ? firingSheet.fighterScale || activeCharacterDefinition.spriteSheet.scale || 1
             : combatPose?.scale || motionPose?.scale || activeCharacterDefinition.spriteSheet.scale || 1;
+          // Bound visible sprite height, including damage and combo handoffs,
+          // without changing the canonical premium silhouette or hitboxes.
+          const scale = window.MugenYusukePalette?.fitScale(
+            rawSheet,frame,requestedScale,220) || requestedScale;
           const drawX = -frame.ax * scale;
           const drawY = -frame.h * scale + (attackType === "body" ? Math.sin(attackProgress * Math.PI) * 23 : attackType === "upper" ? -Math.sin(attackProgress * Math.PI) * 12 : 0);
           const drawWidth = frame.w * scale;
@@ -3213,7 +3249,13 @@
           const handoff = premiumPose?.part === "square" ? null
             : premiumPose?.transitionFrame ? premiumPose
             : premiumPose ? null : motionPose;
-          if (handoff?.transitionFrame && handoff.transitionMix < .96) {
+          // Never draw a leftover legacy sprite over a differently sized or
+          // differently colored high-resolution attack/hit cel.
+          const safeHandoff = handoff?.transitionImage === rawSheet &&
+            handoff?.transitionFrame?.w === chosenFrame.w &&
+            handoff?.transitionFrame?.h === chosenFrame.h &&
+            requestedScale <= .55;
+          if (safeHandoff && handoff.transitionMix < .96) {
             // Crossfade on animation *state* boundaries, preserving the right
             // source texture for old and new frames rather than flashing atlas
             // coordinates from different sprite sheets.

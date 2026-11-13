@@ -74,8 +74,9 @@ assert.match(script, /combatPose\?\.frame/);
 assert.match(script, /combatAtlasReady = false/);
 assert.match(script, /loadSpriteAsset\(yusukeKickSheet,/);
 assert.match(script, /kickAtlasReady/);
-assert.match(script, /\? yusukeSpiritGunSheet : combatPose \? combatPose\.image \|\| yusukeCombatSheet/,
-  "Spirit Gun keeps its canonical art, kick and punches use their own frame sheet");
+assert.match(script, /\? consistentSpiritGunSheet \|\| yusukeSpiritGunSheet/);
+assert.match(script, /combatPose \? combatPose\.image \|\| consistentCombatSheet \|\| yusukeCombatSheet/,
+  "normal and special attacks retain their own palette-locked fighter textures");
 assert.doesNotMatch(script, /loadSpriteAsset\(yusukeSpecialSheet/,
   "do not load the inconsistent retired Spirit Gun artwork");
 console.log("Yusuke sprites: atlas PNG, all 12 frames, animation references, and game script verified.");

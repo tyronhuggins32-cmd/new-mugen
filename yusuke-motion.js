@@ -92,7 +92,7 @@
   }
 
   function createAtlas(image, sourceFrames, scale = 1.1) {
-    if (!image?.naturalWidth || !Array.isArray(sourceFrames) || sourceFrames.length < 24) {
+    if (!(image?.naturalWidth || image?.width) || !Array.isArray(sourceFrames) || sourceFrames.length < 24) {
       throw new Error("Yusuke motion requires the original 24-frame character sheet.");
     }
     const derived = createSupplement(image, sourceFrames);

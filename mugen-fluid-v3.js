@@ -22,7 +22,9 @@
     const context = canvas.getContext("2d", { alpha: true });
     if (!context) return image;
     context.imageSmoothingEnabled = false;
-    context.filter = "hue-rotate(190deg) saturate(1.6) brightness(.72) contrast(1.1)";
+    // Keep Yusuke's hair and uniform the same in both slots. The rival
+    // remains identifiable through the red outline, HUD and hit sparks.
+    context.filter = "brightness(.95) contrast(1.015)";
     context.drawImage(image, 0, 0);
     context.filter = "none";
     tintCache.set(image, canvas);

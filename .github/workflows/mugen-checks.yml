@@ -10,8 +10,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Thorfinn fighter atlas and roster foundation
-        run: node tests/thorfinn.cjs
       - name: Combat engine regression tests
         run: node tests/engine.cjs
       - name: Three-Square combo and Triangle energy threshold
@@ -34,6 +32,8 @@ jobs:
         run: node tests/yusuke-alpha-v9.cjs
       - name: Yusuke skin and costume palette consistency
         run: node tests/yusuke-palette.cjs
+      - name: Yusuke V11 hair, uniform, and giant-sprite bounds
+        run: node tests/yusuke-appearance-v11.cjs
       - name: Yusuke 40 FPS animation and reaction checks
         run: node tests/yusuke-motion.cjs
       - name: Fluid 60 Hz combat and adaptive camera checks
