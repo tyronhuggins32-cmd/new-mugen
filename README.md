@@ -138,3 +138,16 @@ Both the **main menu** and **character selection** have been rebuilt around an o
 - **Checks:** `node tests/neon-ui.cjs` validates the menu screens, roster, labels, preserved controls and responsive styles. The GitHub Actions workflow also runs all existing combat, sprite, VFX, and PS5 control tests.
 
 This is an original presentation, not a rip of the source game's logo or background artwork. It uses the existing Yusuke portrait from the repository. Locked roster cells are not newly playable fighters. Visual consistency and usability on a physical phone/controller still benefit from device QA.
+
+
+## Yusuke appearance consistency update (13 November 2026)
+
+The playable character now uses **one consistent design language across its sprite families**:
+
+- The original 24-frame `sprites.png` is the base reference for proportions and palette; `yusuke-motion.js` derives its in-between movement cels from this same art.
+- The 12 combat cels in `yusuke-combat-expansion.png` were rebuilt from one coherent source at a uniform source scale (0.72) and are drawn using the same game scale (1.1) as the base sprite sheet. Every pose has a crop and ground-anchored pivot in `yusuke.json`.
+- The playable Spirit Gun and Spirit Shotgun now use the original, visually matching **17-frame** `spirit-gun-sprites.png` sequence. The older eight-pose `spirit-specials-v2.png` is retained as a legacy art reference but is no longer loaded or rendered.
+- Shirt, skin, trousers, and wristband colors are checked against the 24-frame reference by `tests/yusuke-palette.cjs`; height, atlas dimensions, alpha type and frame bounds are checked by `tests/yusuke-sprites.cjs`.
+- Animations may intentionally be shorter for crouching and taller with a raised arm or jumping. No attack changes Yusuke's character scale as an unintended effect. PS5 controller mappings, collisions, timing, HP, and combat balance are unchanged.
+
+For verification run `node tests/engine.cjs`, `node tests/yusuke-sprites.cjs`, and `node tests/yusuke-palette.cjs` or view the GitHub Actions regression workflow.
