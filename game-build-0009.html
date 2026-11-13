@@ -3109,7 +3109,8 @@
           // Square punches use a shared planted first/last cel, not a stacked
           // two-silhouette handoff. Old ghost blends made wrists double.
           const handoff = premiumPose?.squareFrame != null ? null
-            : premiumPose?.transitionFrame ? premiumPose : motionPose;
+            : premiumPose?.transitionFrame ? premiumPose
+            : premiumPose ? null : motionPose;
           if (handoff?.transitionFrame && handoff.transitionMix < .96) {
             // Crossfade on animation *state* boundaries, preserving the right
             // source texture for old and new frames rather than flashing atlas
