@@ -88,10 +88,10 @@ director.drawFront({player:runner,cpu:opponent},ctx,1200);
 assert.ok(streaks>=6,"rush and cross release have bounded visible speed arcs");
 assert.equal(allocated.length,2,"rendering never allocates new textures");
 const studio=fs.readFileSync("yusuke-sprite-studio.html","utf8");
-assert.match(studio,/yusuke-directional-movement-v8\\.png/);
-assert.match(studio,/yusuke-directional-combat-v8\\.png/);
-assert.match(studio,/yusuke-directional-v8-frames\\.json/);
-
+assert.ok(studio.includes('"yusuke-directional-"+part+"-v8.png"'),
+ "studio exports each transparent sheet with a stable file name");
+assert.ok(studio.includes("yusuke-directional-v8-frames.json"),
+ "studio exports frame crop metadata for external import");
 const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(html,/yusuke-directional-v8\.js\?v=1/);
 assert.match(html,/MugenDirectional\?\.build/);
