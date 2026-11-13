@@ -1712,7 +1712,7 @@
         </div>
 
         <div class="triangle-action" id="triangle-action" aria-live="polite">△ TRIANGLE · SPIRIT SHOTGUN / POWER KICK</div>
-        <div class="combo-panel" hidden aria-live="polite"><strong id="combo-label">3 SQUARES · COMBO ×1.20</strong><div class="combo-track"><span id="combo-fill"></span></div><div class="combo-time"><span id="combo-window"></span></div><small id="shotgun-ready">SQUARE ×3 · DAMAGE MULTIPLIER ACTIVE</small></div>
+        <div class="combo-panel" hidden aria-live="polite"><strong id="combo-label">3 SQUARES · COMBO ×1.20</strong><div class="combo-track"><span id="combo-fill"></span></div><div class="combo-time"><span id="combo-window"></span></div><small id="shotgun-ready">COMBO 5 UNLOCKS PUNCH VFX</small></div>
         <div class="round-banner" id="round-banner" aria-hidden="true"><strong id="round-banner-text">Fight!</strong></div>
 
         <div class="battle-result" id="battle-result" role="dialog" aria-modal="true" aria-labelledby="battle-result-title">
@@ -1785,6 +1785,7 @@
   <script src="mugen-combat-v5.js?v=1"></script>
   <script src="mugen-spiritgun-v5.js?v=1"></script>
   <script src="mugen-vfx-v8.js?v=2"></script>
+  <script src="mugen-combo-fx-v9.js?v=1"></script>
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="mugen-sfx-v8.js?v=1"></script>
@@ -2269,10 +2270,6 @@
               loadSpriteAsset(premiumMotionSheet,metadata.movement,"Yusuke premium movement")
             ]);
             premiumArt = metadata;
-            // Repair residual white matting at the cel source before any
-            // mirroring, CPU tint or directional texture generation. Keeping
-            // the primary and derived art on the same clean matte prevents
-            // momentary pale outlines on attack/idle transitions.
             cleanPremiumCombatSheet = window.MugenAlphaMatte?.prepare(
               premiumCombatSheet, metadata.combat.frames) || premiumCombatSheet;
             cleanPremiumMotionSheet = window.MugenAlphaMatte?.prepare(
@@ -2816,10 +2813,12 @@
             return;
           }
           const direction = Number(input.right) - Number(input.left);
-          if (this.grounded) this.setFacing(opponent.x >= this.x ? 1 : -1);
-
-
-          const retreating = direction === -this.facing;
+          // Manual directional facing: walking left turns Yusuke left, even
+          // while his opponent stands to the right. The CPU still auto-tracks.
+          if (this.grounded) {
+            if (this.cpu) this.setFacing(opponent.x >= this.x ? 1 : -1);
+            else if (direction) this.setFacing(direction);
+          }
           // Retreat and guard are independent commands. Automatic guarding on
           // backward input used to consume the backwalk, especially up close.
           // L1 / down remains the explicit way to block.
@@ -2847,7 +2846,7 @@
           }
 
           if (direction) {
-            this.vx = direction * (this.grounded ? movement.groundSpeed * (retreating ? .78 : 1) : movement.airSpeed);
+            this.vx = direction * (this.grounded ? movement.groundSpeed : movement.airSpeed);
             this.setState(this.grounded ? "walk" : "jump");
           } else {
             this.vx *= Math.max(0, 1 - dt * (this.grounded ? movement.groundFriction : movement.airFriction));
@@ -3118,7 +3117,9 @@
           context.globalAlpha = baseAlpha;
           context.filter = "none";
           if (!ghost) window.MugenVisuals?.drawCpuAccent(context,this,time);
-          if (!ghost && ["light", "cross", "body", "upper"].includes(attackType) && attackProgress > .15 && attackProgress < .8) {
+          if (!ghost && ["light", "cross", "body", "upper"].includes(attackType)
+              && (window.MugenComboFX?.allows(this,attackType) ?? true)
+              && attackProgress > .15 && attackProgress < .8) {
             context.globalAlpha = Math.sin(attackProgress * Math.PI) * .7;
             context.strokeStyle = attackType === "upper" ? "#f6cc57" : "#d7faff";
             context.lineWidth = attackType === "cross" ? 5 : 3;
@@ -3130,7 +3131,7 @@
               context.moveTo(26, punchY + 12); context.quadraticCurveTo(72, punchY - 7, attackType === "cross" ? 140 : 113, punchY);
             }
             context.stroke();
-            if (this.comboActive) {
+            if (window.MugenComboFX?.ready(this)) {
               // Two inexpensive speed-line layers turn an unlocked punch
               // into a distinctly brighter rush without changing sprite scale.
               const energy = Math.sin(attackProgress * Math.PI);
@@ -3748,26 +3749,27 @@
           if (!blocked) defender.resetCombo();
           attacker.energy = Math.min(100, attacker.energy + (attack.energyGain ?? 5));
           const heavyHit = Boolean(attack.heavyImpact);
+          const visualEffectsAllowed = window.MugenComboFX?.allows(attacker) ?? true;
           // Uppercuts and Power Kicks briefly hold the camera on contact,
           // without an over-tight zoom that would hide either fighter.
-          if (!blocked && heavyHit && !attack.projectile)
+          if (visualEffectsAllowed && !blocked && heavyHit && !attack.projectile)
             this.cinematicImpact = { x: impactX, y: impactY, life: .12, maxLife: .12 };
-          const authoredImpact = Boolean(window.MugenVfxV8?.ready());
-          // One authored contact effect is the visual source of truth. Remove
-          // old random square bursts and stacked procedural impact rings.
-          if (!authoredImpact) {
-            this.addImpact(impactX, impactY,
-              blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff",
-              blocked ? 3 : heavyHit ? 8 : 5, attacker.facing);
-            window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
+          if (visualEffectsAllowed) {
+            const authoredImpact = Boolean(window.MugenVfxV8?.ready());
+            // Authored contact art is the single impact visual source.
+            if (!authoredImpact) {
+              this.addImpact(impactX, impactY,
+                blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff",
+                blocked ? 3 : heavyHit ? 8 : 5, attacker.facing);
+              window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
+              window.MugenCinematicFX?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
+            }
+            window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
+            window.MugenVfxV8?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
           }
-          window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
-          if (!window.MugenVfxV8?.ready())
-            window.MugenCinematicFX?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
-          window.MugenVfxV8?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
-          this.shake = blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light;
+          if (visualEffectsAllowed) this.shake = blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light;
           const impactSound = blocked ? "block" : heavyHit ? "heavy" : "hit";
           if (!window.MugenPlayCombatSfx?.(impactSound, blocked ? .4 : heavyHit ? .88 : .6))
             if (!window.MugenSFX) playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
@@ -3872,14 +3874,14 @@
           const meter = document.querySelector(".combo-panel");
           meter.hidden = !unlocked;
           document.querySelector("#combo-label").textContent =
-            unlocked ? `COMBO ${Math.max(3, player.squarePresses + Math.max(0, player.comboHits - 1))} · DMG ×${player.comboMultiplier.toFixed(2)}`
+            unlocked ? `COMBO ${window.MugenComboFX?.meter(player) ?? 3} · DMG ×${player.comboMultiplier.toFixed(2)}`
               : "SQUARE ×3 TO START COMBO";
           document.querySelector("#combo-fill").style.width =
-            `${unlocked ? Math.min(100, 20 + player.comboHits * 15) : 0}%`;
+            `${unlocked ? Math.min(100, (window.MugenComboFX?.meter(player) ?? 3) * 20) : 0}%`;
           document.querySelector("#combo-window").style.width =
             `${unlocked ? (player.comboTime / (yusukeCombat.combo?.displayTime ?? 2.2)) * 100 : 0}%`;
           document.querySelector("#shotgun-ready").textContent =
-            `SQUARE ×3 · +${Math.round(player.comboBonusDamage)} BONUS DAMAGE`;
+            `${window.MugenComboFX?.ready(player) ? "COMBO 5 · PUNCH VFX UNLOCKED" : "COMBO 5 UNLOCKS PUNCH VFX"} · +${Math.round(player.comboBonusDamage)} BONUS DAMAGE`;
           const shotgunAvailable = player.energy > 50;
           const triangleHint = document.querySelector("#triangle-action");
           triangleHint.textContent = shotgunAvailable
@@ -4106,8 +4108,6 @@
           else if (window.MugenVisuals?.drawArena) window.MugenVisuals.drawArena(context, time, arena);
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
-          // The authored VFX atlas replaces random procedural hit dust and
-          // square sparks; never stack two impact systems over the sprite.
           if (!window.MugenVfxV8?.ready())
             window.MugenFluid?.drawBehind(this, context, time);
           window.MugenVfxV8?.drawBehind(this, context, time);
@@ -4117,7 +4117,7 @@
             window.MugenShotgun?.drawFan(this, context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
-          window.MugenVisuals?.drawEchoes(this, context, time);
+          if (!premiumReady) window.MugenVisuals?.drawEchoes(this, context, time);
           this.player.draw(context, time, this.renderAlpha ?? 1);
           this.cpu.draw(context, time, this.renderAlpha ?? 1);
           window.MugenVisuals?.drawCharge(this.player, context, time);
