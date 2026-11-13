@@ -458,3 +458,14 @@ select, 5000 health, main-menu music and Combo-5 effects gating remain intact.
 
 Regressions include `node tests/yusuke-reference-v14.cjs` plus existing
 V13 and Chromium reference and fight-browser suites.
+
+
+## Yusuke V15: exact submitted 4×4 reference sheet
+
+All on-screen Yusuke poses now use the **user-supplied 1536×1024 reference image**, not the previous premium character illustration. The original 4×4 source sheet remains at `characters/yusuke/yusuke-reference-source-v15.jpg`, with its 16 exact poses extracted, alpha-cleaned and committed as `characters/yusuke/yusuke-reference-exact-v15.png`. The only processing is removal of the JPEG-white background/edge matting, so the teal-striped black hair, sleeveless yellow shirt, dark-green pants, wristbands, shoes and original hand-drawn blue strikes are all preserved.
+
+`yusuke-exact-reference-v15.js` is the visual source of truth for *every* Yusuke draw: idle, walking/retreat, dash/backdash, crouch, guard, jumps, stagger/knockback/knockdown, recovery, all Square punches, heavy strikes, Spirit Gun/Shotgun, and all eight optional reference attacks. The same cropped source cells are mirrored for the opposite direction, held or retimed as needed. **These are 16 unique authored poses**, not 80 newly illustrated drawings. Existing combat physics, attack hitboxes, energy costs, combo meter, sound and gamepad mapping are unchanged.
+
+Every pose is foot anchored and bounded to **208 world pixels maximum visible height**. Exactly one Yusuke body is drawn per frame, with no old-paletted premium body or giant damage ghost composited on top. His palette is preserved equally for the player and CPU. If the new reference image cannot be loaded, the previous combat atlas remains as an explicit fallback so the game can still start.
+
+The existing sprite studio now opens `yusuke-exact-sprite-studio-v15.html`, which displays the true 16-pose reference and exports its transparent PNG plus a JSON map of frame crops, state sequences and the 208px size bound. Use `node tests/yusuke-exact-v15.cjs` for source integrity/animation/single-draw regression, plus the Chromium browser-smoke workflow to confirm the real PNG loads and preserves the matching material colors in-game.
