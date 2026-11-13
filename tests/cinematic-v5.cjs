@@ -22,7 +22,7 @@ const fighter=(x,y=600,width=84,height=194)=>({
 assert.equal(g.MIN_SPACING,cfg.combat.spacing);
 // Precision geometry must exist and match the high-detail sprite silhouette.
 const standing=g.hurtbox({x:500,y:600,width:84,height:194,state:"idle"});
-const crouching=g.hurtbox({x:500,y:600,width:84,height:194,state:"block"});
+const crouching=g.hurtbox({x:500,y:600,width:84,height:194,state:"crouch",grounded:true});
 const flying=g.hurtbox({x:500,y:350,width:84,height:194,state:"jump"});
 assert.ok(standing.width<84 && standing.height<194,"hurtbox hugs the sprite");
 assert.ok(crouching.height<standing.height && crouching.width<standing.width,
