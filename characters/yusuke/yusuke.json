@@ -1208,8 +1208,7 @@
         "loop": true
       }
     }
-  }
-  ,
+  },
   "movementSprites": {
     "source": "spriteSheet",
     "generation": "cached-foot-aligned-inbetweens",
