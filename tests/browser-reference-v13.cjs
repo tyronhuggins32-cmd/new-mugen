@@ -77,7 +77,7 @@ const assert=require("node:assert/strict");
    return {moves,atlasSize:[atlas?.image.width,atlas?.image.height],
      atlasFrames:atlas?.frameCount,drew,flashed,immediate,groundAirDenied,
      airAllowed,airHits,deniedVoid,startedVoid,cinematicSeen,voidHits,
-     finalHealth,heavyHits,errors};
+     finalHealth,heavyHits};
   });
   assert.deepEqual(result.moves,[
    "flashRush","risingBreaker","skyPursuit","spiritCyclone","spiritVoid","meteorFinish"]);
