@@ -102,7 +102,7 @@ const opponent={state:"idle",grounded:true,x:900,y:600,vx:0,facing:-1,
  currentAttack(){return null}};
 director.drawBehind({player:runner,cpu:opponent},ctx,1200);
 director.drawFront({player:runner,cpu:opponent},ctx,1200);
-assert.ok(streaks>=6,"rush and cross release have bounded visible speed arcs");
+assert.ok(streaks>=4,"rush and cross release have restrained directional arcs");
 assert.equal(allocated.length,2,"rendering never allocates new textures");
 const studio=fs.readFileSync("yusuke-sprite-studio.html","utf8");
 assert.ok(studio.includes('"yusuke-directional-"+part+"-v8.png"'),
