@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yusuke Exact Reference Sprite Studio | New Mugen</title>
+<style>
+:root{font:16px/1.5 system-ui;background:#08121e;color:#e8f4f1;color-scheme:dark}
+*{box-sizing:border-box}body{max-width:1200px;margin:0 auto;padding:22px}
+h1{font-size:clamp(1.5rem,4vw,3rem);line-height:1.15;margin:10px 0}
+small,.meta{color:#b2d4ce}p{max-width:950px}a{color:#bcf2d7}
+.panel{background:#132637;border:1px solid #447a7f;border-radius:12px;padding:20px;margin-top:20px}
+button{font:inherit;border:1px solid #b6ffc8;border-radius:7px;background:#b6ffc8;color:#082e2b;
+ padding:10px 18px;font-weight:800;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.controls{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}
+#viewer{overflow:auto;background:repeating-conic-gradient(#3b5560 0 25%,#172833 0 50%) 50%/32px 32px;
+ border:1px solid #64938d;border-radius:7px}
+#viewer canvas{display:block;width:100%;min-width:650px;height:auto}
+#single{background:repeating-conic-gradient(#3b5560 0 25%,#172833 0 50%) 50%/24px 24px;
+ border:1px solid #64938d;border-radius:7px;image-rendering:auto;max-width:100%}
+select{background:#182d36;color:white;padding:10px;border-radius:5px;font:inherit;border:1px solid #81d8c9}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.stat{font-variant-numeric:tabular-nums}
+</style></head>
+<body>
+<header>
+<small>NEW MUGEN / CANONICAL SPRITE STUDIO / V15</small>
+<h1>Yusuke: your exact artwork</h1>
+<p>The 16 poses below come directly from your uploaded 4 × 4 image. White background pixels have been removed so the figures render transparently. There is no redesign, recoloring, or replacement outfit. Movement, hit reactions, Square attacks, and specials all select cels from this exact source.</p>
+<a href="./index.html">Return to game</a>
+<p id="status" role="status">Loading the original character sheet…</p>
+</header>
+<section class="panel">
+<h2>Transparent master atlas</h2>
+<div id="viewer"></div>
+<div class="controls">
+<button id="master-download" disabled>Download all 16 transparent poses</button>
+<button id="metadata-download" disabled>Download animation coordinates (JSON)</button>
+</div>
+<p class="meta">1536 × 1024 pixels · 4 columns × 4 rows · 384 × 256 source cells · preserved outfit and hair · maximum on-screen character height 208 world pixels.</p>
+</section>
+<section class="panel">
+<h2>Inspect individual animations</h2>
+<div class="grid">
+<div><label for="state">Animation / move</label>
+<select id="state"></select>
+<p>Use the slider to inspect which original pose plays at any point in the animation. Other fight mechanics, damage, and PS5 controls remain unchanged.</p>
+<input id="progress" type="range" min="0" max="100" value="48" step="1" style="width:100%">
+<p id="info" class="stat"></p></div>
+<div><canvas id="single" width="384" height="256" aria-label="Selected Yusuke animation cel"></canvas></div>
+</div>
+</section>
+<script src="./yusuke-exact-reference-v15.js?v=1"></script>
+<script>
+(async()=>{
+const $=id=>document.getElementById(id);
+const status=$("status"),image=new Image();
+try{
+ await new Promise((resolve,reject)=>{
+   image.onload=resolve;image.onerror=()=>reject(Error("Could not load reference PNG"));
+   image.src="./characters/yusuke/yusuke-reference-exact-v15.png";
+ });
+ const atlas=window.MugenExactYusuke?.build(image);
+ if(!atlas)throw Error("Reference atlas dimensions mismatch");
+ const viewer=document.createElement("canvas");
+ viewer.width=image.naturalWidth;viewer.height=image.naturalHeight;
+ viewer.getContext("2d").drawImage(image,0,0);
+ $("viewer").appendChild(viewer);
+ const groups={...window.MugenExactYusuke.movementClips,
+               ...window.MugenExactYusuke.attackClips};
+ const keys=Object.keys(groups);
+ for(const key of keys){
+   const opt=new Option(key.replace(/([A-Z])/g," $1"),key);
+   $("state").append(opt);
+ }
+ $("state").value="light";
+ const preview=$("single"),ctx=preview.getContext("2d");
+ function render(){
+   const key=$("state").value,seq=groups[key]||[0];
+   const p=Number($("progress").value)/100;
+   const index=seq[Math.min(seq.length-1,Math.floor(p*seq.length))];
+   const frame=atlas.frames[index];
+   ctx.clearRect(0,0,384,256);
+   const scale=Math.min(.88,208/frame.h);
+   const w=frame.w*scale,h=frame.h*scale;
+   ctx.imageSmoothingEnabled=true;
+   ctx.drawImage(image,frame.x,frame.y,frame.w,frame.h,
+     192-frame.ax*scale,242-h,w,h);
+   $("info").textContent=key+" · source cel "+(index+1)+"/16 · "+Math.round(p*100)+"%";
+ }
+ $("state").onchange=render;$("progress").oninput=render;render();
+ const download=(blob,name)=>{
+   const url=URL.createObjectURL(blob),a=document.createElement("a");
+   a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),2000);
+ };
+ $("master-download").disabled=false;
+ $("master-download").onclick=()=>viewer.toBlob(blob=>{
+  if(blob)download(blob,"yusuke-exact-user-reference-v15.png");
+ },"image/png");
+ $("metadata-download").disabled=false;
+ $("metadata-download").onclick=()=>download(new Blob([JSON.stringify({
+  version:15,source:"characters/yusuke/yusuke-reference-exact-v15.png",
+  originalReference:"characters/yusuke/yusuke-reference-source-v15.jpg",
+  sourceSize:[1536,1024],grid:[4,4],cellSize:[384,256],
+  frames:atlas.frames,attackClips:window.MugenExactYusuke.attackClips,
+  movementClips:window.MugenExactYusuke.movementClips,
+  maxCharacterHeight:window.MugenExactYusuke.maximumHeight,
+  note:"16 unique user-supplied images are reused and transformed across fight states. No additional illustrated frames are implied."
+ },null,2)],{type:"application/json"}),"yusuke-exact-reference-v15-frames.json");
+ status.textContent="Loaded: all 16 exact user-reference sprites, with clean transparent backgrounds.";
+}catch(error){status.textContent="Reference atlas unavailable: "+error.message;}
+})();
+</script>
+</body></html>
