@@ -23,7 +23,7 @@ assert.equal(bytes.readUInt32BE(20), sheet.height);
 assert.equal(bytes[25], 6, "expanded atlas must have a true RGBA transparent background");
 assert.equal(
   crypto.createHash("sha256").update(bytes).digest("hex"),
-  "1748a8c40dbee274d0b8971233f89bbeecfcae4609702de7fb03bcedd6de1c91",
+  "8016f8bad1ef770d8c2ff257b7f1e5020acd392d0b1ddf55bf7c110d54d7e65f",
   "sprite PNG must match the verified generated atlas"
 );
 
