@@ -52,6 +52,22 @@ const path = require("node:path");
     g.player.x=605;g.cpu.x=705;
     for(let i=0;i<25;i++)g.render(1058+i*16);
     const after=window.MugenFluid.getStats(g).zoom;
+    // Exercise real fighter input in Chromium, not just motion clip metadata.
+    const neutral={left:false,right:false,block:false};
+    g.reset();g.state="play";g.player.x=520;g.cpu.x=695;
+    g.cpu.beginAttack("light");
+    const beforeRetreat=g.player.x;
+    g.player.update(1/60,{...neutral,left:true},g.cpu,g);
+    const retreatMoved=g.player.x<beforeRetreat && g.player.state==="walk" &&
+      g.player.facing===1 && g.player.vx<0;
+    g.reset();g.state="play";g.player.x=550;g.cpu.x=800;
+    const beforeBackdash=g.player.x;
+    g.player.update(1/60,{...neutral,left:true,dashPressed:true},g.cpu,g);
+    const backdashMoved=g.player.x<beforeBackdash-7 && g.player.dashDirection===-1;
+    g.reset();g.state="play";g.player.x=900;g.cpu.x=700;g.player.facing=-1;
+    const beforeMirror=g.player.x;
+    g.player.update(1/60,{...neutral,right:true,dashPressed:true},g.cpu,g);
+    const backdashMirrored=g.player.x>beforeMirror+7 && g.player.dashDirection===1;
     g.reset();g.state="play";g.player.energy=50;
     g.player.beginAttack("heavy");
     const lowAction=g.player.currentAttack();
@@ -60,7 +76,6 @@ const path = require("node:path");
     g.reset();g.state="play";g.player.energy=51;g.player.beginAttack("heavy");
     const highAction=g.player.currentAttack();
     // Simulate actual shot release and hit in Chromium, not just metadata.
-    const neutral={left:false,right:false,block:false};
     g.cpu.x=g.player.x+240;
     for(let i=0;i<20;i++)g.player.update(1/60,neutral,g.cpu,g);
     const shotgunProjectileCount=g.projectiles.filter(p=>p.kind==="spiritShotgun").length;
@@ -79,7 +94,7 @@ const path = require("node:path");
       return pose && pose.part==="combat" && pose.frame?.w>0;
     });
     const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
-      shotgunImpacts,shotgunDamage,atlasFrameCount:window.MugenMotion.clips.run.count,
+      shotgunImpacts,shotgunDamage,retreatMoved,backdashMoved,backdashMirrored,atlasFrameCount:window.MugenMotion.clips.run.count,
       motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
       kickReady:window.testEngine.kickReady,
       premiumReady:window.testEngine.premiumReady,
@@ -89,9 +104,12 @@ const path = require("node:path");
     return state;
   });
   assert.notEqual(result.first,result.second,"movement should modify actual rendered pixels continuously");
-  assert.deepEqual(result.atlasCounts,[12,12],"premium fighter builds 24 source-derived cels");
+  assert.deepEqual(result.atlasCounts,[16,16],"premium fighter builds 32 source-derived cels");
   assert.equal(result.forwardClip,"advance","forward directional artwork is active in Chromium");
   assert.equal(result.backwardClip,"retreat","backward footwork has distinct art");
+  assert.equal(result.retreatMoved,true,"real left input must backwalk even near enemy attacks");
+  assert.equal(result.backdashMoved,true,"R1 + left must perform a backward dash");
+  assert.equal(result.backdashMirrored,true,"R1 + right must backdash when Yusuke faces left");
   assert.equal(result.airClip,"aerialForward","diagonal air direction art is active");
   assert.equal(result.crossClip,"cross","cross uses new combo transition cels");
   assert.ok(result.after<result.before,"fight camera should ease out to show point-blank combat");
@@ -117,6 +135,7 @@ const path = require("node:path");
   assert.ok(result.shotgunDamage>=39 && result.shotgunDamage<80,
     "cosmetic energy shots never multiply gameplay damage");
   assert.ok(result.gamepadConnected,"DualSense input module should remain loaded");
+  assert.ok(result.premiumReady && !!result.atlasCounts.length,"premium V7 art stays active");
   assert.equal(errors.length,0,errors.join("\n"));
   console.log("PASS: real kick atlas rendered, strict energy-gated Triangle, fluid sprite motion, camera, controller.");
   console.log(result);
