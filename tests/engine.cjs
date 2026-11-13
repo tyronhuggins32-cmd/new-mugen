@@ -82,6 +82,12 @@ vm.runInContext(`
  assert.equal(g.superSequence,null,'cinematic completes');assert.equal(g.player.energy,0,'MAX drains energy');assert.equal(g.player.comboHits,0,'MAX Spirit Gun does not bypass the three-Square combo gate');assert.ok(g.cpu.health<680,'beam damages opponent');
  g.reset();g.state='play';g.player.energy=0;g.player.update(1/60,{charge:true},g.cpu,g);assert.ok(g.player.energy>0,'hold-to-charge refills energy');
  g.reset();g.state='play';const dashX=g.player.x;g.player.update(1/60,{dashPressed:true},g.cpu,g);assert.ok(g.player.x>dashX+10,'dash crosses space');
+ // Retreat + jump must take priority over nearby attacks and preserve air control.
+ g.reset();g.state='play';g.player.x=520;g.cpu.x=690;g.cpu.beginAttack('light');
+ g.player.update(1/60,{...neutral,left:true,jumpPressed:true},g.cpu,g);
+ assert.equal(g.player.state,'jump','jump pressed while retreating should beat automatic defense');
+ assert.ok(g.player.vy<0 && g.player.vx<0 && g.player.y<arena.floor,
+   'directional jump must rise and move away in one physics tick');
  // Retreat movement must NEVER silently become guard near an attacking target.
  g.reset();g.state='play';g.player.x=500;g.cpu.x=680;g.player.facing=1;
  g.cpu.beginAttack('light');const beforeRetreat=g.player.x;
