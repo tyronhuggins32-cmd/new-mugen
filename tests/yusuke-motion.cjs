@@ -151,7 +151,9 @@ assert.match(html,/<script src="yusuke-motion\.js\?v=5"><\/script>/);
 assert.match(html,/MugenMotion\?\.createAtlas/);
 assert.match(html,/MugenMotion\?\.selectPose/);
 assert.match(html,/MugenMotion\?\.rememberPose/);
-assert.match(html,/motionPose\.transitionImage/);
+assert.match(html,/handoff\.transitionImage/);
+assert.match(html,/const handoff = premiumPose\?\.transitionFrame \? premiumPose : motionPose/);
+
 assert.match(html,/previousSheet/);
 assert.match(html,/window\.MugenFluid\?\.drawCel/);
 assert.match(html,/defender\.hitReaction = !blocked/);
