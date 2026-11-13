@@ -26,6 +26,8 @@ jobs:
         run: node tests/cinematic-fx-v6.cjs
       - name: Yusuke sprite expansion checks
         run: node tests/yusuke-sprites.cjs
+      - name: Yusuke clean alpha contour, matte fringe and interior pinhole tests
+        run: node tests/alpha-cleanup-v9.cjs
       - name: Yusuke skin and costume palette consistency
         run: node tests/yusuke-palette.cjs
       - name: Yusuke 40 FPS animation and reaction checks
