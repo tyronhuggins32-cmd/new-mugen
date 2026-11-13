@@ -58,6 +58,12 @@ const ctx=new Proxy({
 },{get(o,k){return k in o?o[k]:()=>{};},set(o,k,v){o[k]=v;return true;}});
 const game={paused:false,player:ground,cpu:croucher};
 gfx.onHit(game,standing,croucher,{heavyImpact:false},false,670,440);
+assert.equal(gfx.stats(game).active,1,"one hit produces one authored impact cel");
+gfx.onHit(game,standing,croucher,{heavyImpact:false},false,673,444);
+assert.equal(gfx.stats(game).active,1,"same-frame close collision cannot double-spawn");
+gfx.onHit(game,standing,croucher,{heavyImpact:true},true,670,440);
+assert.equal(gfx.stats(game).active,2,"blocked heavy must use a guard ring, not blast");
+assert.equal(gfx.stats(game).contacts,2,"deduplicated hit counts stay grounded");
 gfx.onImpact(game,standing,660,445,false);
 gfx.onShot(game,standing,622,427,true);
 gfx.drawFront(game,ctx);
@@ -71,7 +77,7 @@ gfx.reset(game);
 assert.equal(gfx.stats(game).shots,0);
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/mugen-vfx-v8\.js\?v=1/);
+assert.match(html,/mugen-vfx-v8\.js\?v=2/);
 assert.match(html,/MugenVfxV8\?\.onHit/);
 assert.match(html,/MugenVfxV8\?\.onShot/);
 assert.match(html,/MugenVfxV8\?\.drawFront/);
