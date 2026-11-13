@@ -21,12 +21,12 @@ vm.runInNewContext(source,{window,document,Math});
 const motion=window.MugenDirectional;
 const atlas=motion.build(meta,images);
 assert.ok(atlas,"premium atlas should initialize");
-assert.equal(atlas.frameCount,48,"16 movement + 16 combat + 16 new Square cels");
-assert.equal(atlas.square?.frames.length,16,"Square attacks get 16 additional cels");
+assert.equal(atlas.frameCount,56,"16 movement + 16 combat + 24 new Square cels");
+assert.equal(atlas.square?.frames.length,24,"each of four Square attacks gets six staged cels");
 assert.equal(atlas.square?.image.width,2048);
-assert.equal(atlas.square?.image.height,2048);
+assert.equal(atlas.square?.image.height,3072);
 assert.equal(allocations.length,3,"all three atlases are prebuilt and cached");
-assert.equal(draws.length,48,"each cel is composed from one intact canonical sprite");
+assert.equal(draws.length,56,"each cel is composed from one intact canonical sprite");
 assert.ok(draws.every(call=>call.length===9),
   "never slice a figure into detached horizontal strips");
 assert.ok(draws.every(call=>call[0]===images.combat || call[0]===images.movement),
@@ -47,7 +47,7 @@ for(const [attack,duration] of Object.entries(durations)){
     assert.equal(pose?.part,"square");
     assert.equal(pose?.image,atlas.square.image);
     assert.equal(pose?.scale,.5);
-    assert.ok(pose.index>=0&&pose.index<16);
+    assert.ok(pose.index>=0&&pose.index<24);
     assert.ok(pose.frame?.w>0&&pose.frame.ax>0);
     observed.add(pose.index);timeline.push(pose.index);
   }
