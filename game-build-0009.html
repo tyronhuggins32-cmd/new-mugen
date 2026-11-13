@@ -1948,6 +1948,10 @@
         } catch (_) { return false; }
       }
 
+      // Keep engine-level sound calls optional so headless training, replays
+      // and isolated combat tests work without a browser AudioContext.
+      window.MugenPlayCombatSfx = playCombatSfx;
+
       function setSelected(index, focus = false) {
         selectedIndex = (index + items.length) % items.length;
         items.forEach((item, itemIndex) => {
@@ -2643,7 +2647,7 @@
           // after collision so a whiff never produces a false contact cue.
           if (["light", "cross", "body", "upper", "powerKick"].includes(type)) {
             const charged = type === "upper" || type === "powerKick";
-            if (!playCombatSfx(charged ? "swing-heavy" : "swing",
+            if (!window.MugenPlayCombatSfx?.(charged ? "swing-heavy" : "swing",
               charged ? .62 : .46))
               if (!window.MugenSFX) playTone(punchPitch[type] ?? 115, .06);
           } else {
@@ -2760,11 +2764,11 @@
             this.vx = this.dashDirection * (this.dashDirection === this.facing ? 1030 : 815);
             this.setState("walk");
             this.applyPhysics(dt);
-            playCombatSfx("dash", .55);
+            window.MugenPlayCombatSfx?.("dash", .55);
             return;
           }
           if (input.charge && this.grounded && !this.cpu) {
-            if (this.state !== "charge") playCombatSfx("spirit-charge", .3);
+            if (this.state !== "charge") window.MugenPlayCombatSfx?.("spirit-charge", .3);
             this.setState("charge");
             this.vx = 0;
             this.energy = Math.min(100, this.energy + dt * 22);
@@ -2813,7 +2817,7 @@
           if (input.jumpPressed && this.grounded) {
             this.vy = movement.jumpVelocity;
             this.setState("jump");
-            if (!playCombatSfx("jump", .4))
+            if (!window.MugenPlayCombatSfx?.("jump", .4))
               if (!window.MugenSFX) playTone(285, .04);
           }
 
@@ -2830,7 +2834,7 @@
           if (this.y >= arena.floor) {
             this.y = arena.floor;
             this.vy = 0;
-            if (startedAirborne && landingSpeed > 450) playCombatSfx("land", .42);
+            if (startedAirborne && landingSpeed > 450) window.MugenPlayCombatSfx?.("land", .42);
             if (this.state === "jump") this.setState("idle");
           }
         }
@@ -3580,8 +3584,8 @@
               yusukeCombat.projectileVfx?.shotgun);
             this.shake = Math.max(this.shake, 5.5);
             this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, 1.05, "muzzle");
-          playCombatSfx("spirit-shot", .58, owner.facing * .2);
-            playCombatSfx("shotgun", .65, owner.facing * .2);
+          window.MugenPlayCombatSfx?.("spirit-shot", .58, owner.facing * .2);
+            window.MugenPlayCombatSfx?.("shotgun", .65, owner.facing * .2);
             return;
           }
 
@@ -3607,7 +3611,7 @@
           });
           this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, .54, "muzzle");
           window.MugenSpiritGun?.onFire(this, owner, muzzleX, muzzleY);
-          playCombatSfx("spirit-shot", .56, owner.facing * .22);
+          window.MugenPlayCombatSfx?.("spirit-shot", .56, owner.facing * .22);
         }
 
         updateProjectiles(dt) {
@@ -3713,7 +3717,7 @@
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
           this.shake = blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light;
           const impactSound = blocked ? "block" : heavyHit ? "heavy" : "hit";
-          if (!playCombatSfx(impactSound, blocked ? .4 : heavyHit ? .88 : .6))
+          if (!window.MugenPlayCombatSfx?.(impactSound, blocked ? .4 : heavyHit ? .88 : .6))
             if (!window.MugenSFX) playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
         }
 
