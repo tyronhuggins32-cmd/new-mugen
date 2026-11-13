@@ -21,12 +21,12 @@ vm.runInNewContext(source,{window,document,Math});
 const motion=window.MugenDirectional;
 const atlas=motion.build(meta,images);
 assert.ok(atlas,"premium atlas should initialize");
-assert.equal(atlas.frameCount,56,"16 movement + 16 combat + 24 new Square cels");
-assert.equal(atlas.square?.frames.length,24,"each of four Square attacks gets six staged cels");
-assert.equal(atlas.square?.image.width,2048);
+assert.equal(atlas.frameCount,80,"16 movement + 16 combat + 48 new Square cels");
+assert.equal(atlas.square?.frames.length,48,"each of four Square attacks gets twelve staged cels");
+assert.equal(atlas.square?.image.width,4096);
 assert.equal(atlas.square?.image.height,3072);
 assert.equal(allocations.length,3,"all three atlases are prebuilt and cached");
-assert.equal(draws.length,56,"each cel is composed from one intact canonical sprite");
+assert.equal(draws.length,80,"each cel is composed from one intact canonical sprite");
 assert.ok(draws.every(call=>call.length===9),
   "never slice a figure into detached horizontal strips");
 assert.ok(draws.every(call=>call[0]===images.combat || call[0]===images.movement),
@@ -47,7 +47,7 @@ for(const [attack,duration] of Object.entries(durations)){
     assert.equal(pose?.part,"square");
     assert.equal(pose?.image,atlas.square.image);
     assert.equal(pose?.scale,.5);
-    assert.ok(pose.index>=0&&pose.index<24);
+    assert.ok(pose.index>=0&&pose.index<48);
     assert.ok(pose.frame?.w>0&&pose.frame.ax>0);
     observed.add(pose.index);timeline.push(pose.index);
   }
@@ -93,4 +93,4 @@ assert.match(studio,/square:\{width:atlas\.square\.image\.width/,"sprite JSON in
 const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(html,/yusuke-directional-v8\.js\?v=4/,"new sprite code invalidates old cached atlas");
 assert.match(html,/MugenDirectional\?\.choosePose/,"game selects the new Square cels");
-console.log("PASS: Square light/cross/body/upper each gain 5+ distinct 40 FPS poses with premium alpha and fallback.");
+console.log("PASS: Square light/cross/body/upper gain 12 source-derived cels each, with 40FPS movement and 60Hz Square rendering with premium alpha and fallback.");
