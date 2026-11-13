@@ -3190,11 +3190,12 @@
           defender.health = Math.max(0, defender.health - damage);
           defender.invulnerability = blocked ? .1 : .18;
           defender.hitstun = blocked ? .12 : attack.hitstun;
+          defender.dashTimer = 0;
           defender.setState(blocked ? "block" : "hit");
           const knockbackDirection = attack.facing || attacker.facing;
           defender.vx = knockbackDirection * attack.knockback * (blocked ? .34 : 1);
           if (!blocked && attack.heavyImpact) defender.vy = -170;
-          attacker.energy = Math.min(100, attacker.energy + (attack.energyGain || 5));
+          attacker.energy = Math.min(100, attacker.energy + (attack.energyGain ?? 5));
           const heavyHit = Boolean(attack.heavyImpact);
           const impactCount = blocked ? 8 : heavyHit ? 27 : 17;
           this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", impactCount);
@@ -3299,6 +3300,7 @@
           playerHealth.style.width = `${Math.max(0, this.player.health / this.player.maxHealth * 100)}%`;
           cpuHealth.style.width = `${Math.max(0, this.cpu.health / this.cpu.maxHealth * 100)}%`;
           playerEnergy.style.width = `${Math.max(0, this.player.energy)}%`;
+          document.querySelector(".touch-button[data-control=\"ultimate\"]")?.classList.toggle("ready", this.player.energy >= 100);
           cpuEnergy.style.width = `${Math.max(0, this.cpu.energy)}%`;
           roundTimer.textContent = String(Math.max(0, Math.ceil(this.timer))).padStart(2, "0");
         }
