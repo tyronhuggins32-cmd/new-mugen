@@ -1502,6 +1502,7 @@
     }
   </style>
   <link rel="stylesheet" href="arcade-layout.css?v=15">
+  <link rel="stylesheet" href="neon-arcade-ui.css?v=1">
 </head>
 <body>
   <canvas id="fx" aria-hidden="true"></canvas>
@@ -1516,125 +1517,158 @@
       <div class="controller-status-row"><span id="controller-status" aria-live="polite">PS5 CONTROLLER: PRESS A BUTTON</span><span class="online-dot"></span><span id="screen-status">Menu Online</span></div>
     </header>
 
-    <main class="screen" id="main-menu-screen">
-      <section aria-labelledby="game-title">
-        <p class="eyebrow">The fight starts here</p>
-        <h1 id="game-title">New <span>Mugen</span></h1>
-        <p class="tagline">Choose your battle. Build your legend.</p>
+    <main class="screen neon-home" id="main-menu-screen">
+      <div class="neon-backdrop" aria-hidden="true">
+        <div class="neon-backdrop-rings"></div>
+        <div class="neon-backdrop-grid"></div>
+        <div class="neon-backdrop-rays"></div>
+        <div class="neon-backdrop-speed"></div>
+      </div>
 
-        <nav class="menu" aria-label="Main menu">
-          <button class="menu-item active" type="button" data-mode="arcade">
-            <span class="num">01</span><span class="label">Play Arcade</span><span class="arrow">›</span>
-          </button>
-          <button class="menu-item" type="button" data-mode="versus">
-            <span class="num">02</span><span class="label">Versus</span><span class="arrow">›</span>
-          </button>
-          <button class="menu-item" type="button" data-mode="training">
-            <span class="num">03</span><span class="label">Training</span><span class="arrow">›</span>
-          </button>
-          <button class="menu-item" type="button" data-mode="watch">
-            <span class="num">04</span><span class="label">Watch</span><span class="arrow">›</span>
-          </button>
-          <button class="menu-item" type="button" data-mode="options">
-            <span class="num">05</span><span class="label">Options</span><span class="arrow">›</span>
-          </button>
-        </nav>
+      <section class="neon-hero" aria-labelledby="game-title">
+        <div class="neon-hero-meta"><span class="neon-micro-accent">BATTLE ARENA SYSTEM</span><span>EST. 2026 // BUILD 0010</span></div>
+        <div class="neon-logo" aria-label="New Mugen Rising">
+          <span class="neon-logo-mini">THE NEXT GENERATION OF 2D FIGHTING</span>
+          <h1 id="game-title"><span class="neon-logo-new">NEW</span><strong class="neon-logo-mugen">MUGEN</strong></h1>
+          <span class="neon-logo-rising">RISING<span class="neon-logo-slash" aria-hidden="true">／</span></span>
+        </div>
+        <p class="neon-hero-subtitle">LIMITLESS MATCHUPS. ONE ARENA.</p>
+        <img class="neon-menu-portrait" src="characters/yusuke/portrait.webp" alt="" aria-hidden="true" decoding="async">
+        <div class="neon-welcome">
+          <div class="neon-welcome-head"><span class="neon-welcome-led"></span>WELCOME TO THE ARENA <span class="neon-welcome-number">001</span></div>
+          <p>Step into a high-impact 2D battle. Master Yusuke’s spirit techniques, build devastating combos, and climb the arcade ranks.</p>
+          <div class="neon-welcome-tags"><span>2D FIGHTER</span><span>SPIRIT COMBAT</span><span>DUALSENSE READY</span></div>
+        </div>
       </section>
 
-      <aside class="showcase" aria-live="polite">
-        <div class="fighter fighter-a" aria-hidden="true"></div>
-        <div class="fighter fighter-b" aria-hidden="true"></div>
-        <div class="mode-card">
-          <div class="mode-card-header"><span>Selected mode</span><span id="mode-code">A-01</span></div>
-          <h2 id="mode-title">Arcade</h2>
-          <p id="mode-description">Fight through a ladder of rivals and reach the final challenger.</p>
-        </div>
-      </aside>
+      <section class="neon-mode-section" aria-label="Game mode selection">
+        <header class="neon-mode-header">
+          <div><span class="neon-screen-code">01 / MENU</span><h2>MODE SELECTION</h2></div>
+          <span class="neon-mode-header-side">MAIN MENU</span>
+        </header>
+        <nav class="menu neon-mode-list" aria-label="Main menu">
+          <button class="menu-item active" type="button" data-mode="arcade">
+            <span class="num">01</span><span class="label">ARCADE MODE</span><span class="mode-availability">PLAY</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="versus">
+            <span class="num">02</span><span class="label">VERSUS MODE</span><span class="mode-availability">SOON</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="training">
+            <span class="num">03</span><span class="label">TRAINING MODE</span><span class="mode-availability">SOON</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="watch">
+            <span class="num">04</span><span class="label">SPECTATOR MODE</span><span class="mode-availability">SOON</span><span class="arrow">›</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="options">
+            <span class="num">05</span><span class="label">OPTIONS</span><span class="mode-availability">SETUP</span><span class="arrow">›</span>
+          </button>
+        </nav>
+        <aside class="showcase neon-mode-details" aria-live="polite">
+          <div class="mode-card">
+            <div class="mode-card-header"><span>SELECTED MODE</span><span id="mode-code">A-01</span></div>
+            <h3 id="mode-title">Arcade</h3>
+            <p id="mode-description">Fight through a ladder of rivals and reach the final challenger.</p>
+            <div class="neon-mode-controls"><span><b>✕</b> CONFIRM</span><span><b>▲ ▼</b> CHOOSE</span><span><b>○</b> BACK</span></div>
+          </div>
+        </aside>
+        <div class="neon-mode-bottom"><span>PRESS ✕ / ENTER TO SELECT</span><span>PLAYER 01 // READY</span></div>
+      </section>
+      <div class="neon-ticker" aria-hidden="true"><span>NEW MUGEN RISING</span><span>SPIRIT DETECTIVE</span><span>NEW MUGEN RISING</span><span>FIGHTER SYSTEM ACTIVE</span></div>
     </main>
 
-    <main class="arcade-screen" id="arcade-screen" hidden>
-      <header class="arcade-heading">
+    <main class="arcade-screen neon-select" id="arcade-screen" hidden>
+      <div class="neon-select-scenery" aria-hidden="true">
+        <span class="neon-select-orbit"></span><span class="neon-select-hatch"></span>
+      </div>
+      <header class="arcade-heading neon-select-heading">
         <div class="arcade-heading-copy">
-          <p class="arcade-kicker">Arcade Route // Match 01</p>
-          <h2>Select Your Character</h2>
+          <p class="arcade-kicker">NEW MUGEN RISING <span>// PLAYER 01</span></p>
+          <h2>CHARACTER <em>SELECT</em></h2>
+          <p class="neon-select-heading-sub">CHOOSE YOUR FIGHTER. DEFINE THE BATTLE.</p>
         </div>
         <div class="arcade-badges" aria-label="Match settings">
-          <span class="arcade-badge">CPU: Normal</span>
-          <span class="arcade-badge">Stage: Spirit Skyline</span>
-          <span class="arcade-badge">180 Seconds</span>
+          <span class="arcade-badge">ARCADE // 01</span>
+          <span class="arcade-badge">CPU: NORMAL</span>
+          <span class="arcade-badge">SPIRIT SKYLINE</span>
         </div>
-        <button class="back-button" id="arcade-back" type="button"><span>‹</span> Main Menu</button>
+        <button class="back-button" id="arcade-back" type="button"><span>‹</span> MAIN MENU</button>
       </header>
 
-      <div class="select-playbar"><p>PLAYER 1 · YUSUKE<br>First to 2 rounds · vs CPU</p><button class="choose-button" id="choose-character" type="button">Play as Yusuke</button></div>
+      <div class="select-playbar">
+        <p><strong>PLAYER 1</strong><span class="neon-player-pulse" aria-hidden="true"></span><span>YUSUKE URAMESHI // READY TO FIGHT</span></p>
+        <button class="choose-button" id="choose-character" type="button">FIGHT AS YUSUKE <span aria-hidden="true">›</span></button>
+      </div>
       <div class="select-layout">
         <section class="roster-panel" aria-label="Playable fighter roster">
-          <p class="panel-label"><span>Fighter roster</span><strong>1 READY</strong></p>
+          <p class="panel-label"><span>FIGHTER GRID</span><strong>01 / 08</strong></p>
           <div class="roster-grid">
             <button class="roster-card selected" type="button" data-character="yusuke_urameshi" aria-current="true" aria-label="Select Yusuke Urameshi">
-              <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="Yusuke Urameshi aiming his Spirit Gun">
-              <span>Yusuke</span>
+              <img src="characters/yusuke/portrait.webp" alt="Yusuke Urameshi">
+              <span>YUSUKE</span>
             </button>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
-            <div class="roster-card locked" aria-label="Locked character slot"><span>EMPTY</span></div>
+            <div class="roster-card locked" aria-label="Unreleased character slot"><span>LOCKED</span></div>
+            <div class="roster-card locked" aria-label="Unreleased character slot"><span>LOCKED</span></div>
+            <div class="roster-card locked" aria-label="Unreleased character slot"><span>LOCKED</span></div>
+            <div class="roster-card locked" aria-label="Unreleased character slot"><span>LOCKED</span></div>
+            <div class="roster-card locked" aria-label="Unreleased character slot"><span>LOCKED</span></div>
+            <div class="roster-card locked" aria-label="Unreleased character slot"><span>LOCKED</span></div>
+            <div class="roster-card locked" aria-label="Unreleased character slot"><span>LOCKED</span></div>
           </div>
           <div class="select-status">
-            <div class="select-status-row"><span>Playable</span><strong>1 Fighter</strong></div>
-            <div class="select-status-row"><span>Arcade path</span><strong>1 Match</strong></div>
-            <div class="select-status-row"><span>Control</span><strong>Player 1</strong></div>
+            <div class="select-status-row"><span>Available fighters</span><strong>01 / 08</strong></div>
+            <div class="select-status-row"><span>Match type</span><strong>VS CPU</strong></div>
+            <div class="select-status-row"><span>Selection</span><strong>PLAYER ONE</strong></div>
           </div>
+          <div class="neon-roster-footer"><span class="neon-roster-dot"></span> MORE CHALLENGERS COMING</div>
         </section>
 
         <section class="character-stage" aria-labelledby="selected-character-name">
-          <img class="character-art" id="character-art" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="Yusuke Urameshi charging his Spirit Gun">
+          <div class="neon-character-halo" aria-hidden="true"></div>
+          <div class="neon-stage-scanline" aria-hidden="true"></div>
+          <div class="neon-character-top" aria-hidden="true"><span>CHARACTER NO. 001</span><span>SPIRIT CLASS</span></div>
+          <img class="character-art" id="character-art" src="characters/yusuke/portrait.webp" alt="Yusuke Urameshi charging his Spirit Gun">
           <div class="portrait-fallback" aria-hidden="true">
             <div class="fallback-fighter"><span class="fallback-energy"></span></div>
           </div>
           <div class="character-identity">
-            <span class="player-tag">Player 1 // Ready</span>
+            <span class="player-tag">PLAYER 1 // SELECTED</span>
             <h3 id="selected-character-name">Yusuke</h3>
             <p id="selected-character-title">Spirit Detective</p>
           </div>
+          <div class="neon-stage-bottom" aria-hidden="true">YU YU HAKUSHO / FIGHTER PROFILE 001</div>
         </section>
 
         <aside class="character-details" aria-label="Selected fighter details">
+          <div class="neon-data-header"><span>FIGHTER DATABASE</span><span>PROFILE / 001</span></div>
           <p class="detail-series" id="character-series">Yu Yu Hakusho</p>
           <h3 id="character-full-name">Yusuke Urameshi</h3>
           <p class="archetype" id="character-archetype">Instinctive Brawler / Spirit Artillery</p>
           <p class="fighter-description" id="character-description">Dark Tournament Yusuke builds spirit energy through fearless close-range pressure, then punishes retreating opponents with his signature techniques.</p>
-
+          <p class="neon-data-subheading">COMBAT PARAMETERS <span>01 // PERFORMANCE</span></p>
           <div class="stats" id="character-stats" aria-label="Gameplay statistics">
             <div class="stat-row"><span>Power</span><span class="stat-track"><span class="stat-fill" style="--value: 84%"></span></span><strong>84</strong></div>
             <div class="stat-row"><span>Speed</span><span class="stat-track"><span class="stat-fill" style="--value: 76%"></span></span><strong>76</strong></div>
             <div class="stat-row"><span>Range</span><span class="stat-track"><span class="stat-fill" style="--value: 88%"></span></span><strong>88</strong></div>
             <div class="stat-row"><span>Defense</span><span class="stat-track"><span class="stat-fill" style="--value: 72%"></span></span><strong>72</strong></div>
           </div>
-
-          <p class="move-heading">Playable moves</p>
+          <p class="move-heading">SPECIAL MOVES / TECHNIQUES</p>
           <ul class="move-list" id="character-moves">
-            <li><span>Street Brawl Chain</span><span class="move-input">J</span></li>
-            <li><span>Spirit Punch</span><span class="move-input">K</span></li>
-            <li><span>Spirit Gun</span><span class="move-input">L</span></li>
-            <li><span>Spirit Shotgun</span><span class="move-input">J ×3 → L</span></li>
-            <li><span>Spirit Dash</span><span class="move-input">E</span></li>
-            <li><span>Spirit Charge</span><span class="move-input">Hold I</span></li>
-            <li><span>MAX Spirit Gun</span><span class="move-input">U · 100 Meter</span></li>
+            <li><span>Street Brawl Chain</span><span class="move-input">□</span></li>
+            <li><span>Spirit Punch</span><span class="move-input">△</span></li>
+            <li><span>Spirit Gun</span><span class="move-input">○</span></li>
+            <li><span>Spirit Shotgun</span><span class="move-input">□ ×3 → ○</span></li>
+            <li><span>Spirit Dash</span><span class="move-input">R1</span></li>
+            <li><span>Spirit Charge</span><span class="move-input">L2</span></li>
+            <li><span>MAX Spirit Gun</span><span class="move-input">R2</span></li>
           </ul>
-
           <div class="enemy-preview" aria-label="Next CPU opponent">
             <span class="enemy-avatar">DS</span>
-            <span><small>First opponent</small><strong>Demon Scout</strong></span>
+            <span><small>ARCADE BATTLE 01</small><strong>DEMON SCOUT</strong></span>
             <em>CPU</em>
           </div>
-
-
         </aside>
       </div>
+      <div class="neon-select-ticker" aria-hidden="true"><span>SPIRIT POWER / 100%</span><span>✕ CONFIRM • ○ BACK</span><span>NEW MUGEN RISING</span></div>
     </main>
 
     <main class="fight-screen" id="fight-screen" hidden>
@@ -1734,29 +1768,29 @@
 
       const modes = {
         arcade: {
-          title: "Arcade",
-          code: "A-01",
-          description: "Fight through a ladder of rivals and reach the final challenger."
+          title: "Arcade Mode",
+          code: "A-01 · AVAILABLE",
+          description: "Enter the Spirit Skyline. Battle the Demon Scout as Yusuke in a full arcade match."
         },
         versus: {
-          title: "Versus",
-          code: "V-02",
-          description: "Settle the score in a local head-to-head battle."
+          title: "Versus Mode",
+          code: "V-02 · COMING SOON",
+          description: "Head-to-head battles are under development. Arcade is available now."
         },
         training: {
-          title: "Training",
-          code: "T-03",
-          description: "Practice movement, timing, combos, and defensive reactions."
+          title: "Training Mode",
+          code: "T-03 · COMING SOON",
+          description: "A dedicated practice dojo is planned. Hone your technique in Arcade for now."
         },
         watch: {
-          title: "Watch",
-          code: "W-04",
-          description: "Let two computer-controlled fighters battle for the arena."
+          title: "Spectator Mode",
+          code: "W-04 · COMING SOON",
+          description: "CPU-versus-CPU exhibition matches are not playable yet."
         },
         options: {
           title: "Options",
-          code: "O-05",
-          description: "Adjust presentation, sound, and display settings."
+          code: "O-05 · SETTINGS",
+          description: "Adjust visual effects, audio, and fullscreen presentation."
         }
       };
 
