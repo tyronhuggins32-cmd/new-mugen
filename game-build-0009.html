@@ -1910,6 +1910,7 @@
         modeTitle.textContent = mode.title;
         modeCode.textContent = mode.code;
         modeDescription.textContent = mode.description;
+        mainMenuScreen.dataset.mode = selected.dataset.mode;
         if (focus) selected.focus({ preventScroll: true });
       }
 
@@ -2009,7 +2010,7 @@
         characterFullName.textContent = character.displayName;
         characterArchetype.textContent = profile.archetype;
         characterDescription.textContent = profile.description;
-        chooseCharacter.textContent = `Play as ${character.shortName}`;
+        chooseCharacter.textContent = `FIGHT AS ${character.shortName.toUpperCase()}  ›`;
 
         characterStats.replaceChildren();
         Object.entries(selectStats).forEach(([label, value]) => {
@@ -2133,7 +2134,7 @@
         yusukeMotionAtlas = null;
         chooseCharacter.disabled = true;
         startBattleButton.disabled = true;
-        chooseCharacter.textContent = "Loading Yusuke...";
+        chooseCharacter.textContent = "PREPARING FIGHTER...";
 
         try {
           let character;
@@ -2186,7 +2187,7 @@
           chooseCharacter.disabled = false;
           startBattleButton.disabled = false;
         } catch (error) {
-          chooseCharacter.textContent = "Yusuke Art Missing";
+          chooseCharacter.textContent = "FIGHTER ART UNAVAILABLE";
           characterDescription.textContent = "Keep sprites.png and spirit-gun-sprites.png inside characters/yusuke, then refresh this page.";
           showToast("Yusuke's sprite images could not load.");
           console.error(error);
