@@ -113,6 +113,7 @@
     if (!game?.player || !game?.cpu || !arena) return;
     const t = getTracker(game);
     const c = t.camera;
+    const firstFrame = !c.last;
     const dt = c.last ? clamp((time - c.last) / 1000, 0, .06) : 1 / 60;
     c.last = time;
     const midpoint = ((game.player.prevX ?? game.player.x) + game.player.x +
@@ -127,15 +128,15 @@
       ?? (1 + .055 * clamp((distance - 160) / 550) + .012 * emphasis);
     const rate = 1 - Math.exp(-dt * 6.2);
     c.zoom = lerp(c.zoom, desiredZoom, rate);
-    const halfWidth = arena.width / (2 * c.zoom);
+    const halfWidth = (arena.viewportWidth || arena.width) / (2 * c.zoom);
     const impact = game.cinematicImpact;
     const focusX = impact ? midpoint * .82 + impact.x * .18 : midpoint;
     const targetX = clamp(focusX, halfWidth, arena.width - halfWidth);
-    c.x = lerp(c.x || targetX, targetX, rate);
+    c.x = firstFrame ? targetX : lerp(c.x || targetX, targetX, rate);
     const jitter = Math.min(10, game.shake || 0);
     const shiftX = Math.sin(time * .077) * jitter * .37;
     const shiftY = Math.cos(time * .095) * jitter * .25;
-    ctx.translate(arena.width / 2 + shiftX, arena.height / 2 + shiftY);
+    ctx.translate((arena.viewportWidth || arena.width) / 2 + shiftX, arena.height / 2 + shiftY);
     ctx.scale(c.zoom, c.zoom);
     ctx.translate(-c.x, -arena.height / 2);
     // Adaptive expensive effects, based on a smoothed frame-budget counter.
