@@ -2564,11 +2564,9 @@
         }
 
         get hurtbox() {
-          return {
-            x: this.x - this.width / 2,
-            y: this.y - this.height,
-            width: this.width,
-            height: this.height
+          return window.MugenCombatV5?.hurtbox(this) || {
+            x: this.x - this.width / 2, y: this.y - this.height,
+            width: this.width, height: this.height
           };
         }
 
@@ -2633,12 +2631,15 @@
         activeHitbox() {
           const type = this.currentAttack();
           const attack = attackData[type];
-          if (!attack || attack.projectile || this.stateTime < attack.activeStart || this.stateTime > attack.activeEnd) return null;
-          const width = attack.range;
+          if (!attack || attack.projectile ||
+              this.stateTime < attack.activeStart ||
+              this.stateTime > attack.activeEnd) return null;
+          const accurate = window.MugenCombatV5?.attackHitbox(this, attack, type);
+          if (accurate) return accurate;
           return {
-            x: this.facing > 0 ? this.x + 18 : this.x - 18 - width,
+            x: this.facing > 0 ? this.x + 18 : this.x - 18 - attack.range,
             y: this.y - attack.height - 24,
-            width,
+            width: attack.range,
             height: attack.height
           };
         }
