@@ -1780,6 +1780,7 @@
   <script src="mugen-fluid-v3.js?v=2"></script>
   <script src="mugen-combat-v5.js?v=1"></script>
   <script src="mugen-spiritgun-v5.js?v=1"></script>
+  <script src="mugen-vfx-v8.js?v=1"></script>
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="mugen-sfx-v8.js?v=1"></script>
@@ -3387,6 +3388,7 @@
           this.renderAlpha = 1;
           this._lastHudAt = 0;
           window.MugenFluid?.reset(this);
+          window.MugenVfxV8?.reset(this);
           window.MugenCinematicFX?.reset(this);
           window.MugenShotgun?.reset(this);
           window.MugenSpiritGun?.reset(this);
@@ -3458,6 +3460,7 @@
           window.MugenVisuals?.tick(this, dt);
           window.MugenShotgun?.tick(this, dt);
           window.MugenSpiritGun?.tick(this, dt);
+          window.MugenVfxV8?.tick(this, dt);
           this.shake = Math.max(0, this.shake - dt * 26);
 
           if (this.state === "intro") {
@@ -3598,6 +3601,7 @@
             // the additional anime-style pellets are visual only.
             window.MugenShotgun?.onFire(this, owner, muzzleX, muzzleY, owner.facing,
               yusukeCombat.projectileVfx?.shotgun);
+            window.MugenVfxV8?.onShot(this, owner, muzzleX, muzzleY, true);
             this.shake = Math.max(this.shake, 5.5);
             this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, 1.05, "muzzle");
           window.MugenPlayCombatSfx?.("spirit-shot", .58, owner.facing * .2);
@@ -3627,6 +3631,7 @@
           });
           this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, .54, "muzzle");
           window.MugenSpiritGun?.onFire(this, owner, muzzleX, muzzleY);
+          window.MugenVfxV8?.onShot(this, owner, muzzleX, muzzleY, false);
           window.MugenPlayCombatSfx?.("spirit-shot", .56, owner.facing * .22);
         }
 
@@ -3659,9 +3664,12 @@
                 this.damageFighter(projectile.owner, target, projectile, contact.x, contact.y);
               // Energy shots always collide and vanish. During i-frames the
               // target takes no damage, but a shot never phases through it.
-              if (projectile.kind === "spiritGun")
+              if (projectile.kind === "spiritGun") {
                 window.MugenSpiritGun?.onImpact(this, projectile.owner,
                   contact.x, contact.y, !vulnerable || target.state === "block");
+                window.MugenVfxV8?.onImpact(this, projectile.owner,
+                  contact.x, contact.y, !vulnerable || target.state === "block");
+              }
               if (projectile.kind === "spiritShotgun")
                 window.MugenShotgun?.onImpact(this, contact.x, contact.y,
                   Boolean(projectile.owner.cpu), yusukeCombat.projectileVfx?.shotgun);
@@ -3728,7 +3736,9 @@
           this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", impactCount);
           window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
           window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
-          window.MugenCinematicFX?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
+          if (!window.MugenVfxV8?.ready())
+            window.MugenCinematicFX?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
+          window.MugenVfxV8?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
           this.shake = blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light;
@@ -3942,6 +3952,15 @@
         }
 
         drawSpiritProjectile(context, projectile, time) {
+          if (projectile.kind === "spiritGun" && window.MugenVfxV8?.ready()) {
+            const t = this.renderAlpha ?? 1;
+            const x = (projectile.prevX ?? projectile.x)
+              + (projectile.x - (projectile.prevX ?? projectile.x)) * t;
+            const y = (projectile.prevY ?? projectile.y)
+              + (projectile.y - (projectile.prevY ?? projectile.y)) * t;
+            window.MugenVfxV8.drawProjectile(context, projectile, x, y);
+            return;
+          }
           if (projectile.kind === "spiritGun" && window.MugenSpiritGun?.drawShot) {
             const t = this.renderAlpha ?? 1;
             const x = (projectile.prevX ?? projectile.x)
@@ -4046,7 +4065,7 @@
         render(time) {
           const context = this.context;
           context.setTransform(1, 0, 0, 1, 0, 0);
-          context.clearRect(0, 0, arena.width, arena.height);
+          context.clearRect(0, 0, arena.viewportWidth || arena.width, arena.height);
           context.save();
           if (window.MugenFluid?.beginFrame) window.MugenFluid.beginFrame(this, context, time, arena);
           else if (this.shake > 0) context.translate((Math.sin(time * .11) + Math.sin(time * .067)) * this.shake * .28, (Math.cos(time * .097) + Math.cos(time * .053)) * this.shake * .28);
@@ -4055,6 +4074,7 @@
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
           window.MugenFluid?.drawBehind(this, context, time);
+          window.MugenVfxV8?.drawBehind(this, context, time);
           window.MugenDirectional?.drawBehind(this, context, time);
           window.MugenCinematicFX?.drawBehind(this, context, time);
           window.MugenShotgun?.drawFan(this, context, time);
@@ -4064,8 +4084,11 @@
           this.player.draw(context, time, this.renderAlpha ?? 1);
           this.cpu.draw(context, time, this.renderAlpha ?? 1);
           window.MugenVisuals?.drawCharge(this.player, context, time);
-          window.MugenShotgun?.drawWindup(this, context, time, yusukeCombat.projectileVfx?.shotgun);
-          window.MugenSpiritGun?.drawWindup(this, context, time, yusukeCombat.projectileVfx);
+          if (!window.MugenVfxV8?.ready()) {
+            window.MugenShotgun?.drawWindup(this, context, time, yusukeCombat.projectileVfx?.shotgun);
+            window.MugenSpiritGun?.drawWindup(this, context, time, yusukeCombat.projectileVfx);
+          }
+          window.MugenVfxV8?.drawWindup(this, context, time);
           if (this.superSequence) window.MugenCinematics?.aura(this, context, time);
           for (const burst of this.energyBursts) this.drawSpiritBurst(context, burst, time);
           for (const impact of this.impacts) {
@@ -4074,12 +4097,15 @@
             context.fillRect(impact.x, impact.y, impact.size, impact.size);
           }
           context.globalAlpha = 1;
-          window.MugenVisuals?.drawHits(this, context, time);
-          window.MugenShotgun?.drawImpacts(this, context, time);
-          window.MugenSpiritGun?.drawImpact(this, context, time);
-          window.MugenFluid?.drawFront(this, context, time);
+          if (!window.MugenVfxV8?.ready()) {
+            window.MugenVisuals?.drawHits(this, context, time);
+            window.MugenShotgun?.drawImpacts(this, context, time);
+            window.MugenSpiritGun?.drawImpact(this, context, time);
+            window.MugenFluid?.drawFront(this, context, time);
+            window.MugenCinematicFX?.drawFront(this, context, time);
+          }
           window.MugenDirectional?.drawFront(this, context, time);
-          window.MugenCinematicFX?.drawFront(this, context, time);
+          window.MugenVfxV8?.drawFront(this, context, time);
           context.restore();
           window.MugenSpiritGun?.drawOverlay(this, context, arena);
           window.MugenCinematics?.render(this, context, time);
