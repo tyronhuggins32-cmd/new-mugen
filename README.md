@@ -301,3 +301,13 @@ This maintenance pass fixes bugs demonstrated in the screen recording rather tha
 - **Performance & tests:** the 2,600-pixel stage, 60 Hz simulation and PS5 controller remain unchanged. The new effects texture is 1,536×1,024 PNG; the browser only paints active cels. `node tests/air-and-vfx-v8.cjs` verifies crossover geometry, high/low strike overlap and texture cropping; the Chromium play-through checks an actual directional jump over a stationary opponent, back-jump while threatened, high/low punch contact and live VFX loading.
 
 **Visual fidelity:** this is a meaningful in-game VFX and sprite cleanup, but it does not turn the whole game into the static high-detail concept rendering, which would require additional hand-authored action frames and stage art.
+
+## V9: turn-to-walk movement, clean Square combos and 5,000 HP
+
+Yusuke now **turns to face the D-pad/stick direction while walking**, even if the opponent is behind him. Holding left while the opponent stands to his right turns him left and plays the normal left-facing locomotion, rather than endlessly backpedaling. Holding right reverses him symmetrically. R1 still performs a direction-latched dash without forcing a turn mid-burst, and the CPU continues tracking its opponent. Jump, dodge, guard and the existing DualSense layout remain unchanged.
+
+Square punches remain fully damaging but are **visually clean at combo counts 1–4**. The combo HUD and damage multiplier still activate on the **third Square press**; the visual upgrade is distinct and unlocks at **displayed COMBO 5**. Until then, punch VFX producers are suppressed, including impact particles, screen shake, camera hit-focus, pose stroke arcs, cinematic crescents and the authored PNG strike effects. At COMBO 5 those visual feedback layers activate normally; specials, blocking reactions from other moves and the opponent's effects remain available. Shared policy: `mugen-combo-fx-v9.js`.
+
+**Both fighters have 5,000 starting and maximum HP.** The HUD reports current/maximum HP and bars remain proportional. Yusuke's low-health Fighting Instinct passive activates at **1,500 HP** (the same 30% threshold as before). Existing base attack damage, energy costs, Spirit Shotgun threshold, Power Kick and combo scaling are preserved.
+
+Regression coverage: `tests/triangle-combo.cjs` validates visually clean early Square hits and COMBO 5 activation. `tests/combat.cjs` exercises full five-hit VFX gating, reverse turning and 5,000 HP in Chromium, and `tests/engine.cjs` checks movement, dash and HP in fixed-step gameplay. The browser smoke suite matches the cache-busted game URL used by `index.html`.
