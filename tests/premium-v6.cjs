@@ -6,6 +6,8 @@ const crypto=require("node:crypto");
 const vm=require("node:vm");
 
 const data=JSON.parse(fs.readFileSync("characters/yusuke/premium-atlas.json","utf8"));
+assert.equal(data.version,3,"playable fighter requires polished V7 master palette");
+assert.ok(data.combat.src.endsWith("-v7.png") && data.movement.src.endsWith("-v7.png"));
 const fakeWindow={};
 vm.runInNewContext(fs.readFileSync("yusuke-premium-v6.js","utf8"),{window:fakeWindow});
 const premium=fakeWindow.MugenPremium;
@@ -13,8 +15,8 @@ premium.validate(data);
 assert.equal(data.combat.scale,data.movement.scale);
 assert.equal(data.combat.scale,.5);
 for(const [name,expectedHash] of [
-  ["combat","a361f1196c3827ff2ba81271df67d454e58bdfa1990e57829d8230b6728475bd"],
-  ["movement","912feb7bcf7af6908ea0d61e5b617e9b18e0485492dc983fc0775f0ade15da93"]
+  ["combat","ef613aeb167b94409135bedd3486e41f1657128c3df5a2d9b3cd7a5ed5c3daa0"],
+  ["movement","f74529bb2e10ddd33a22a2183548bbf2e2dc3db7536c1d385dc81b96cc4b82a8"]
 ]){
  const sheet=data[name];
  const buffer=fs.readFileSync(sheet.src);
@@ -96,6 +98,10 @@ assert.match(html,/width: 2600/);
 assert.match(html,/premiumArt = metadata/);
 assert.match(html,/premiumReady = true/);
 assert.match(html,/MugenPremium\?\.choosePose\(/);
+assert.match(html,/const tween = premiumPose \|\| motionPose \? null/,
+  "do not sample legacy body frames against premium PNG textures");
+assert.match(html,/const sourceFrames = premiumPose \? premiumArt\[premiumPose.part\]\.frames/,
+  "premium frames must use matching source metadata, not old atlases");
 assert.match(html,/MugenRooftop\.render\(context, time, arena, this\)/);
 assert.match(html,/x: arena\.width \/ 2 - 300/);
 assert.match(html,/x: arena\.width \/ 2 \+ 300/);
