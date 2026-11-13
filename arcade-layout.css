@@ -98,3 +98,33 @@ body[data-screen="arcade"] .select-playbar .choose-button { position: static; wi
  background: linear-gradient(140deg, #95773f, #673d22);
  box-shadow: 0 0 16px #ffe88d88, inset 0 0 14px #fff4bd66;
 }
+
+/* DualSense build: touch interface removed; the arena must stay unobstructed. */
+.touch-controls { display: none !important; }
+.controller-status-row { display: flex; align-items: center; justify-content: flex-end; gap: 9px; min-width: 0; flex-wrap: wrap; }
+#controller-status {
+  display: inline-block;
+  color: #b9d8eb;
+  border: 1px solid #467088;
+  border-radius: 4px;
+  background: #0c2230bb;
+  padding: 7px 9px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .045em;
+  white-space: nowrap;
+}
+#controller-status.connected { color: #adffe2; border-color: #7cecc6; background: #0e3b33d9; }
+@media (max-width: 700px) {
+  .topbar { gap: 7px; }
+  .topbar .build-mark { font-size: 8px; letter-spacing: .025em; }
+  .controller-status-row #screen-status, .controller-status-row .online-dot { display: none; }
+  #controller-status { font-size: 8px; padding: 5px; letter-spacing: 0; }
+}
+@media (max-height: 550px) and (orientation: landscape) {
+  body[data-screen="fight"] { overflow: hidden; }
+  body[data-screen="fight"] .frame { padding: 2px 7px; gap: 2px; grid-template-rows: 0 1fr 0; }
+  body[data-screen="fight"] .topbar, body[data-screen="fight"] .footer { visibility: hidden; overflow: hidden; }
+  body[data-screen="fight"] .fight-screen { padding: 0; width: 100%; align-items: center; }
+  body[data-screen="fight"] .game-shell { width: min(100%, 177.78vh); max-height: 99dvh; margin: auto; }
+}
