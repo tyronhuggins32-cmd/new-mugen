@@ -1781,6 +1781,7 @@
   <script src="mugen-combat-v5.js?v=1"></script>
   <script src="mugen-spiritgun-v5.js?v=1"></script>
   <script src="mugen-rooftop-v6.js?v=1"></script>
+  <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=1"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
@@ -3300,6 +3301,7 @@
           this.renderAlpha = 1;
           this._lastHudAt = 0;
           window.MugenFluid?.reset(this);
+          window.MugenCinematicFX?.reset(this);
           window.MugenShotgun?.reset(this);
           window.MugenSpiritGun?.reset(this);
           battleResult.classList.remove("open");
@@ -3422,6 +3424,7 @@
           for (const contact of contacts) if (contact) contact();
           this.updateProjectiles(dt);
           window.MugenFluid?.tick(this, dt);
+          window.MugenCinematicFX?.tick(this, dt);
           this.updateHud();
 
           if (this.player.health <= 0 || this.cpu.health <= 0 || this.timer <= 0) this.finishRound();
@@ -3636,6 +3639,7 @@
           this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", impactCount);
           window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
           window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
+          window.MugenCinematicFX?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
           this.shake = blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light;
@@ -3960,6 +3964,7 @@
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
           window.MugenFluid?.drawBehind(this, context, time);
+          window.MugenCinematicFX?.drawBehind(this, context, time);
           window.MugenShotgun?.drawFan(this, context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
@@ -3981,6 +3986,7 @@
           window.MugenShotgun?.drawImpacts(this, context, time);
           window.MugenSpiritGun?.drawImpact(this, context, time);
           window.MugenFluid?.drawFront(this, context, time);
+          window.MugenCinematicFX?.drawFront(this, context, time);
           context.restore();
           window.MugenSpiritGun?.drawOverlay(this, context, arena);
           window.MugenCinematics?.render(this, context, time);
