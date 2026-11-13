@@ -15,7 +15,7 @@
     pants:Object.freeze({h:157/255,s:160/255,v:87/255}),
     wrist:Object.freeze({h:135/255,s:121/255,v:72/255})
   });
-  const prepared=new WeakMap(),boundsCache=new WeakMap();
+  const prepared=new WeakMap(),boundsCache=new WeakMap(),readable=new WeakMap();
   function hsv(r,g,b){
     r/=255;g/=255;b/=255;
     const max=Math.max(r,g,b),min=Math.min(r,g,b),delta=max-min;
@@ -139,7 +139,13 @@
     if(seen.has(key))return seen.get(key);
     let height=frame.h;
     try{
-      const result=makeCanvas(image);
+      let result=readable.get(image);
+      if(!result){
+        result=(typeof image.getContext==="function")
+          ? {canvas:image,ctx:image.getContext("2d",{willReadFrequently:true})}
+          : makeCanvas(image);
+        if(result)readable.set(image,result);
+      }
       const ctx=result?.ctx;
       if(ctx){
         const src=ctx.getImageData(frame.x,frame.y,frame.w,frame.h).data;
@@ -161,6 +167,8 @@
   }
   function fitScale(image,frame,requested,maxVisible=220){
     if(!frame||!Number.isFinite(requested)||requested<=0)return requested;
+    // The canonical premium scale (.5) is already size-locked.
+    if(requested<=.55)return requested;
     const visible=visibleHeight(image,frame);
     if(!visible)return requested;
     // Premium source frames are ~200px high at .5 render scale.
