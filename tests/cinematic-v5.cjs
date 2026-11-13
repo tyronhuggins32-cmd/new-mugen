@@ -29,15 +29,23 @@ assert.ok(crouching.height<standing.height && crouching.width<standing.width,
   "a guarded crouch presents a smaller physical silhouette");
 assert.ok(flying.y+flying.height < standing.y,
   "a high jump clears the grounded opponent instead of catching an invisible wall");
-const jab=g.attackHitbox({x:500,y:600,facing:1},cfg.combat.attacks.light,"light");
-const body=g.attackHitbox({x:500,y:600,facing:1},cfg.combat.attacks.body,"body");
-const upper=g.attackHitbox({x:500,y:600,facing:-1},cfg.combat.attacks.upper,"upper");
+const jab=g.attackHitbox({x:500,y:600,facing:1,grounded:true},cfg.combat.attacks.light,"light");
+const body=g.attackHitbox({x:500,y:600,facing:1,grounded:true},cfg.combat.attacks.body,"body");
+const upper=g.attackHitbox({x:500,y:600,facing:-1,grounded:true},cfg.combat.attacks.upper,"upper");
 assert.ok(jab.x>500 && jab.width>80,"jab extends from the attacking hand");
 assert.ok(body.y>jab.y,"body blow targets lower than a face jab");
 assert.ok(upper.x<500 && upper.x+upper.width<500,"left-facing hitbox tracks mirrored arm");
 assert.equal(g.attackHitbox({x:500,y:600},cfg.combat.attacks.gun,"gun"),null,
   "projectile moves never gain additional phantom melee hitboxes");
 
+// Air crossovers remain unlocked until landing so a jump never snaps back.
+const leaper=fighter(520,290),standingRival=fighter(520,600);
+leaper._crossOverActive=false;
+assert.equal(g.separate(leaper,standingRival,arena),false);
+assert.equal(leaper._crossOverActive,true);
+leaper.y=480;
+assert.equal(g.separate(leaper,standingRival,arena),false,
+  "descending across the rival must not trigger an invisible push wall");
 assert.equal(g.CONTACT_ASSIST,cfg.combat.punchAssist);
 let a=fighter(500),b=fighter(510,600,76,178);
 assert.equal(g.separate(a,b,arena),true);
