@@ -14,7 +14,7 @@ const path = require("node:path");
   await page.route("**/game-build-0009.html",route=>route.fulfill({
     contentType:"text/html",
     body:html.replace("      function beginFight() {",
-      "      window.testEngine = { get game() { return arcadeGame; }, arena }; \n      function beginFight() {")
+      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, arena }; \n      function beginFight() {")
   }));
   await page.goto("http://127.0.0.1:8000/");
   await page.locator('button.menu-item[data-mode="arcade"]').click();
@@ -43,7 +43,15 @@ const path = require("node:path");
     g.player.x=605;g.cpu.x=705;
     for(let i=0;i<25;i++)g.render(1058+i*16);
     const after=window.MugenFluid.getStats(g).zoom;
+    g.reset();g.state="play";g.player.energy=50;
+    g.player.beginAttack("heavy");
+    const lowAction=g.player.currentAttack();
+    g.player.stateTime=.22;
+    g.render(1720); // Load and paint the kick atlas in the real canvas context.
+    g.reset();g.state="play";g.player.energy=51;g.player.beginAttack("heavy");
+    const highAction=g.player.currentAttack();
     const state={first,second,before,after,atlasFrameCount:window.MugenMotion.clips.run.count,
+      kickReady:window.testEngine.kickReady,lowAction,highAction,
       playerHealth:g.player.health,gamepadConnected:!!window.MugenGamepad};
     return state;
   });
@@ -51,9 +59,12 @@ const path = require("node:path");
   assert.ok(result.after>result.before,"fight camera should follow and zoom closer");
   assert.equal(result.atlasFrameCount,28,"run uses virtual 60 Hz time samples");
   assert.equal(result.playerHealth,1000);
+  assert.equal(result.kickReady,true,"the eight-frame kick PNG must load into the browser");
+  assert.equal(result.lowAction,"powerKick","at 50 Spirit Triangle becomes Power Kick");
+  assert.equal(result.highAction,"shotgun","at 51 Spirit Triangle becomes Spirit Shotgun");
   assert.ok(result.gamepadConnected,"DualSense input module should remain loaded");
   assert.equal(errors.length,0,errors.join("\n"));
-  console.log("PASS: browser rendered changing sprite pixels, dynamic camera, controller and no page exceptions");
+  console.log("PASS: real kick atlas rendered, strict energy-gated Triangle, fluid sprite motion, camera, controller.");
   console.log(result);
   await browser.close();
 })().catch(e=>{console.error(e);process.exit(1);});
