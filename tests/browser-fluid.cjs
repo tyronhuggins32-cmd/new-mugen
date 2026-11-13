@@ -50,6 +50,26 @@ const path = require("node:path");
     const atlasCounts=extra?[extra.movement.frames.length,extra.combat.frames.length]:[];
     const squareCount=extra?.square?.frames.length||0;
     const squareTextureHeight=extra?.square?.image.height||0;
+    const chainActor={state:"attack-light",grounded:true,vx:0,vy:0,
+      facing:1,stateTime:.01,dashTimer:0};
+    const cleanChain=[];
+    for(const move of ["light","cross","body","upper"]){
+      chainActor.state="attack-"+move;chainActor.stateTime=.01;
+      cleanChain.push(window.MugenDirectional?.choosePose(chainActor,move,extra,.03));
+    }
+    chainActor.state="walk";chainActor.vx=480;chainActor.stateTime=.02;
+    cleanChain.push(window.MugenDirectional?.choosePose(chainActor,null,extra));
+    const squareGhostFree=cleanChain.every(pose=>pose && !pose.transitionFrame);
+    const cleanIdle=window.MugenPremium?.choosePose(
+      {state:"idle",grounded:true,stateTime:.25,vy:0,vx:0},
+      null,window.testEngine.premiumArt,window.testEngine.cleanedPremium);
+    const cleanGun=window.MugenPremium?.choosePose(
+      {state:"attack-gun",grounded:true,stateTime:.1,vy:0,vx:0},
+      "gun",window.testEngine.premiumArt,window.testEngine.cleanedPremium);
+    const specialFallbackClean=Boolean(
+      cleanIdle?.image===window.testEngine.cleanedPremium.movement &&
+      cleanGun?.image===window.testEngine.cleanedPremium.combat
+    );
     // Actual 40 FPS attack samples must visit distinct poses, rather than
     // holding two stills through the active damage window.
     const squareSequences=Object.entries({light:.19,cross:.25,body:.29,upper:.39})
@@ -115,7 +135,8 @@ const path = require("node:path");
         window.testEngine.premiumImages,.5);
       return pose && pose.part==="combat" && pose.frame?.w>0;
     });
-    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,squareCount,squareTextureHeight,squareSequences,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
+    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,squareCount,squareTextureHeight,squareSequences,squareGhostFree,
+      specialFallbackClean,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
       shotgunImpacts,shotgunDamage,retreatMoved,backdashMoved,backdashMirrored,atlasFrameCount:window.MugenMotion.clips.run.count,
       motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
       kickReady:window.testEngine.kickReady,
@@ -130,6 +151,10 @@ const path = require("node:path");
   assert.deepEqual(result.atlasCounts,[16,16],"existing premium sheets remain aligned");
   assert.equal(result.squareCount,24,"Square kit builds 24 new cels");
   assert.equal(result.squareTextureHeight,3072,"Square PNG texture has six rows");
+  assert.equal(result.squareGhostFree,true,
+    "each Square attack and its walk exit must show one complete sprite without double outlines");
+  assert.equal(result.specialFallbackClean,true,
+    "idle and gun poses must keep original high-resolution alpha-cleaned artwork");
   assert.deepEqual(result.squareSequences.map(s=>s.count),[6,6,6,6],
     "all four punches must cycle through six readable poses at 40 FPS in Chromium");
   assert.equal(result.forwardClip,"advance","forward directional artwork is active in Chromium");
