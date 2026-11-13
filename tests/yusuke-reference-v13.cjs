@@ -31,6 +31,8 @@ for(const id of ids){
 assert.ok(combat.moves.risingBreaker.hits[0].launchVelocity<0);
 assert.ok(combat.moves.skyPursuit.airOnly);
 assert.ok(combat.moves.spiritVoid.cinematic);
+assert.equal(combat.moves.spiritVoid.hits.length,15,
+ "reference-video finish needs fifteen separate confirmed damage beats");
 const src={combat:{width:2048,naturalWidth:2048},movement:{width:2048,naturalWidth:2048}};
 const atlas=combat.build(meta,src);
 assert.equal(atlas.frames.length,48);
