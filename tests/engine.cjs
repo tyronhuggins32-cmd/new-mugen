@@ -94,7 +94,7 @@ vm.runInContext(`
  g.player.update(1/60,{...neutral,left:true},g.cpu,g);
  assert.equal(g.player.state,'walk','backpedal should animate even near a punch');
  assert.ok(g.player.vx<0 && g.player.x<beforeRetreat,'left retreat escapes close range');
- assert.equal(g.player.facing,1,'backpedal keeps facing the opponent');
+ assert.equal(g.player.facing,-1,'held left turns the player away from the opponent');
  // The same R1/Keyboard dash input plus held direction must honor backward.
  g.reset();g.state='play';g.player.x=550;g.cpu.x=800;
  const beforeBackDash=g.player.x;
