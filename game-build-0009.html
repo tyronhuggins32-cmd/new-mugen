@@ -1778,6 +1778,7 @@
   <script src="mugen-cinematics.js?v=1"></script>
   <script src="mugen-visuals-v2.js?v=2"></script>
   <script src="mugen-fluid-v3.js?v=1"></script>
+  <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=4"></script>
   <script src="dualsense-controller.js?v=1"></script>
   <script>
@@ -3255,6 +3256,7 @@
           this.renderAlpha = 1;
           this._lastHudAt = 0;
           window.MugenFluid?.reset(this);
+          window.MugenShotgun?.reset(this);
           battleResult.classList.remove("open");
           roundBanner.classList.add("show");
           roundBannerText.textContent = `Round ${this.roundNumber}`;
@@ -3321,6 +3323,7 @@
           }
           this.updateImpacts(dt);
           window.MugenVisuals?.tick(this, dt);
+          window.MugenShotgun?.tick(this, dt);
           this.shake = Math.max(0, this.shake - dt * 26);
 
           if (this.state === "intro") {
@@ -3442,7 +3445,12 @@
                 volleyId
               });
             }
-            this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, .72, "muzzle");
+            // Gameplay remains seven hitboxes and one damage application;
+            // the additional anime-style pellets are visual only.
+            window.MugenShotgun?.onFire(this, owner, muzzleX, muzzleY, owner.facing,
+              yusukeCombat.projectileVfx?.shotgun);
+            this.shake = Math.max(this.shake, 5.5);
+            this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, 1.05, "muzzle");
             return;
           }
 
@@ -3488,6 +3496,10 @@
                 "impact"
               );
               this.damageFighter(projectile.owner, target, projectile, projectile.x, projectile.y);
+              if (projectile.kind === "spiritShotgun") {
+                window.MugenShotgun?.onImpact(this, projectile.x, projectile.y,
+                  Boolean(projectile.owner.cpu), yusukeCombat.projectileVfx?.shotgun);
+              }
               projectile.life = 0;
               if (projectile.volleyId) {
                 for (const sibling of this.projectiles) {
@@ -3747,6 +3759,13 @@
         }
 
         drawSpiritProjectile(context, projectile, time) {
+          if (projectile.kind === "spiritShotgun" && window.MugenShotgun?.drawPellet) {
+            const t = this.renderAlpha ?? 1;
+            const x = (projectile.prevX ?? projectile.x) + (projectile.x - (projectile.prevX ?? projectile.x)) * t;
+            const y = (projectile.prevY ?? projectile.y) + (projectile.y - (projectile.prevY ?? projectile.y)) * t;
+            window.MugenShotgun.drawPellet(context, projectile, x, y, time);
+            return;
+          }
           if (window.MugenVisuals?.drawProjectileFX) {
             const t = this.renderAlpha ?? 1;
             const x = (projectile.prevX ?? projectile.x) + (projectile.x - (projectile.prevX ?? projectile.x)) * t;
@@ -3843,12 +3862,14 @@
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
           window.MugenFluid?.drawBehind(this, context, time);
+          window.MugenShotgun?.drawFan(this, context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
           window.MugenVisuals?.drawEchoes(this, context, time);
           this.player.draw(context, time, this.renderAlpha ?? 1);
           this.cpu.draw(context, time, this.renderAlpha ?? 1);
           window.MugenVisuals?.drawCharge(this.player, context, time);
+          window.MugenShotgun?.drawWindup(this, context, time, yusukeCombat.projectileVfx?.shotgun);
           if (this.superSequence) window.MugenCinematics?.aura(this, context, time);
           for (const burst of this.energyBursts) this.drawSpiritBurst(context, burst, time);
           for (const impact of this.impacts) {
@@ -3858,6 +3879,7 @@
           }
           context.globalAlpha = 1;
           window.MugenVisuals?.drawHits(this, context, time);
+          window.MugenShotgun?.drawImpacts(this, context, time);
           window.MugenFluid?.drawFront(this, context, time);
           context.restore();
           window.MugenCinematics?.render(this, context, time);
