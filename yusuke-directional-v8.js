@@ -125,5 +125,73 @@
    part,index,clip,frames:atlasSheet.frames,
    transitionFrame:previous,transitionImage:previousImage,transitionMix:mix};
  }
- root.MugenDirectional=Object.freeze({fps:FPS,layouts,build,choosePose});
+ // Lightweight world-space speed streaks and wind-up accents influenced by
+ // the reference video's rapid aerial rushes and combo pacing. No collision,
+ // projectile or energy changes; all effects are stateless and bounded.
+ function drawBehind(game,ctx,time){
+  if(!game?.player || !game?.cpu)return;
+  const q=root.MugenFluid?.getStats?.(game)?.quality??1;
+  ctx.save();
+  for(const f of [game.player,game.cpu]){
+   const speed=Math.abs(f.vx||0);
+   const active=(f.dashTimer||0)>0 || (f.state==="walk"&&speed>310) ||
+     (!f.grounded && speed>210);
+   if(!active)continue;
+   const dir=Math.sign(f.vx||f.facing||1);
+   const color=f.cpu?"#ff759d":"#8dfaff";
+   const length=clamp(speed*.13,40,130);
+   const count=q<.6?2:5;
+   ctx.strokeStyle=color;ctx.lineCap="round";
+   for(let i=0;i<count;i++){
+    const row=i*24+(Math.sin(time*.016+i)*7);
+    ctx.globalAlpha=.29*(1-i/count);
+    ctx.lineWidth=1+i%2;
+    const x=f.x-dir*(36+i*7);
+    const y=f.y-36-row;
+    ctx.beginPath();
+    ctx.moveTo(x,y);ctx.lineTo(x-dir*length*(1-i*.1),y+(i%2?4:-4));
+    ctx.stroke();
+   }
+  }
+  ctx.restore();
+ }
+ function drawFront(game,ctx,time){
+  if(!game?.player || !game?.cpu)return;
+  ctx.save();ctx.globalCompositeOperation="lighter";
+  for(const f of [game.player,game.cpu]){
+   const attack=f.currentAttack?.();
+   if(!["light","cross","body","upper","powerKick"].includes(attack))continue;
+   const duration=attack==="light"?.19:attack==="cross"?.25:attack==="body"?.29:attack==="upper"?.39:.47;
+   const p=clamp((f.stateTime||0)/duration);
+   if(p<.16||p>.87)continue;
+   const force=Math.sin((p-.16)/.71*Math.PI);
+   if(force<=0)continue;
+   ctx.save();
+   ctx.translate(f.x,f.y);
+   ctx.scale(f.facing||1,1);
+   ctx.globalAlpha=force*.38;
+   ctx.strokeStyle=f.cpu?"#ff9abc":"#affbff";
+   ctx.lineWidth=attack==="upper"||attack==="powerKick"?5:3;
+   ctx.lineCap="round";
+   const upper=attack==="upper", low=attack==="body";
+   const centerY=upper?-155:low?-77:-128;
+   const range=attack==="powerKick"?158:attack==="cross"?136:118;
+   ctx.beginPath();
+   if(upper){
+    ctx.moveTo(24,-96);ctx.quadraticCurveTo(101,-136,90,-224);
+   }else{
+    ctx.moveTo(20,centerY+16);
+    ctx.quadraticCurveTo(range*.61,centerY-27,range,centerY-5);
+   }
+   ctx.stroke();
+   if(attack==="powerKick"||upper){
+    ctx.globalAlpha=force*.18;
+    ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(48,-130,77,-1.1,.62);ctx.stroke();
+   }
+   ctx.restore();
+  }
+  ctx.restore();
+ }
+ root.MugenDirectional=Object.freeze({fps:FPS,layouts,build,choosePose,drawBehind,drawFront});
 })(typeof window==="undefined"?globalThis:window);
