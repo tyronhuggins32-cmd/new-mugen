@@ -60,10 +60,10 @@
  // The active attack durations are still defined in yusuke.json; only artwork
  // timing is changed. A shared nearly-neutral exit connects to the next move.
  const square=Object.freeze({
-  light:Object.freeze({frames:[16,17,18,19],cuts:[.17,.32,.70],lead:8,rise:-2,roll:.014}),
-  cross:Object.freeze({frames:[20,21,22,23],cuts:[.18,.35,.69],lead:11,rise:-2,roll:.018}),
-  body:Object.freeze({frames:[24,25,26,27],cuts:[.20,.36,.71],lead:7,rise:2,roll:.016}),
-  upper:Object.freeze({frames:[28,29,30,31],cuts:[.20,.38,.70],lead:8,rise:-7,roll:.021})
+  light:Object.freeze({frames:[16,17,18,19],cuts:[.14,.24,.70],lead:8,rise:-2,roll:.014}),
+  cross:Object.freeze({frames:[20,21,22,23],cuts:[.18,.30,.69],lead:11,rise:-2,roll:.018}),
+  body:Object.freeze({frames:[24,25,26,27],cuts:[.20,.32,.71],lead:7,rise:2,roll:.016}),
+  upper:Object.freeze({frames:[28,29,30,31],cuts:[.20,.32,.70],lead:8,rise:-7,roll:.021})
  });
  const smoothstep=t=>{const a=clamp(t);return a*a*(3-2*a);};
  function squareFrame(type,progress){
