@@ -16,7 +16,8 @@ const document={createElement(tag){
  assert.equal(tag,"canvas");
  const canvas={width:0,height:0,getContext(type){
   assert.equal(type,"2d");
-  return {imageSmoothingEnabled:true,drawImage(...args){draws.push(args);}};
+  return {imageSmoothingEnabled:true,save(){},restore(){},
+    translate(){},transform(){},drawImage(...args){draws.push(args);}};
  }};
  allocated.push(canvas);return canvas;
 }};
@@ -37,7 +38,9 @@ for(const part of ["movement","combat"]){
   assert.ok(f.ax>=0&&f.ax<=f.w);
  }
 }
-assert.equal(draws.length,32*10,"each derived cel uses original source pixel strips");
+assert.equal(draws.length,32,"all derived cels preserve each body as one complete source sprite");
+assert.ok(draws.every(args=>args.length===9),
+  "no partial sprite-strip cropping is allowed: it creates white seams");
 assert.ok(draws.every(args=>images.movement===args[0]||images.combat===args[0]));
 const fighter={facing:1,state:"walk",grounded:true,vx:275,vy:0,stateTime:.13,dashTimer:0,currentAttack(){return null;}};
 const choose=(type,p=.5)=>director.choosePose(fighter,type,atlas,p);
