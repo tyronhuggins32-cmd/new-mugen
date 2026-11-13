@@ -14,6 +14,8 @@ jobs:
         run: node tests/engine.cjs
       - name: Three-Square combo and Triangle energy threshold
         run: node tests/triangle-combo.cjs
+      - name: Spirit Shotgun anime-reference VFX and damage safety
+        run: node tests/shotgun-v4.cjs
       - name: Yusuke sprite expansion checks
         run: node tests/yusuke-sprites.cjs
       - name: Yusuke skin and costume palette consistency
