@@ -62,6 +62,42 @@
     return true;
   }
 
+  // Hit geometry follows the actual ~200px premium fighter silhouette:
+  // narrow shoulders, crouched guard, and an airborne body at real world Y.
+  // This avoids invisible full-width boxes and permits proper jump-over.
+  function hurtbox(fighter) {
+    if (!fighter || !Number.isFinite(fighter.x) || !Number.isFinite(fighter.y)) return null;
+    const guarded = fighter.state === "block" || fighter.state === "crouch";
+    const bodyWidth = Number(fighter.width) || 84;
+    const bodyHeight = Number(fighter.height) || 194;
+    const width = bodyWidth * (guarded ? .72 : .85);
+    const height = bodyHeight * (guarded ? .73 : .94);
+    return { x:fighter.x-width/2, y:fighter.y-height, width, height };
+  }
+
+  // For each punch, place the active area at the hand/leg strike altitude,
+  // not a giant rectangular column from the fighter's feet to their head.
+  // Attack data still controls reach, frame windows, damage and stun.
+  const strikeOffsets=Object.freeze({
+    light:{from:143,lead:23}, cross:{from:151,lead:24},
+    body:{from:110,lead:23}, upper:{from:190,lead:24},
+    heavy:{from:182,lead:24}, powerKick:{from:154,lead:29}
+  });
+  function attackHitbox(fighter,attack,type) {
+    if (!fighter || !attack || attack.projectile || !Number.isFinite(attack.range) ||
+        !Number.isFinite(fighter.x) || !Number.isFinite(fighter.y)) return null;
+    const reach=Math.max(20,Math.min(200,attack.range));
+    const h=Math.max(30,Math.min(155,Number(attack.height)||92));
+    const offset=strikeOffsets[type] || {from:h+24,lead:18};
+    const facing=fighter.facing<0?-1:1;
+    const lead=offset.lead;
+    return {
+      x:facing>0?fighter.x+lead:fighter.x-lead-reach,
+      y:fighter.y-offset.from,
+      width:reach,height:h
+    };
+  }
+
   // Ray-vs-expanded-AABB gives the first collision point on the projectile
   // path, including a shot that crossed the entire defender within one frame.
   // This prevents fast Spirit Gun shots from tunneling through the target.
@@ -94,6 +130,6 @@
   }
 
   root.MugenCombatV5 = Object.freeze({
-    MIN_SPACING, CONTACT_ASSIST, separate, assistPunch, sweepCircle, cameraZoom
+    MIN_SPACING, CONTACT_ASSIST, separate, assistPunch, hurtbox, attackHitbox, sweepCircle, cameraZoom
   });
 })(typeof window === "undefined" ? globalThis : window);
