@@ -1695,7 +1695,8 @@
           <span id="match-score" aria-live="polite">Rounds 0 – 0 · First to 2</span>
         </div>
 
-        <div class="combo-panel"><strong id="combo-label">0 HITS · +0 DAMAGE</strong><div class="combo-track"><span id="combo-fill"></span></div><div class="combo-time"><span id="combo-window"></span></div><small id="shotgun-ready">SHOTGUN: PUNCH ×3 → SPIRIT</small></div>
+        <div class="triangle-action" id="triangle-action" aria-live="polite">△ TRIANGLE · SPIRIT SHOTGUN / POWER KICK</div>
+        <div class="combo-panel" hidden aria-live="polite"><strong id="combo-label">3 SQUARES · COMBO ×1.20</strong><div class="combo-track"><span id="combo-fill"></span></div><div class="combo-time"><span id="combo-window"></span></div><small id="shotgun-ready">SQUARE ×3 · DAMAGE MULTIPLIER ACTIVE</small></div>
         <div class="round-banner" id="round-banner" aria-hidden="true"><strong id="round-banner-text">Fight!</strong></div>
 
         <div class="battle-result" id="battle-result" role="dialog" aria-modal="true" aria-labelledby="battle-result-title">
@@ -1806,9 +1807,12 @@
       yusukeSpriteSheet.decoding = "async";
       const yusukeCombatSheet = new Image();
       yusukeCombatSheet.decoding = "async";
+      const yusukeKickSheet = new Image();
+      yusukeKickSheet.decoding = "async";
       const yusukeSpiritGunSheet = new Image();
       yusukeSpiritGunSheet.decoding = "async";
       let combatAtlasReady = false;
+      let kickAtlasReady = false;
       let yusukeMotionAtlas = null;
       let activeCharacterDefinition = null;
       let yusukeSpriteFrames = [];
@@ -2131,6 +2135,7 @@
       async function loadCharacterDefinition() {
         characterReady = false;
         combatAtlasReady = false;
+        kickAtlasReady = false;
         yusukeMotionAtlas = null;
         chooseCharacter.disabled = true;
         startBattleButton.disabled = true;
@@ -2165,7 +2170,19 @@
             }
           }
 
-          // Synthesise and cache 10 FPS movement cels from the existing 24 poses.
+          // Kick art is optional for safety; the attack still executes if a
+          // network or CDN failure prevents loading the new sprite sheet.
+          if (character.powerKickSpriteSheet) {
+            try {
+              await loadSpriteAsset(yusukeKickSheet, character.powerKickSpriteSheet, "Yusuke power kick");
+              kickAtlasReady = true;
+            } catch (error) {
+              kickAtlasReady = false;
+              console.warn("Power-kick artwork unavailable; retaining the original kick animation.", error);
+            }
+          }
+
+          // Sample 60 Hz virtual movement poses directly from the original 24 sprites.
           // A canvas/context failure must not prevent combat or controller input.
           try {
             yusukeMotionAtlas = window.MugenMotion?.createAtlas(
@@ -2179,7 +2196,7 @@
           // Warm CPU palette textures once on the character-selection load.
           // Avoid a GPU filter/upload hitch when the first enemy attack begins.
           if (window.MugenFluid?.tintForCpu) {
-            [yusukeSpriteSheet, yusukeCombatSheet, yusukeSpiritGunSheet]
+            [yusukeSpriteSheet, yusukeCombatSheet, yusukeSpiritGunSheet, yusukeKickSheet]
               .filter(image => image.naturalWidth > 0)
               .forEach(image => window.MugenFluid.tintForCpu(image, true));
           }
@@ -2377,6 +2394,14 @@
       // Build-0010 supplemental artwork selection. This only affects visuals;
       // all attack timing, hitboxes, controller inputs, and damage stay unchanged.
       function selectYusukeCombatPose(fighter, attackType, progress = 0) {
+        if (attackType === "powerKick" && kickAtlasReady) {
+          const atlas = activeCharacterDefinition?.powerKickSpriteSheet;
+          const animation = atlas?.animations?.powerKick;
+          const index = animationFrameFrom(animation, fighter.stateTime, progress);
+          const frame = atlas?.frames?.[index];
+          if (frame) return { frame, animation, frames: atlas.frames,
+            scale: atlas.scale || 1.1, image: yusukeKickSheet };
+        }
         const extra = combatAtlasReady ? activeCharacterDefinition?.combatSpriteSheet : null;
         if (!extra) return null;
         const choose = name => {
@@ -2387,10 +2412,13 @@
           return frame ? { frame, animation, frames: extra.frames, scale: extra.scale || activeCharacterDefinition.spriteSheet.scale || 1 } : null;
         };
 
-        // Preserve the detailed existing firing sheet on projectile release.
-        if (attackType === "gun" || attackType === "shotgun") return null;
+        // Spirit Shotgun is fist-fired like the anime, not finger-fired.
+        // The finger-pointing animation remains exclusive to Spirit Gun.
+        if (attackType === "gun") return null;
+        if (attackType === "shotgun") return choose("straightCross");
+        if (attackType === "light") return choose("lightJab") || choose("straightCross");
         if (attackType === "cross") return choose("straightCross");
-        if (attackType === "body") return choose("lowSlide");
+        if (attackType === "body") return choose("bodyBlow") || choose("crouchBrace");
         if (attackType === "upper") return choose("risingUppercut");
         if (attackType === "heavy") return choose(fighter.attackVariant === 0 ? "risingUppercut" : "jumpingKick");
         if (attackType === "light" && !fighter.grounded) return choose("jumpingKick");
@@ -2715,7 +2743,9 @@
             fighterAnimation: firingArt.fighterAnimation,
             fighterScale: firingArt.fighterScale || activeCharacterDefinition.spriteSheet.scale
           };
-          const usesFiringAnimation = Boolean(attackData[attackType]?.projectile && firingSheet?.fighterFrames?.length);
+          const usesFiringAnimation = Boolean(
+            (attackType === "gun" || (attackType === "shotgun" && !combatAtlasReady))
+            && firingSheet?.fighterFrames?.length);
           const firingFrameIndex = usesFiringAnimation
             ? animationFrameFrom(firingSheet.fighterAnimation, this.stateTime, attackProgress)
             : -1;
@@ -2726,7 +2756,7 @@
             this, yusukeMotionAtlas, !usesFiringAnimation && !combatPose && !attackType
           );
           let renderSheet = usesFiringAnimation
-            ? yusukeSpiritGunSheet : combatPose ? yusukeCombatSheet : motionPose?.image || yusukeSpriteSheet;
+            ? yusukeSpiritGunSheet : combatPose ? combatPose.image || yusukeCombatSheet : motionPose?.image || yusukeSpriteSheet;
           // CPU palette is cached once instead of applying a costly per-frame
           // canvas filter to every stripe, trail and interpolated pose.
           if (this.cpu) renderSheet = window.MugenFluid?.tintForCpu(renderSheet, true) || renderSheet;
@@ -2734,8 +2764,9 @@
             ? firingSheet.fighterFrames[firingFrameIndex] || firingSheet.fighterFrames[0]
             : combatPose?.frame || motionPose?.frame || yusukeSpriteFrames[this.yusukeFrameIndex()] || yusukeSpriteFrames[0];
           if (!frame) return;
-          const lunge = ["light", "cross", "body", "upper"].includes(attackType)
-            ? Math.sin(attackProgress * Math.PI) * ({ light: 7, cross: 19, body: 12, upper: 5 }[attackType])
+          const lunge = ["light", "cross", "body", "upper", "powerKick"].includes(attackType)
+            ? Math.sin(attackProgress * Math.PI)
+              * ({ light: 8, cross: 18, body: 15, upper: 12, powerKick: 26 }[attackType])
             : attackType === "heavy" ? Math.sin(attackProgress * Math.PI) * 14 : 0;
           const scale = usesFiringAnimation
             ? firingSheet.fighterScale || activeCharacterDefinition.spriteSheet.scale || 1
@@ -3533,12 +3564,25 @@
           const now = performance.now();
           if (!force && now - (this._lastHudAt || 0) < 65) return;
           this._lastHudAt = now;
-          const hits = this.player.comboHits;
-          const primed = this.player.punchStep === 3 && this.player.punchWindow > 0;
-          document.querySelector("#combo-label").textContent = `${hits} HIT${hits === 1 ? "" : "S"} · +${hits} DAMAGE`;
-          document.querySelector("#combo-fill").style.width = `${Math.min(100, hits * 10)}%`;
-          document.querySelector("#combo-window").style.width = `${this.player.comboTime / 2 * 100}%`;
-          document.querySelector("#shotgun-ready").textContent = primed ? "SHOTGUN READY — PRESS SPIRIT" : "SHOTGUN: PUNCH ×3 → SPIRIT";
+          const player = this.player;
+          const unlocked = player.comboActive && player.comboTime > 0;
+          const meter = document.querySelector(".combo-panel");
+          meter.hidden = !unlocked;
+          document.querySelector("#combo-label").textContent =
+            unlocked ? `COMBO ${Math.max(3, player.squarePresses + player.comboHits)} · DMG ×${player.comboMultiplier.toFixed(2)}`
+              : "SQUARE ×3 TO START COMBO";
+          document.querySelector("#combo-fill").style.width =
+            `${unlocked ? Math.min(100, 20 + player.comboHits * 15) : 0}%`;
+          document.querySelector("#combo-window").style.width =
+            `${unlocked ? (player.comboTime / (yusukeCombat.combo?.displayTime ?? 2.2)) * 100 : 0}%`;
+          document.querySelector("#shotgun-ready").textContent =
+            `THIRD SQUARE UNLOCKED · +${Math.round(player.comboBonusDamage)} BONUS DMG`;
+          const shotgunAvailable = player.energy > 50;
+          const triangleHint = document.querySelector("#triangle-action");
+          triangleHint.textContent = shotgunAvailable
+            ? `△ SPIRIT SHOTGUN · ${Math.ceil(player.energy)}% SPIRIT`
+            : `△ POWER KICK · ${Math.ceil(player.energy)}% SPIRIT`;
+          triangleHint.dataset.mode = shotgunAvailable ? "shotgun" : "kick";
           document.querySelector("#match-score").textContent = `Rounds ${this.roundWins[0]} – ${this.roundWins[1]} · First to 2`;
           playerHealth.parentElement.title = `${Math.ceil(this.player.health)} / ${this.player.maxHealth} HP`;
           cpuHealth.parentElement.title = `${Math.ceil(this.cpu.health)} / ${this.cpu.maxHealth} HP`;
