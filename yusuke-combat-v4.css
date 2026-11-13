@@ -1,0 +1,30 @@
+/* Yusuke combat v4: HUD hidden until third Square press. */
+.combo-panel[hidden] { display:none !important; }
+.combo-panel {
+ width:268px;border-left:4px solid #ffd66e;
+ background:linear-gradient(120deg,rgba(15,21,37,.98),rgba(24,18,37,.88));
+ box-shadow:0 8px 25px rgba(0,0,0,.5),inset 0 0 32px rgba(255,194,75,.08);
+ border-radius:3px 12px 12px 3px;
+ animation:combo-ignite .18s ease-out both;
+}
+.combo-panel strong{font:900 17px/1.2 system-ui,sans-serif;letter-spacing:.035em;}
+.combo-track{height:8px;border-radius:8px;overflow:hidden;}
+.combo-track span{background:linear-gradient(90deg,#ff713b,#ffe07d);box-shadow:0 0 8px #ffd66e;transition:width 90ms linear;}
+.combo-time span{background:#79eafb;transition:width 90ms linear;}
+.triangle-action {
+ position:absolute;z-index:3;right:23px;top:150px;pointer-events:none;
+ padding:7px 12px;letter-spacing:.04em;font:900 12px/1.1 system-ui,sans-serif;
+ border:1px solid #64dcffa0;border-radius:7px;color:#d1f8ff;background:#071624df;
+ text-shadow:0 0 9px #41cffe6e;
+}
+.triangle-action[data-mode="kick"]{border-color:#ffb95a97;color:#ffe6b7;background:#29150de0;}
+@keyframes combo-ignite{from{opacity:0;transform:translateX(-18px) scale(.94)}to{opacity:1;transform:translateX(0) scale(1)}}
+@media(max-width:840px){
+ .combo-panel{top:116px;left:9px;width:205px;padding:8px;}
+ .combo-panel strong{font-size:13px;}
+ .triangle-action{top:116px;right:9px;font-size:9px;padding:5px 7px;}
+}
+@media(max-width:520px){
+ .combo-panel{top:146px;left:8px;max-width:188px;}
+ .triangle-action{top:116px;right:8px;font-size:8px;max-width:calc(100% - 16px);}
+}
