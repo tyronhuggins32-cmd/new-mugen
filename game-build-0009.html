@@ -2625,7 +2625,9 @@
               : input.heavyPressed ? "heavy" : input.lightPressed ? "light" : null;
             if (queuedAttack) {
               this.actionBuffer = queuedAttack;
-              this.actionBufferTime = input.gunPressed ? Math.max(yusukeCombat.input.attackBuffer, attack.duration - this.stateTime + .05) : yusukeCombat.input.attackBuffer;
+              // Keep Square and Triangle taps queued through recovery.
+              this.actionBufferTime = Math.max(yusukeCombat.input.attackBuffer,
+                attack.duration - this.stateTime + .07);
             }
             this.vx *= Math.max(0, 1 - dt * movement.attackFriction);
             if (attack.projectile && !this.projectileSpawned && this.stateTime >= attack.spawnTime) {
@@ -3585,14 +3587,14 @@
           const meter = document.querySelector(".combo-panel");
           meter.hidden = !unlocked;
           document.querySelector("#combo-label").textContent =
-            unlocked ? `COMBO ${Math.max(3, player.squarePresses + player.comboHits)} · DMG ×${player.comboMultiplier.toFixed(2)}`
+            unlocked ? `COMBO ${Math.max(3, player.squarePresses + Math.max(0, player.comboHits - 1))} · DMG ×${player.comboMultiplier.toFixed(2)}`
               : "SQUARE ×3 TO START COMBO";
           document.querySelector("#combo-fill").style.width =
             `${unlocked ? Math.min(100, 20 + player.comboHits * 15) : 0}%`;
           document.querySelector("#combo-window").style.width =
             `${unlocked ? (player.comboTime / (yusukeCombat.combo?.displayTime ?? 2.2)) * 100 : 0}%`;
           document.querySelector("#shotgun-ready").textContent =
-            `THIRD SQUARE UNLOCKED · +${Math.round(player.comboBonusDamage)} BONUS DMG`;
+            `SQUARE ×3 · +${Math.round(player.comboBonusDamage)} BONUS DAMAGE`;
           const shotgunAvailable = player.energy > 50;
           const triangleHint = document.querySelector("#triangle-action");
           triangleHint.textContent = shotgunAvailable
