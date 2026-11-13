@@ -1760,7 +1760,8 @@
 
   <script src="mugen-cinematics.js?v=1"></script>
   <script src="mugen-visuals-v2.js?v=2"></script>
-  <script src="yusuke-motion.js?v=2"></script>
+  <script src="mugen-fluid-v3.js?v=1"></script>
+  <script src="yusuke-motion.js?v=3"></script>
   <script src="dualsense-controller.js?v=1"></script>
   <script>
     (() => {
@@ -2682,8 +2683,11 @@
           const motionPose = window.MugenMotion?.selectPose(
             this, yusukeMotionAtlas, !usesFiringAnimation && !combatPose && !attackType
           );
-          const renderSheet = usesFiringAnimation
+          let renderSheet = usesFiringAnimation
             ? yusukeSpiritGunSheet : combatPose ? yusukeCombatSheet : motionPose?.image || yusukeSpriteSheet;
+          // CPU palette is cached once instead of applying a costly per-frame
+          // canvas filter to every stripe, trail and interpolated pose.
+          if (this.cpu) renderSheet = window.MugenFluid?.tintForCpu(renderSheet, true) || renderSheet;
           const frame = usesFiringAnimation
             ? firingSheet.fighterFrames[firingFrameIndex] || firingSheet.fighterFrames[0]
             : combatPose?.frame || motionPose?.frame || yusukeSpriteFrames[this.yusukeFrameIndex()] || yusukeSpriteFrames[0];
@@ -2722,9 +2726,7 @@
           context.scale(this.facing * turnCompression, 1);
           context.rotate(pose.tilt);
           context.scale(pose.stretchX, pose.stretchY);
-          context.imageSmoothingEnabled = true;
-          context.imageSmoothingQuality = "high";
-          if (this.cpu) context.filter = "hue-rotate(190deg) saturate(1.8) brightness(.70) contrast(1.18)";
+          context.imageSmoothingEnabled = false;
 
           if (!ghost && this.state === "walk" && Math.abs(this.vx) > 250) {
             const localDirection = Math.sign(this.vx * this.facing) || 1;
@@ -2821,30 +2823,31 @@
             : attackProgress;
           const tween = motionPose ? null : window.MugenVisuals?.animBlend(animation, this.stateTime, progressForFrames);
           const nextFrame = sourceFrames?.[tween?.to];
+          // Deform the existing sprite at screen refresh rate rather than
+          // stacking translucent full-body poses into a slideshow.
           const baseAlpha = context.globalAlpha;
-          if (motionPose?.transitionFrame && motionPose.transitionMix < .995) {
-            // State changes crossfade the last movement cel into the new one
-            // over 160 ms without touching the input/physics tick.
-            const previous = motionPose.transitionFrame;
-            context.globalAlpha = baseAlpha * (1 - motionPose.transitionMix);
-            context.drawImage(renderSheet, previous.x, previous.y, previous.w, previous.h,
-              -previous.ax * scale, -previous.h * scale, previous.w * scale, previous.h * scale);
-            context.globalAlpha = baseAlpha * motionPose.transitionMix;
-            context.drawImage(renderSheet, frame.x, frame.y, frame.w, frame.h,
-              drawX, drawY, drawWidth, drawHeight);
-            context.globalAlpha = baseAlpha;
-          } else if (tween && tween.mix > .005 && tween.mix < .995 && nextFrame && nextFrame !== frame) {
-            context.globalAlpha = baseAlpha * (1 - tween.mix);
-            context.drawImage(renderSheet,frame.x,frame.y,frame.w,frame.h,drawX,drawY,drawWidth,drawHeight);
-            context.globalAlpha = baseAlpha * tween.mix;
-            context.drawImage(renderSheet,nextFrame.x,nextFrame.y,nextFrame.w,nextFrame.h,
-              -nextFrame.ax * scale,
-              -nextFrame.h * scale + (drawY + frame.h * scale),
-              nextFrame.w * scale,nextFrame.h * scale);
-            context.globalAlpha = baseAlpha;
+          const chosenFrame = tween?.mix >= .68 && nextFrame ? nextFrame : frame;
+          const paintFrame = (sprite, opacity = 1, asGhost = ghost) => {
+            if (!sprite || opacity <= 0) return;
+            context.globalAlpha = baseAlpha * opacity;
+            const ox = -sprite.ax * scale;
+            const oy = -sprite.h * scale + (drawY + frame.h * scale);
+            if (!window.MugenFluid?.drawCel(
+              context, renderSheet, sprite, ox, oy,
+              sprite.w * scale, sprite.h * scale, this, time, asGhost
+            )) {
+              context.drawImage(renderSheet, sprite.x, sprite.y, sprite.w, sprite.h,
+                ox, oy, sprite.w * scale, sprite.h * scale);
+            }
+          };
+          if (motionPose?.transitionFrame && motionPose.transitionMix < .96) {
+            // A short 67 ms hand-off, not prolonged ghost silhouettes.
+            paintFrame(motionPose.transitionFrame, 1 - motionPose.transitionMix, true);
+            paintFrame(chosenFrame, motionPose.transitionMix);
           } else {
-            context.drawImage(renderSheet,frame.x,frame.y,frame.w,frame.h,drawX,drawY,drawWidth,drawHeight);
+            paintFrame(chosenFrame);
           }
+          context.globalAlpha = baseAlpha;
           context.filter = "none";
           if (!ghost) window.MugenVisuals?.drawCpuAccent(context,this,time);
           if (!ghost && ["light", "cross", "body", "upper"].includes(attackType) && attackProgress > .15 && attackProgress < .8) {
@@ -3112,10 +3115,12 @@
           this.visualEchoes = [];
           this.visualHits = [];
           this.renderAlpha = 1;
+          this._lastHudAt = 0;
+          window.MugenFluid?.reset(this);
           battleResult.classList.remove("open");
           roundBanner.classList.add("show");
           roundBannerText.textContent = `Round ${this.roundNumber}`;
-          this.updateHud();
+          this.updateHud(true);
         }
 
         start() {
@@ -3145,15 +3150,20 @@
 
         loop(time) {
           if (!this.running) return;
-          const elapsed = Math.max(0, Math.min((time - this.lastFrame) / 1000, .25));
+          // Never attempt a quarter second of catch-up on Safari after a tab stall.
+          // A bounded fixed step keeps physics consistent without death spirals.
+          const elapsed = Math.max(0, Math.min((time - this.lastFrame) / 1000, .0833));
           this.lastFrame = time;
           if (!this.paused) {
             this.accumulator += elapsed;
             const step = 1 / 60;
-            while (this.accumulator >= step) {
+            let substeps = 0;
+            while (this.accumulator >= step && substeps < 5) {
               this.accumulator -= step;
               this.update(step);
+              substeps++;
             }
+            if (this.accumulator >= step * 2) this.accumulator = step * .999;
           }
           this.renderAlpha = this.paused ? 1 : Math.max(0, Math.min(1, this.accumulator * 60));
           this.render(time);
@@ -3224,6 +3234,7 @@
           const contacts = [this.prepareMelee(this.player, this.cpu), this.prepareMelee(this.cpu, this.player)];
           for (const contact of contacts) if (contact) contact();
           this.updateProjectiles(dt);
+          window.MugenFluid?.tick(this, dt);
           this.updateHud();
 
           if (this.player.health <= 0 || this.cpu.health <= 0 || this.timer <= 0) this.finishRound();
@@ -3378,6 +3389,7 @@
           const impactCount = blocked ? 8 : heavyHit ? 27 : 17;
           this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", impactCount);
           window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
+          window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
           this.shake = blocked ? effects.shake.block : heavyHit ? effects.shake.heavy : effects.shake.light;
@@ -3436,7 +3448,7 @@
           if (Math.abs(playerLife - cpuLife) < 1e-9) this.winner = null;
           else this.winner = playerLife > cpuLife ? this.player : this.cpu;
           if (this.winner) this.roundWins[this.winner === this.player ? 0 : 1] += 1;
-          this.updateHud();
+          this.updateHud(true);
           this.state = "ending";
           this.endingTime = 1.15;
           roundBannerText.textContent = this.timer <= 0 ? "Time!" : "K.O.!";
@@ -3465,7 +3477,12 @@
           rematchButton.focus({ preventScroll: true });
         }
 
-        updateHud() {
+        updateHud(force = false) {
+          // Smooth health bars in CSS, but avoid dozens of text/layout writes
+          // on every 60 Hz physics tick, particularly on mobile Safari.
+          const now = performance.now();
+          if (!force && now - (this._lastHudAt || 0) < 65) return;
+          this._lastHudAt = now;
           const hits = this.player.comboHits;
           const primed = this.player.punchStep === 3 && this.player.punchWindow > 0;
           document.querySelector("#combo-label").textContent = `${hits} HIT${hits === 1 ? "" : "S"} · +${hits} DAMAGE`;
@@ -3661,10 +3678,12 @@
           context.setTransform(1, 0, 0, 1, 0, 0);
           context.clearRect(0, 0, arena.width, arena.height);
           context.save();
-          if (this.shake > 0) context.translate((Math.sin(time * .11) + Math.sin(time * .067)) * this.shake * .28, (Math.cos(time * .097) + Math.cos(time * .053)) * this.shake * .28);
+          if (window.MugenFluid?.beginFrame) window.MugenFluid.beginFrame(this, context, time, arena);
+          else if (this.shake > 0) context.translate((Math.sin(time * .11) + Math.sin(time * .067)) * this.shake * .28, (Math.cos(time * .097) + Math.cos(time * .053)) * this.shake * .28);
           if (window.MugenVisuals?.drawArena) window.MugenVisuals.drawArena(context, time, arena);
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
+          window.MugenFluid?.drawBehind(this, context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
           window.MugenVisuals?.drawEchoes(this, context, time);
@@ -3680,6 +3699,7 @@
           }
           context.globalAlpha = 1;
           window.MugenVisuals?.drawHits(this, context, time);
+          window.MugenFluid?.drawFront(this, context, time);
           context.restore();
           window.MugenCinematics?.render(this, context, time);
         }
@@ -3936,6 +3956,15 @@
         gamepadControls?.update(time);
         const delta = Math.min(time - lastTime, 32);
         lastTime = time;
+        // The fight has its own canvas. Repainting the entire animated menu
+        // underneath it at high DPR burned GPU time and made gameplay stutter.
+        if (activeScreen === "fight") {
+          if (!draw.fightHidden) ctx.clearRect(0, 0, innerWidth, innerHeight);
+          draw.fightHidden = true;
+          requestAnimationFrame(draw);
+          return;
+        }
+        draw.fightHidden = false;
         ctx.clearRect(0, 0, innerWidth, innerHeight);
 
         if (particlesOn) {
