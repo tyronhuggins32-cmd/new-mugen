@@ -2639,7 +2639,9 @@
           // Quiet whooshes mark the initial swing; hit impacts sound only
           // after collision so a whiff never produces a false contact cue.
           if (["light", "cross", "body", "upper", "powerKick"].includes(type)) {
-            if (!playCombatSfx("swing", type === "powerKick" ? .82 : .52))
+            const charged = type === "upper" || type === "powerKick";
+            if (!playCombatSfx(charged ? "swing-heavy" : "swing",
+              charged ? .62 : .46))
               if (!window.MugenSFX) playTone(punchPitch[type] ?? 115, .06);
           } else {
             playTone(punchPitch[type] ?? (type === "shotgun" ? 410 : 480),
@@ -2759,6 +2761,7 @@
             return;
           }
           if (input.charge && this.grounded && !this.cpu) {
+            if (this.state !== "charge") playCombatSfx("spirit-charge", .3);
             this.setState("charge");
             this.vx = 0;
             this.energy = Math.min(100, this.energy + dt * 22);
@@ -2807,7 +2810,8 @@
           if (input.jumpPressed && this.grounded) {
             this.vy = movement.jumpVelocity;
             this.setState("jump");
-            playTone(285, .04);
+            if (!playCombatSfx("jump", .4))
+              if (!window.MugenSFX) playTone(285, .04);
           }
 
           this.applyPhysics(dt);
@@ -3573,6 +3577,8 @@
               yusukeCombat.projectileVfx?.shotgun);
             this.shake = Math.max(this.shake, 5.5);
             this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, 1.05, "muzzle");
+          playCombatSfx("spirit-shot", .58, owner.facing * .2);
+            playCombatSfx("shotgun", .65, owner.facing * .2);
             return;
           }
 
