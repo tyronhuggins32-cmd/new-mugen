@@ -49,12 +49,14 @@
     K(C,5,17,8),K(M,0)])
   }),
   spiritVoid:Object.freeze({
-   title:"Spirit Void",description:"A darkened cinematic charge followed by eight blue energy impacts.",
-   duration:1.68,cost:65,airOnly:false,cinematic:true,rush:80,bound:false,
-   hits:Object.freeze([H(.85,19,910,0,.28),H(.94,19,910,0,.28),
-    H(1.03,19,910,0,.28),H(1.12,19,910,0,.28),
-    H(1.21,19,910,0,.28),H(1.30,19,910,0,.28),
-    H(1.39,19,910,0,.28),H(1.51,72,910,710,.54,true,-320)]),
+   title:"Spirit Void",description:"A darkened cinematic charge into a controlled fifteen-hit spirit barrage.",
+   duration:2.16,cost:65,airOnly:false,cinematic:true,rush:80,bound:false,
+   // Fourteen rapid energy contacts followed by one decisive impact. Every
+   // count is an actual damage call, not simulated spark/particle contacts.
+   hits:Object.freeze([
+    ...Array.from({length:14},(_,i)=>H(1.055+i*.057,18,910,0,.28)),
+    H(1.92,72,910,710,.54,true,-320)
+   ]),
    cels:Object.freeze([K(M,0),K(C,6,-13,-6),K(C,6,-22,-12,-2),
     K(C,6,-7,-3,-4),K(C,7,12,6,-5),K(C,7,22,10,-7),
     K(C,7,18,8,-7),K(M,0)])
@@ -183,13 +185,13 @@
    const target=actor===game.player?game.cpu:game.player;
    let memo=s.fighters.get(actor);
    if(!memo||memo.name!==id||actor.stateTime<memo.previous-.01){
-    memo={name:id,index:0,previous:0,created:0};
+    memo={name:id,index:0,previous:0,created:0,connected:0};
     s.fighters.set(actor,memo);
    }
    if(move.rush&&!move.cinematic)
     drive(actor,target,move,dt,game.arena);
    memo.previous=actor.stateTime;
-   s.active.push({actor,target,id,move,progress:clamp(actor.stateTime/move.duration)});
+   s.active.push({actor,target,id,move,progress:clamp(actor.stateTime/move.duration),count:memo.connected});
    while(memo.index<move.hits.length && actor.stateTime>=move.hits[memo.index].at){
     const hit=move.hits[memo.index++];
     if(!withinReach(actor,target,hit))continue;
@@ -203,6 +205,8 @@
       referenceHit:true
     };
     game.damageFighter?.(actor,target,attack,impactX,impactY);
+    memo.connected++;
+    s.active[s.active.length-1].count=memo.connected;
     s.events.push({name:id,x:impactX,y:impactY,age:0,
       life:hit.heavy?.26:.14,dir:face,heavy:hit.heavy});
     if(s.events.length>20)s.events.splice(0,s.events.length-20);
@@ -264,6 +268,14 @@
     beam.addColorStop(1,"rgba(23,143,255,0)");
     ctx.globalAlpha=.88*fade;ctx.fillStyle=beam;
     ctx.fillRect(dir>0?originX:originX-beamLength,originY-36,beamLength,72);
+   }
+   if(v.count>0){
+    // A reference-style hit counter tied to real registered contacts.
+    // The original Square COMBO 5 gate and meter are not modified.
+    ctx.globalAlpha=.98;
+    ctx.font="italic 900 27px Impact, sans-serif";
+    ctx.fillStyle="#fff2bf";
+    ctx.fillText(v.count+" HITS",actor.x-dir*122,actor.y-235);
    }
   }
   ctx.restore();
