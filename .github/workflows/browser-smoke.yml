@@ -10,6 +10,7 @@ on:
       - "mugen-yusuke-reference-v13.js"
       - "yusuke-attack-lab-v13.html"
       - "tests/yusuke-reference-v13.cjs"
+      - "tests/yusuke-reference-v14.cjs"
       - "tests/browser-reference-v13.cjs"
       - "yusuke-alpha-v9.js"
       - "mugen-vfx-v8.js"
