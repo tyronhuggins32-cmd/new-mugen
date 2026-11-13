@@ -140,7 +140,7 @@ const path = require("node:path");
     screen.drawImage=function(...args){
       if(args.length===9){
         const image=args[0],width=image?.naturalWidth||image?.width;
-        if(width===2048||width===1536){
+        if(width===2048||width===1536||width===4096){
           const [sx,sy,sw,sh]=args.slice(1,5);
           const [dw,dh]=args.slice(7,9);
           if(sw>0&&sh>0&&Number.isFinite(dh)){
