@@ -837,17 +837,24 @@
   "moves": [
     {
       "id": "street_brawl_chain",
-      "name": "Jab → Cross → Body → Uppercut",
-      "input": "□ / J",
+      "name": "Square Punch Chain",
+      "input": "□ / Square",
       "type": "normal",
-      "description": "Tap J in rhythm for a four-punch sequence. Pausing or getting hit resets the chain."
+      "description": "Tap Square for jab, cross, body shot and uppercut. The first two presses deal normal damage. On the third consecutive press, the combo meter appears and damage starts multiplying."
     },
     {
-      "id": "spirit_punch",
-      "name": "Three-Square Combo (x1.2→x2.6)",
-      "input": "□ × 3 then continue □",
+      "id": "power_kick",
+      "name": "Power Kick",
+      "input": "△ / Triangle at ≤50% Spirit",
       "type": "normal",
-      "description": "Alternates a spirit-coated uppercut and power kick for heavy knockback."
+      "description": "A free, spirit-enhanced kick with a new eight-frame animation that launches opponents backward and upward."
+    },
+    {
+      "id": "spirit_shotgun",
+      "name": "Spirit Shotgun",
+      "input": "△ / Triangle at >50% Spirit",
+      "type": "special",
+      "description": "Releases seven spreading blue Spirit Energy pellets from a clenched fist. Costs 30 Spirit and does not require any Square presses."
     },
     {
       "id": "spirit_gun",
@@ -855,13 +862,6 @@
       "input": "○ / L",
       "type": "special",
       "description": "Concentrates spirit energy in Yusuke's index finger, then releases a fast, compact energy bullet with a separate impact burst."
-    },
-    {
-      "id": "spirit_shotgun",
-      "name": "Spirit Shotgun (Spirit >50%)",
-      "input": "△ / Triangle",
-      "type": "special",
-      "description": "Three punches prime a fist-fired Spirit Shotgun. Press Spirit Gun before the punch chain expires."
     },
     {
       "id": "spirit_dash",
@@ -1375,6 +1375,46 @@
         ],
         "fps": 8,
         "loop": true
+      },
+      "lightJab": {
+        "keyframes": [
+          {
+            "frame": 0,
+            "at": 0
+          },
+          {
+            "frame": 1,
+            "at": 0.2
+          },
+          {
+            "frame": 1,
+            "at": 0.53
+          },
+          {
+            "frame": 0,
+            "at": 0.88
+          }
+        ]
+      },
+      "bodyBlow": {
+        "keyframes": [
+          {
+            "frame": 2,
+            "at": 0
+          },
+          {
+            "frame": 1,
+            "at": 0.28
+          },
+          {
+            "frame": 1,
+            "at": 0.57
+          },
+          {
+            "frame": 2,
+            "at": 0.86
+          }
+        ]
       }
     },
     "consistency": {
