@@ -48,6 +48,23 @@ const path = require("node:path");
     const airClip=fake(260,"jump",false)?.clip;
     const crossClip=fake(0,"attack-cross",true,"cross")?.clip;
     const atlasCounts=extra?[extra.movement.frames.length,extra.combat.frames.length]:[];
+    const squareCount=extra?.square?.frames.length||0;
+    const squareTextureHeight=extra?.square?.image.height||0;
+    // Actual 40 FPS attack samples must visit distinct poses, rather than
+    // holding two stills through the active damage window.
+    const squareSequences=Object.entries({light:.19,cross:.25,body:.29,upper:.39})
+      .map(([attack,duration])=>{
+        const actor={state:"attack-"+attack,grounded:true,vx:0,vy:0,facing:1,
+          stateTime:0,dashTimer:0};
+        const keys=new Set();
+        for(let i=0;i<=Math.ceil(duration*40);i++){
+          actor.stateTime=i/40;
+          const pose=window.MugenDirectional?.choosePose(actor,attack,extra,
+            Math.min(1,i/(duration*40)));
+          if(pose?.part==="square")keys.add(pose.index);
+        }
+        return {attack,count:keys.size};
+      });
     const before=window.MugenFluid.getStats(g).zoom;
     g.player.x=605;g.cpu.x=705;
     for(let i=0;i<25;i++)g.render(1058+i*16);
@@ -98,7 +115,7 @@ const path = require("node:path");
         window.testEngine.premiumImages,.5);
       return pose && pose.part==="combat" && pose.frame?.w>0;
     });
-    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
+    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,squareCount,squareTextureHeight,squareSequences,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
       shotgunImpacts,shotgunDamage,retreatMoved,backdashMoved,backdashMirrored,atlasFrameCount:window.MugenMotion.clips.run.count,
       motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
       kickReady:window.testEngine.kickReady,
@@ -110,7 +127,11 @@ const path = require("node:path");
     return state;
   });
   assert.notEqual(result.first,result.second,"movement should modify actual rendered pixels continuously");
-  assert.deepEqual(result.atlasCounts,[16,16],"premium fighter builds 32 source-derived cels");
+  assert.deepEqual(result.atlasCounts,[16,16],"existing premium sheets remain aligned");
+  assert.equal(result.squareCount,24,"Square kit builds 24 new cels");
+  assert.equal(result.squareTextureHeight,3072,"Square PNG texture has six rows");
+  assert.deepEqual(result.squareSequences.map(s=>s.count),[6,6,6,6],
+    "all four punches must cycle through six readable poses at 40 FPS in Chromium");
   assert.equal(result.forwardClip,"advance","forward directional artwork is active in Chromium");
   assert.equal(result.backwardClip,"retreat","backward footwork has distinct art");
   assert.equal(result.retreatMoved,true,"real left input must backwalk even near enemy attacks");
