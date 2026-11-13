@@ -50,7 +50,19 @@ const path = require("node:path");
     g.render(1720); // Load and paint the kick atlas in the real canvas context.
     g.reset();g.state="play";g.player.energy=51;g.player.beginAttack("heavy");
     const highAction=g.player.currentAttack();
-    const state={first,second,before,after,atlasFrameCount:window.MugenMotion.clips.run.count,
+    // Simulate actual shot release and hit in Chromium, not just metadata.
+    const neutral={left:false,right:false,block:false};
+    g.cpu.x=g.player.x+240;
+    for(let i=0;i<20;i++)g.player.update(1/60,neutral,g.cpu,g);
+    const shotgunProjectileCount=g.projectiles.filter(p=>p.kind==="spiritShotgun").length;
+    const shotgunVisualFragments=window.MugenShotgun?.stats(g).visualFragments;
+    g.render(1950); // Render fist charge, actual pellets and decorative fan together.
+    for(let i=0;i<24;i++)g.updateProjectiles(1/60);
+    const shotgunImpacts=window.MugenShotgun?.stats(g).impactsCreated;
+    const shotgunDamage=1000-g.cpu.health;
+    g.render(1990); // The collision splash must render without browser errors.
+    const state={first,second,before,after,shotgunProjectileCount,shotgunVisualFragments,
+      shotgunImpacts,shotgunDamage,atlasFrameCount:window.MugenMotion.clips.run.count,
       kickReady:window.testEngine.kickReady,lowAction,highAction,
       playerHealth:g.player.health,gamepadConnected:!!window.MugenGamepad};
     return state;
@@ -62,6 +74,11 @@ const path = require("node:path");
   assert.equal(result.kickReady,true,"the eight-frame kick PNG must load into the browser");
   assert.equal(result.lowAction,"powerKick","at 50 Spirit Triangle becomes Power Kick");
   assert.equal(result.highAction,"shotgun","at 51 Spirit Triangle becomes Spirit Shotgun");
+  assert.equal(result.shotgunProjectileCount,7,"Spirit Shotgun keeps seven damaging collision pellets");
+  assert.equal(result.shotgunVisualFragments,40,"anime reference emits forty visual-only energy shots");
+  assert.equal(result.shotgunImpacts,1,"one clustered impact effect after a confirmed hit");
+  assert.ok(result.shotgunDamage>=39 && result.shotgunDamage<80,
+    "cosmetic energy shots never multiply gameplay damage");
   assert.ok(result.gamepadConnected,"DualSense input module should remain loaded");
   assert.equal(errors.length,0,errors.join("\n"));
   console.log("PASS: real kick atlas rendered, strict energy-gated Triangle, fluid sprite motion, camera, controller.");
