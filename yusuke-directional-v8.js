@@ -181,16 +181,22 @@
   const atlasSheet=atlas[part],frame=atlasSheet?.frames?.[index];
   if(!frame)return null;
   const memo=fighter._directionalSprite || (fighter._directionalSprite={
-   clip:null,frame:null,image:null,started:0,from:null,fromImage:null
+   clip:null,frame:null,image:null,started:0,from:null,fromImage:null,
+   part:null,fromPart:null
   });
   if(memo.clip!==clip){
    memo.from=memo.frame;memo.fromImage=memo.image;
+   memo.fromPart=memo.part;
    memo.clip=clip;memo.started=t;
   }
   const mix=clamp((t-memo.started)/.075);
-  const previous=mix<.95 ? memo.from : null;
+  // Square sprites have already been expanded to six stages. Rendering an
+  // old full body over the new one for 75ms causes duplicate hands/outlines.
+  // Keep only one intact figure for Square entry, exit, and chained punches.
+  const ghostSquare=part==="square" || memo.fromPart==="square";
+  const previous=!ghostSquare && mix<.95 ? memo.from : null;
   const previousImage=previous?memo.fromImage:null;
-  memo.frame=frame;memo.image=atlasSheet.image;
+  memo.frame=frame;memo.image=atlasSheet.image;memo.part=part;
   return {frame,image:atlasSheet.image,scale:atlasSheet.scale,source:"directional",
    part,index,clip,frames:atlasSheet.frames,
    transitionFrame:previous,transitionImage:previousImage,transitionMix:mix};
