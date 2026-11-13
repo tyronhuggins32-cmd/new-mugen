@@ -79,8 +79,46 @@ const assert = require('node:assert/strict');
   g.updateProjectiles(.3);
   ok(g.projectiles.length===0 && g.cpu.health===1000,
     'gun stops even on an invulnerable target without damaging it');
+  // Reproduce the user's cross-up issue with 60 real fixed physics steps.
+  // This is not a synthetic teleport; horizontal input and gravity must carry
+  // Yusuke completely over the standing opponent and onto the opposite side.
+  g.reset();g.state='play';g.player.x=500;g.cpu.x=670;
+  g.player.facing=1;g.cpu.facing=-1;
+  const jumpInput=(direction,pressed)=>({
+    left:direction<0,right:direction>0,jumpPressed:pressed,
+    block:false,lightPressed:false,heavyPressed:false,gunPressed:false,
+    dashPressed:false,charge:false,ultimatePressed:false
+  });
+  g.player.update(1/60,jumpInput(1,true),g.cpu,g);
+  ok(g.player.vy<0 && !g.player.grounded,'jump begins despite nearby opponent');
+  let openedAirCross=false;
+  for(let i=0;i<65;i++){
+    g.player.update(1/60,jumpInput(1,false),g.cpu,g);
+    g.separateFighters();
+    if(g.player._crossOverActive)openedAirCross=true;
+  }
+  ok(openedAirCross,'jumper passes shoulder height without an invisible collision wall');
+  ok(g.player.x>g.cpu.x+142,'Yusuke can land on far side of opponent');
+  ok(g.player.grounded,'fighter finishes jump on stage floor');
+
+  g.reset();g.state='play';g.player.x=900;g.cpu.x=1050;
+  g.cpu.setState('attack-light');g.player.facing=1;
+  g.player.update(1/60,jumpInput(-1,true),g.cpu,g);
+  ok(g.player.vy<0 && g.player.vx<0,
+    'retreating jump wins priority over automatic back-blocking');
+
+  g.reset();g.state='play';g.player.x=555;g.cpu.x=686;
+  g.player.facing=1;g.cpu.state='crouch';
+  g.player.setState('attack-light');g.player.stateTime=.08;
+  ok(!g.prepareMelee(g.player,g.cpu),'high jab must miss crouched hurtbox');
+  g.player.setState('attack-body');g.player.stateTime=.13;
+  ok(typeof g.prepareMelee(g.player,g.cpu)==='function',
+    'low body punch overlaps crouched opponent');
+
+  ok(window.MugenVfxV8?.ready(),
+    'new transparent Spirit Gun and punch hit effects must load in the playable fight');
   g.reset();g.state='play';g.start();
-  return 22;
+  return 28;
  });
  await page.keyboard.press('p');
  const pausedTime=await page.evaluate(()=>testEngine.game.timer);
