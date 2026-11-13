@@ -12,7 +12,6 @@
   const ease = x => { const t = clamp(x); return t * t * (3 - 2 * t); };
   const tintCache = new WeakMap();
   const trackers = new WeakMap();
-  let nextId = 0;
 
   function tintForCpu(image, cpu) {
     if (!cpu || !image || !image.width || typeof document === "undefined") return image;
@@ -164,9 +163,12 @@
   }
 
   function dust(game, x, y, direction, amount = 3, tint = "188,219,225") {
+    // The authored V8 sheet already draws grounded dust. Do not add a second
+    // procedural cloud over its carefully composed transparent pixels.
+    if (root.MugenVfxV8?.ready()) return;
     const t = getTracker(game);
     for (let i = 0; i < amount; i++) {
-      const variation = (i * 17 + nextId++ * 7) % 19 - 9;
+      const variation = (i - (amount - 1) / 2) * 2.25;
       t.dust.push({
         x: x + variation * 1.4, y: y - i % 3, vx: -direction * (27 + i * 19),
         vy: -24 - (i % 4) * 19, life: .22 + i * .025,
