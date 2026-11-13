@@ -1647,7 +1647,7 @@
             <li><span>Power Kick · Spirit ≤50%</span><span class="move-input">△</span></li>
             <li><span>Spirit Gun</span><span class="move-input">○</span></li>
             <li><span>Spirit Shotgun · Spirit >50%</span><span class="move-input">△</span></li>
-            <li><span>Spirit Dash</span><span class="move-input">R1</span></li>
+            <li><span>Forward Dash / Backdash</span><span class="move-input">R1 + direction</span></li>
             <li><span>Spirit Charge</span><span class="move-input">L2</span></li>
             <li><span>MAX Spirit Gun</span><span class="move-input">R2</span></li>
           </ul>
@@ -1739,7 +1739,7 @@
         <span><span class="key">○ / Esc</span> Back</span>
       </div>
       <div class="controls" id="fight-controls" hidden>
-        <span><span class="key">PS5</span> Stick / D-pad: Move · ×: Jump · L1: Block · □: Punch ×3 for Combo · △: Shotgun >50% Spirit / Power Kick ≤50% · ○: Spirit Gun · R1: Dash · L2: Charge · R2: MAX · Options: Pause</span>
+        <span><span class="key">PS5</span> Stick / D-pad: Move · ×: Jump · L1: Block · □: Punch ×3 for Combo · △: Shotgun >50% Spirit / Power Kick ≤50% · ○: Spirit Gun · R1: Dash (hold away to backdash) · L2: Charge · R2: MAX · Options: Pause</span>
         <span><span class="key">Keyboard fallback</span> A/D + W/S · J: Combo · K: Shotgun/Kick · L: Spirit Gun · E Dash · I Charge · U MAX</span>
       </div>
       <div class="copyright">New Mugen // Prototype</div>
@@ -1782,6 +1782,7 @@
   <script src="mugen-spiritgun-v5.js?v=1"></script>
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
+  <script src="mugen-sfx-v8.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=1"></script>
   <script src="yusuke-directional-v8.js?v=1"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
@@ -1930,6 +1931,26 @@
           // The menu remains fully usable when browser audio is unavailable.
         }
       }
+
+      function playCombatSfx(name, intensity = .7, pan = 0) {
+        // Sound option applies to movement, attack cues and confirmed hits.
+        // The original short noise/tone synthesis is reused, never loaded
+        // from external files. Audio hardware is optional.
+        if (!soundOn || !window.MugenSFX?.play) return false;
+        try {
+          audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+          if (audioContext.state === "suspended") audioContext.resume?.().catch?.(() => {});
+          const clip = name === "hit" ? "impact-light" :
+            name === "heavy" ? "impact-heavy" : name;
+          return window.MugenSFX.play(audioContext, clip, {
+            strength: intensity, pan: Math.max(-.6, Math.min(.6, pan))
+          });
+        } catch (_) { return false; }
+      }
+
+      // Keep engine-level sound calls optional so headless training, replays
+      // and isolated combat tests work without a browser AudioContext.
+      window.MugenPlayCombatSfx = playCombatSfx;
 
       function setSelected(index, focus = false) {
         selectedIndex = (index + items.length) % items.length;
@@ -2543,6 +2564,7 @@
           this.comboBonusDamage = 0;
           this.knockbackDrag = 5.2;
           this.dashTimer = 0;
+          this.dashDirection = facing;
           this.dashCooldown = 0;
           this.jumpBuffer = 0;
           this._crossOverActive = false;
@@ -2566,7 +2588,10 @@
         }
 
         get hurtbox() {
-          return window.MugenCombatV5?.hurtbox(this) || {
+          // Collision module exposes spacing/sweep helpers, not a hurtbox()
+          // method. Never call a missing optional member as a function.
+          return (typeof window.MugenCombatV5?.hurtbox === "function"
+            ? window.MugenCombatV5.hurtbox(this) : null) || {
             x: this.x - this.width / 2, y: this.y - this.height,
             width: this.width, height: this.height
           };
@@ -2620,8 +2645,17 @@
           this.actionBufferTime = 0;
           if (type === "heavy") this.attackVariant = (this.attackVariant + 1) % Math.max(1, attack.animations?.length || 2);
           const punchPitch = { light: 290, cross: 245, body: 184, upper: 150 };
-          playTone(punchPitch[type] ?? (type === "powerKick" ? 113 : type === "shotgun" ? 410 : 480),
-            attack.projectile ? .12 : .06);
+          // Quiet whooshes mark the initial swing; hit impacts sound only
+          // after collision so a whiff never produces a false contact cue.
+          if (["light", "cross", "body", "upper", "powerKick"].includes(type)) {
+            const charged = type === "upper" || type === "powerKick";
+            if (!window.MugenPlayCombatSfx?.(charged ? "swing-heavy" : "swing",
+              charged ? .62 : .46))
+              if (!window.MugenSFX) playTone(punchPitch[type] ?? 115, .06);
+          } else {
+            playTone(punchPitch[type] ?? (type === "shotgun" ? 410 : 480),
+              attack.projectile ? .12 : .06);
+          }
           return true;
         }
 
@@ -2666,7 +2700,8 @@
           this.energy = Math.min(100, this.energy + dt * regenRate);
           this.stateTime += dt;
           this.turnTimer = Math.max(0, this.turnTimer - dt);
-          // Keep a very brief jump tap through strike recovery.
+          // Briefly buffer a jump through attack recovery, preserving a
+          // retreating jump even if the opponent is swinging.
           if (input.jumpPressed) this.jumpBuffer = .16;
           else this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);
 
@@ -2715,37 +2750,47 @@
             return;
           }
 
-          // Resolve jumping before passive back-blocking, charging or dashing.
-          // Retreat+Up must jump away even when an enemy attack is threatening.
+          // Jump takes priority over dashing/guarding, including holding away
+          // + jump at point-blank range. Air crossovers remain unblocked until
+          // landing through the combat geometry's crossover flag.
           if (this.jumpBuffer > 0 && this.grounded) {
             this.jumpBuffer = 0;
             this._crossOverActive = false;
             this.vy = movement.jumpVelocity;
-            const jumpDirection = Number(input.right) - Number(input.left);
-            if (jumpDirection) this.vx = jumpDirection * movement.airSpeed;
+            const airborneDirection = Number(Boolean(input.right)) - Number(Boolean(input.left));
+            if (airborneDirection) this.vx = airborneDirection * movement.airSpeed;
             this.setState("jump");
-            playTone(285, .04);
+            if (!window.MugenPlayCombatSfx?.("jump", .4))
+              if (!window.MugenSFX) playTone(285, .04);
             this.applyPhysics(dt);
             return;
           }
 
-          // Forward burst and vulnerable spirit charge. Both use the same fixed 60 Hz physics.
+          // R1 uses the held direction (left or right); no direction still
+          // dashes toward the enemy. Latch the vector for the whole burst so
+          // releasing the stick/button mid-dash cannot reverse direction.
           if (this.dashTimer > 0 && this.grounded) {
             this.dashTimer = Math.max(0, this.dashTimer - dt);
-            this.vx = this.facing * 1030;
+            const backstep = this.dashDirection !== this.facing;
+            this.vx = this.dashDirection * (backstep ? 815 : 1030);
             this.setState("walk");
             this.applyPhysics(dt);
             return;
           }
           if (input.dashPressed && this.grounded && this.dashCooldown === 0 && !this.cpu) {
-            this.dashTimer = .145;
+            this.setFacing(opponent.x >= this.x ? 1 : -1);
+            const stick = Number(Boolean(input.right)) - Number(Boolean(input.left));
+            this.dashDirection = stick || this.facing;
+            this.dashTimer = this.dashDirection === this.facing ? .145 : .17;
             this.dashCooldown = .48;
-            this.vx = this.facing * 1030;
+            this.vx = this.dashDirection * (this.dashDirection === this.facing ? 1030 : 815);
             this.setState("walk");
             this.applyPhysics(dt);
+            window.MugenPlayCombatSfx?.("dash", .55);
             return;
           }
           if (input.charge && this.grounded && !this.cpu) {
+            if (this.state !== "charge") window.MugenPlayCombatSfx?.("spirit-charge", .3);
             this.setState("charge");
             this.vx = 0;
             this.energy = Math.min(100, this.energy + dt * 22);
@@ -2757,9 +2802,10 @@
 
 
           const retreating = direction === -this.facing;
-          const threatened = (opponent.currentAttack() && Math.abs(opponent.x - this.x) < 250)
-            || game.projectiles.some(p => p.owner !== this && Math.abs(p.x - this.x) < 240);
-          if ((input.block || (retreating && threatened)) && this.grounded) {
+          // Retreat and guard are independent commands. Automatic guarding on
+          // backward input used to consume the backwalk, especially up close.
+          // L1 / down remains the explicit way to block.
+          if (input.block && this.grounded) {
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             this.setState("block");
             this.vx *= Math.max(0, 1 - dt * movement.groundFriction);
@@ -2794,6 +2840,8 @@
         }
 
         applyPhysics(dt) {
+          const startedAirborne = this.y < arena.floor - .5;
+          const landingSpeed = this.vy;
           if (!this.grounded || this.vy < 0) this.vy += yusukeCombat.movement.gravity * dt;
           this.x += this.vx * dt;
           this.y += this.vy * dt;
@@ -2801,6 +2849,7 @@
           if (this.y >= arena.floor) {
             this.y = arena.floor;
             this.vy = 0;
+            if (startedAirborne && landingSpeed > 450) window.MugenPlayCombatSfx?.("land", .42);
             this._crossOverActive = false;
             if (this.state === "jump") this.setState("idle");
           }
@@ -3551,6 +3600,8 @@
               yusukeCombat.projectileVfx?.shotgun);
             this.shake = Math.max(this.shake, 5.5);
             this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, 1.05, "muzzle");
+          window.MugenPlayCombatSfx?.("spirit-shot", .58, owner.facing * .2);
+            window.MugenPlayCombatSfx?.("shotgun", .65, owner.facing * .2);
             return;
           }
 
@@ -3576,6 +3627,7 @@
           });
           this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, .54, "muzzle");
           window.MugenSpiritGun?.onFire(this, owner, muzzleX, muzzleY);
+          window.MugenPlayCombatSfx?.("spirit-shot", .56, owner.facing * .22);
         }
 
         updateProjectiles(dt) {
@@ -3680,7 +3732,9 @@
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
           this.shake = blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light;
-          playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
+          const impactSound = blocked ? "block" : heavyHit ? "heavy" : "hit";
+          if (!window.MugenPlayCombatSfx?.(impactSound, blocked ? .4 : heavyHit ? .88 : .6))
+            if (!window.MugenSFX) playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
         }
 
         addImpact(x, y, color, count) {

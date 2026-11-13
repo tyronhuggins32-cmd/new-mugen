@@ -11,6 +11,9 @@ const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,element());
 const callbacks=new Map();let nextId=0;
 const context=vm.createContext({console,config,assert,performance:{now:()=>0},
  requestAnimationFrame:fn=>{callbacks.set(++nextId,fn);return nextId},cancelAnimationFrame:id=>callbacks.delete(id),
+ // The game test evaluates only the engine slice. The real sound function
+ // lives in the surrounding HTML and is replaced by a no-output test seam.
+ playCombatSfx(){return true;},
  document:{querySelector:node,addEventListener(){}},window:{addEventListener(){}},touchButtons:[],
  fightCanvas:{width:1280,height:720},activeScreen:'fight',arcadeGame:null,
  roundBanner:element(),roundBannerText:element(),battleResult:element(),battleResultKicker:element(),battleResultTitle:element(),battleResultMessage:element(),rematchButton:element(),playerHealth:element(),cpuHealth:element(),playerEnergy:element(),cpuEnergy:element(),roundTimer:element(),playTone(){},pending:()=>callbacks.size});
@@ -22,6 +25,36 @@ vm.runInContext(`
  g.player.x=400;g.cpu.x=900;g.player.update(1/60,{...neutral,left:true},g.cpu,g);
  assert.equal(g.player.facing,1);assert.ok(g.player.vx<0);
  pressFightControl('left','KeyA');pressFightControl('left','ArrowLeft');releaseFightControl('left','KeyA');assert.ok(humanInput().left);clearFightInput();
+ // Backward input must NEVER auto-block, even during enemy attacks.
+ g.reset();g.state='play';g.player.x=460;g.cpu.x=610;
+ g.cpu.beginAttack('light');g.player.facing=1;
+ const retreatX=g.player.x;
+ g.player.update(1/60,{...neutral,left:true},g.cpu,g);
+ assert.equal(g.player.state,'walk','back direction should be walking, not auto guard');
+ assert.ok(g.player.x<retreatX,'walk backward travels away from an attacking opponent');
+ assert.equal(g.player.facing,1,'retreat keeps facing opponent');
+ // R1 + away dashes backward without a facing flip, and direction stays
+ // latched when the dpad/stick is released.
+ g.reset();g.state='play';g.player.x=500;g.cpu.x=950;g.player.facing=1;
+ const backX=g.player.x;
+ g.player.update(1/60,{...neutral,left:true,dashPressed:true},g.cpu,g);
+ assert.equal(g.player.dashDirection,-1);
+ assert.ok(g.player.x<backX,'backdash moves away from opponent');
+ const backFollow=g.player.x;
+ g.player.update(1/60,neutral,g.cpu,g);
+ assert.ok(g.player.x<backFollow,'backdash persists after input release');
+ assert.equal(g.player.facing,1);
+ // Facing left reverses controls symmetrically: right + R1 retreats right.
+ g.reset();g.state='play';g.player.x=900;g.cpu.x=400;g.player.facing=-1;
+ const rightX=g.player.x;
+ g.player.update(1/60,{...neutral,right:true,dashPressed:true},g.cpu,g);
+ assert.equal(g.player.dashDirection,1);
+ assert.ok(g.player.x>rightX,'left-facing fighter can backdash right');
+ assert.equal(g.player.facing,-1);
+ // R1 alone retains classic forward dash toward the opponent.
+ g.reset();g.state='play';g.player.x=500;g.cpu.x=950;g.player.facing=1;
+ g.player.update(1/60,{...neutral,dashPressed:true},g.cpu,g);
+ assert.equal(g.player.dashDirection,1);
  g.player.x=arena.left;g.cpu.x=arena.left+10;g.separateFighters();assert.ok(g.cpu.x-g.player.x >= (g.player.width+g.cpu.width)/2);
  g.player.x=500;g.cpu.x=510;g.player.y=arena.floor-240;g.separateFighters();assert.equal(g.player.x,500);assert.equal(g.cpu.x,510);
  g.reset();g.state='play';g.cpu.health=0;g.finishRound();assert.equal(g.roundWins[0],1);g.update(2);assert.equal(g.roundNumber,2);assert.equal(g.state,'intro');
@@ -49,6 +82,40 @@ vm.runInContext(`
  assert.equal(g.superSequence,null,'cinematic completes');assert.equal(g.player.energy,0,'MAX drains energy');assert.equal(g.player.comboHits,0,'MAX Spirit Gun does not bypass the three-Square combo gate');assert.ok(g.cpu.health<680,'beam damages opponent');
  g.reset();g.state='play';g.player.energy=0;g.player.update(1/60,{charge:true},g.cpu,g);assert.ok(g.player.energy>0,'hold-to-charge refills energy');
  g.reset();g.state='play';const dashX=g.player.x;g.player.update(1/60,{dashPressed:true},g.cpu,g);assert.ok(g.player.x>dashX+10,'dash crosses space');
+ // Retreat + jump must take priority over nearby attacks and preserve air control.
+ g.reset();g.state='play';g.player.x=520;g.cpu.x=690;g.cpu.beginAttack('light');
+ g.player.update(1/60,{...neutral,left:true,jumpPressed:true},g.cpu,g);
+ assert.equal(g.player.state,'jump','jump pressed while retreating should beat automatic defense');
+ assert.ok(g.player.vy<0 && g.player.vx<0 && g.player.y<arena.floor,
+   'directional jump must rise and move away in one physics tick');
+ // Retreat movement must NEVER silently become guard near an attacking target.
+ g.reset();g.state='play';g.player.x=500;g.cpu.x=680;g.player.facing=1;
+ g.cpu.beginAttack('light');const beforeRetreat=g.player.x;
+ g.player.update(1/60,{...neutral,left:true},g.cpu,g);
+ assert.equal(g.player.state,'walk','backpedal should animate even near a punch');
+ assert.ok(g.player.vx<0 && g.player.x<beforeRetreat,'left retreat escapes close range');
+ assert.equal(g.player.facing,1,'backpedal keeps facing the opponent');
+ // The same R1/Keyboard dash input plus held direction must honor backward.
+ g.reset();g.state='play';g.player.x=550;g.cpu.x=800;
+ const beforeBackDash=g.player.x;
+ g.player.update(1/60,{...neutral,left:true,dashPressed:true},g.cpu,g);
+ assert.ok(g.player.x<beforeBackDash-7,'left+dash moves away at dash speed');
+ assert.equal(g.player.dashDirection,-1,'dash direction is latched from input');
+ for(let frame=0;frame<4;frame++)g.player.update(1/60,neutral,g.cpu,g);
+ assert.ok(g.player.vx<0,'backdash keeps its direction after the R1 tap');
+ assert.equal(g.player.facing,1,'backdash does not reverse the character');
+ g.reset();g.state='play';g.player.x=900;g.cpu.x=700;g.player.facing=-1;
+ const beforeRightBackdash=g.player.x;
+ g.player.update(1/60,{...neutral,right:true,dashPressed:true},g.cpu,g);
+ assert.ok(g.player.x>beforeRightBackdash+7,'right+dash backsteps when facing left');
+ assert.equal(g.player.dashDirection,1);
+ assert.equal(g.player.facing,-1);
+ g.reset();g.state='play';g.player.x=500;g.cpu.x=680;
+ g.player.update(1/60,{...neutral,left:true,block:true},g.cpu,g);
+ assert.equal(g.player.state,'block','explicit guard still blocks while retreating');
+ g.reset();g.state='play';g.player.x=500;g.cpu.x=750;
+ g.player.update(1/60,{...neutral,dashPressed:true},g.cpu,g);
+ assert.ok(g.player.vx>0,'neutral R1 remains the original forward dash');
  g.reset();g.state='play';
  g.damageFighter(g.player,g.cpu,{damage:10,knockback:135,hitstun:.2,heavyImpact:false},g.cpu.x,g.cpu.y-105);
  assert.equal(g.cpu.state,'hit');assert.equal(g.cpu.hitReaction,'stagger');

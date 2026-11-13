@@ -17,7 +17,7 @@ const scope=vm.createContext({
  roundBanner:element(),roundBannerText:element(),battleResult:element(),
  battleResultKicker:element(),battleResultTitle:element(),battleResultMessage:element(),
  rematchButton:element(),playerHealth:element(),cpuHealth:element(),
- playerEnergy:element(),cpuEnergy:element(),roundTimer:element(),playTone(){}
+ playerEnergy:element(),cpuEnergy:element(),roundTimer:element(),playTone(){},playCombatSfx(){return true;}
 });
 const start=html.indexOf("      const arena =");
 const end=html.indexOf("      function beginFight()",start);

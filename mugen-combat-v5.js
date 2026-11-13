@@ -117,7 +117,10 @@
     const box = attackHitbox(attacker,attack,kind);
     const tip = box ? (direction>0?box.x+box.width:box.x)
                     : attacker.x + direction*(18 + attack.range);
-    const reach = (tip-attacker.x)*direction + defender.width*.48;
+    // Use the actual measured hurtbox, not an approximation of the full
+    // fighter width. The old estimate could leave a ~2px visible jab gap.
+    const contactHalfWidth = (defender.hurtbox?.width ?? defender.width) / 2;
+    const reach = (tip-attacker.x)*direction + contactHalfWidth;
     if (signedDistance < minSpacing || signedDistance > reach + maxAssist ||
         signedDistance <= reach) return false;
     const desired = Math.max(minSpacing, reach - 1);
