@@ -70,10 +70,10 @@ assert.ok(pose.image);
 const failed=director.build(meta,{movement:images.movement,combat:null});
 assert.equal(failed,null,"missing source art must not break the game");
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/yusuke-directional-v8\\.js\\?v=1/);
-assert.match(html,/MugenDirectional\\?\\.build/);
-assert.match(html,/MugenDirectional\\?\\.choosePose/);
-assert.match(html,/premiumPose\\.frames \\|\\| premiumArt/);
-new vm.Script([...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/g)]
+assert.match(html,/yusuke-directional-v8\.js\?v=1/);
+assert.match(html,/MugenDirectional\?\.build/);
+assert.match(html,/MugenDirectional\?\.choosePose/);
+assert.match(html,/premiumPose\.frames \|\| premiumArt/);
+new vm.Script([...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
   .map(x=>x[1]).find(x=>x.includes("function selectYusukeCombatPose")));
 console.log("PASS: 24 consistent directional/combat-derived frames, 40 FPS clips and browser fallback.");
