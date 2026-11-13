@@ -2176,6 +2176,14 @@
             console.warn("Movement in-betweens unavailable; keeping base sprite animation.", error);
           }
 
+          // Warm CPU palette textures once on the character-selection load.
+          // Avoid a GPU filter/upload hitch when the first enemy attack begins.
+          if (window.MugenFluid?.tintForCpu) {
+            [yusukeSpriteSheet, yusukeCombatSheet, yusukeSpiritGunSheet]
+              .filter(image => image.naturalWidth > 0)
+              .forEach(image => window.MugenFluid.tintForCpu(image, true));
+          }
+
           activeCharacterDefinition = character;
           yusukeSpriteFrames = character.spriteSheet.frames;
           yusukeAnimations = character.spriteSheet.animations;
