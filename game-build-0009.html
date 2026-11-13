@@ -4101,7 +4101,10 @@
           window.MugenShotgun?.drawFan(this, context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
-          window.MugenVisuals?.drawEchoes(this, context, time);
+          // Modern directional streaks replace translucent fighter-shaped
+          // ghosts. Old afterimages read as white/pale duplicate outlines.
+          if (!window.MugenVfxV8?.ready())
+            window.MugenVisuals?.drawEchoes(this, context, time);
           this.player.draw(context, time, this.renderAlpha ?? 1);
           this.cpu.draw(context, time, this.renderAlpha ?? 1);
           window.MugenVisuals?.drawCharge(this.player, context, time);
