@@ -14,16 +14,16 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
 #status{color:#cbfcee}small{color:#a6c5c0}
 </style></head><body>
 <header><small>NEW MUGEN / FIGHTER ASSET STUDIO</small><h1>Yusuke Directional Sprites</h1>
-<p>Preview and export transparent, source-matched movement and combat atlases. Every cel preserves pixels and colors from the existing high-resolution fighter art. These are 32 source-derived action variations with refined alpha edges, not 32 separate hand illustrations. Left-facing animation is mirrored in the fighting engine.</p>
+<p>Preview and export transparent, source-matched movement and combat atlases. Every cel preserves pixels and colors from the existing high-resolution fighter art. These are 48 source-derived action cels with refined alpha edges, including 16 additional Square attack phases. These are not 48 individually hand-illustrated drawings. Left-facing animation is mirrored in the fighting engine.</p>
 <a class="button" href="./index.html">Return to game</a><p id="status">Building sprite atlases…</p></header>
 <main><section class="art"><h2>01 / Directional movement (16 cels)</h2><p>Advancing, backpedaling, high-speed rush, diagonal air movement, defensive low stance and recovery.</p>
 <div class="preview" id="move-preview"></div><button type="button" id="movement-download" disabled>Download transparent movement PNG</button></section>
-<section class="art"><h2>02 / Combo and combat (16 cels)</h2><p>Jab, cross, body blow, rising uppercut, jumping strike, finishing kick and hit-stagger variations.</p>
+<section class="art"><h2>02 / Combo and combat (32 cels)</h2><p>Jab, cross, body and uppercut now have four dedicated phases each: anticipation, acceleration, contact and recovery. Heavy attacks, aerial strikes and hit-stagger retain their original poses.</p>
 <div class="preview" id="combat-preview"></div><button type="button" id="combat-download" disabled>Download transparent combat PNG</button></section>
 <section class="art"><h2>Frame metadata</h2><p>Export frame coordinates, 512-pixel tile geometry, rendering scale, crop/foot-pivot alignment and 40 FPS playback rate for integration into a sprite editor.</p><button type="button" id="metadata-download" disabled>Download atlas frame JSON</button></section></main>
 <script src="./yusuke-premium-v6.js?v=1"></script>
 <script src="./yusuke-alpha-v9.js?v=1"></script>
-<script src="./yusuke-directional-v8.js?v=2"></script>
+<script src="./yusuke-directional-v8.js?v=3"></script>
 <script>
 (async()=>{
  const status=document.querySelector("#status"),button=id=>document.getElementById(id);
@@ -43,17 +43,19 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
     movement:cleanedMovement,combat:cleanedCombat
   });
   if(!atlas)throw Error("Canvas generation unavailable; the playable game still uses original sprites");
-  const snapshots={fps:40,pixelScale:.5,cellSize:[512,512],columns:4,rows:4,
+  const snapshots={fps:40,pixelScale:.5,cellSize:[512,512],columns:4,rows:{movement:4,combat:8},
    source:{movement:meta.movement.src,combat:meta.combat.src},
    animations:{movement:{advance:[0,1,2],retreat:[3,4,5],rush:[6,7],
      aerialForward:[8],aerialBack:[9],lowGuard:[10,11],
      backdash:[12,13],pivot:[14],landing:[15]},
     combat:{jab:[0,1],cross:[2,3],body:[4],upper:[5,6],
      airStrike:[7,8],finisher:[9,10],stagger:[11],
-     heavy:[12,13],guard:[14],recovery:[15]}},
+     heavy:[12,13],guard:[14],recovery:[15],
+     squareLight:[16,17,18,19],squareCross:[20,21,22,23],
+     squareBody:[24,25,26,27],squareUpper:[28,29,30,31]}},
    sheets:{movement:{width:atlas.movement.image.width,height:atlas.movement.image.height,frames:atlas.movement.frames},
     combat:{width:atlas.combat.image.width,height:atlas.combat.image.height,frames:atlas.combat.frames}},
-   note:"Cels are composites from the premium source artwork, with consistent color/pixel size and foot pivot. Horizontal facing is mirrored in game."};
+   note:"48 cels including 32 combat and 16 movement. All are full-body derivatives of cleaned premium sources with matched pivots; Square four-phase animation plays at 40 FPS. Left facing is mirrored."};
   const save=(blob,name)=>{
    const url=URL.createObjectURL(blob);const a=document.createElement("a");
    a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
@@ -72,7 +74,7 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
   button("metadata-download").onclick=()=>save(
    new Blob([JSON.stringify(snapshots,null,2)],{type:"application/json"}),
    "yusuke-directional-v8-frames.json");
-  status.textContent="Ready: 16 movement + 16 combat cels at 40 FPS. Assets were generated successfully.";
+  status.textContent="Ready: 16 movement + 32 combat cels at 40 FPS. Assets were generated successfully.";
  }catch(error){status.textContent="Sprite preview unavailable: "+error.message;}
 })();
 </script></body></html>
