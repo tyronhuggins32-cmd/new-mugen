@@ -812,7 +812,7 @@
   "moves": [
     {
       "id": "street_brawl_chain",
-      "name": "Jab \u2192 Cross \u2192 Body \u2192 Uppercut",
+      "name": "Jab → Cross → Body → Uppercut",
       "input": "J",
       "type": "normal",
       "description": "Tap J in rhythm for a four-punch sequence. Pausing or getting hit resets the chain."
@@ -834,9 +834,30 @@
     {
       "id": "spirit_shotgun",
       "name": "Spirit Shotgun",
-      "input": "J \u2192 J \u2192 J \u2192 L",
+      "input": "J → J → J → L",
       "type": "special",
       "description": "Three punches prime a fist-fired Spirit Shotgun. Press Spirit Gun before the punch chain expires."
+    },
+    {
+      "id": "spirit_dash",
+      "name": "Spirit Dash",
+      "input": "R1 / E",
+      "type": "movement",
+      "description": "Quick forward dash to close distance or extend pressure."
+    },
+    {
+      "id": "spirit_charge",
+      "name": "Spirit Charge",
+      "input": "Hold L2 / I",
+      "type": "utility",
+      "description": "Stand and channel spirit energy; vulnerable while charging."
+    },
+    {
+      "id": "maximum_spirit_gun",
+      "name": "MAX Spirit Gun",
+      "input": "R2 / U (100 meter)",
+      "type": "super",
+      "description": "Eight-hit cinematic spirit attack; requires full spirit meter."
     }
   ],
   "ai": {
