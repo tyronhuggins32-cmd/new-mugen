@@ -2436,12 +2436,6 @@
         if (image.complete && image.naturalWidth === 0) showPortraitFallback(image);
       });
 
-      // Inside the engine section so standalone engine tests can import it.
-      function isThorfinnSelected() {
-        return typeof selectedFighterDefinition !== "undefined" &&
-          selectedFighterDefinition?.id === "thorfinn_karlsefni";
-      }
-
       const arena = Object.freeze({
         width: 2600,
         height: fightCanvas.height,
@@ -2450,6 +2444,12 @@
         left: 68,
         right: 2600 - 68
       });
+
+      // Included in the engine slice used by standalone regression tests.
+      function isThorfinnSelected() {
+        return typeof selectedFighterDefinition !== "undefined" &&
+          selectedFighterDefinition?.id === "thorfinn_karlsefni";
+      }
 
       let attackData = Object.freeze({});
 
