@@ -21,7 +21,7 @@ const assert = require('node:assert/strict');
   const neutral={left:false,right:false,block:false};
   g.player.x=400;g.cpu.x=900;
   g.player.update(1/60,{...neutral,left:true},g.cpu,g);
-  ok(g.player.facing===1 && g.player.vx<0,'retreat facing');
+  ok(g.player.facing===-1 && g.player.vx<0,'left input turns Yusuke left and walks');
   pressFightControl('left','KeyA');pressFightControl('left','ArrowLeft');releaseFightControl('left','KeyA');
   ok(humanInput().left,'aliased inputs');clearFightInput();
   g.player.x=arena.left;g.cpu.x=arena.left+10;g.separateFighters();
@@ -38,10 +38,10 @@ const assert = require('node:assert/strict');
   ok(g.roundNumber===2 && g.roundWins.every(x=>x===0),'draw replay');
   g.reset();g.player.setState('block');g.player.facing=1;
   g.damageFighter(g.cpu,g.player,{damage:10,facing:1,hitstun:.2,knockback:10},0,0);
-  ok(g.player.health===990,'rear guard bypass');
+  ok(g.player.health===4990,'rear guard bypass');
   g.reset();g.player.setState('block');g.player.facing=1;
   g.damageFighter(g.cpu,g.player,{damage:10,facing:-1,hitstun:.2,knockback:10},0,0);
-  ok(g.player.health===997.5,'front guard');
+  ok(g.player.health===4997.5,'front guard');
   // Triangle switches on the strict spirit meter threshold.
   g.reset();g.state='play';g.player.energy=50;
   ok(g.player.beginAttack('heavy') && g.player.currentAttack()==='powerKick',
@@ -61,7 +61,7 @@ const assert = require('node:assert/strict');
   g.player.stateTime=.08;
   const contact=g.prepareMelee(g.player,g.cpu);
   ok(typeof contact==='function' && g.player.x>400,'jab snaps into its active hit range');
-  contact();ok(g.cpu.health<1000,'assisted jab registers actual damage');
+  contact();ok(g.cpu.health<g.cpu.maxHealth,'assisted jab registers actual damage');
 
   g.reset();g.state='play';g.player.x=350;g.cpu.x=740;
   g.player.facing=1;g.player.energy=100;
@@ -69,7 +69,7 @@ const assert = require('node:assert/strict');
   ok(g.projectiles.length===1,'gun spawns exactly one shot');
   g.updateProjectiles(.3); // Bullet crosses the entire hurtbox in one large step.
   ok(g.projectiles.length===0,'swept Spirit Gun stops on the defender');
-  ok(g.cpu.health===922,'Spirit Gun lands its configured 78 base damage');
+  ok(g.cpu.health===4922,'Spirit Gun lands its configured 78 base damage');
   ok(g.hitStop>=.1 && g.shake>=15,'gun impact drives cinematic hit-stop and shake');
   ok(window.MugenSpiritGun?.stats(g).shotsHit===1,'new Spirit Gun effect triggers on contact');
 
@@ -77,7 +77,7 @@ const assert = require('node:assert/strict');
   g.cpu.invulnerability=1;
   g.spawnProjectile(g.player,'spiritGun');
   g.updateProjectiles(.3);
-  ok(g.projectiles.length===0 && g.cpu.health===1000,
+  ok(g.projectiles.length===0 && g.cpu.health===5000,
     'gun stops even on an invulnerable target without damaging it');
   // Reproduce the user's cross-up issue with 60 real fixed physics steps.
   // This is not a synthetic teleport; horizontal input and gravity must carry
