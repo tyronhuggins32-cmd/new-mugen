@@ -1501,7 +1501,7 @@
       #fx { display: none; }
     }
   </style>
-  <link rel="stylesheet" href="arcade-layout.css?v=14">
+  <link rel="stylesheet" href="arcade-layout.css?v=15">
 </head>
 <body>
   <canvas id="fx" aria-hidden="true"></canvas>
@@ -1725,6 +1725,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="mugen-cinematics.js?v=1"></script>
+  <script src="mugen-visuals-v2.js?v=2"></script>
   <script src="dualsense-controller.js?v=1"></script>
   <script>
     (() => {
@@ -2326,7 +2327,7 @@
           if (!animation) return null;
           const frameIndex = animationFrameFrom(animation, fighter.stateTime, progress);
           const frame = extra.frames[frameIndex];
-          return frame ? { frame, scale: extra.scale || activeCharacterDefinition.spriteSheet.scale || 1 } : null;
+          return frame ? { frame, animation, frames: extra.frames, scale: extra.scale || activeCharacterDefinition.spriteSheet.scale || 1 } : null;
         };
 
         // Preserve the detailed existing firing sheet on projectile release.
@@ -2350,6 +2351,8 @@
           this.name = name;
           this.x = x;
           this.y = arena.floor;
+          this.prevX = x;
+          this.prevY = arena.floor;
           this.facing = facing;
           this.cpu = cpu;
           this.palette = palette;
@@ -2609,7 +2612,7 @@
           return animationFrame("idle", this.stateTime);
         }
 
-        drawYusukeSprite(context, time) {
+        drawYusukeSprite(context, time, alpha = 1, ghost = false) {
           const attackType = this.currentAttack();
           const attackProgress = attackType ? Math.min(1, this.stateTime / attackData[attackType].duration) : 0;
           const specialSheet = activeCharacterDefinition.specialSpriteSheet;
@@ -2640,7 +2643,8 @@
             ? 1 - Math.sin((this.turnTimer / turnDuration) * Math.PI) * .1
             : 1;
 
-          context.save();
+          if (!ghost) context.save();
+          if (!ghost) {
           context.globalAlpha = .36;
           context.fillStyle = "#000";
           context.beginPath();
@@ -2648,13 +2652,21 @@
           context.ellipse(this.x, arena.floor + 8, 62 * shadowScale, 13 * shadowScale, 0, 0, Math.PI * 2);
           context.fill();
           context.restore();
-
+          }
+          const mix = window.MugenVisuals?.clamp(alpha) ?? alpha;
+          const posX = (this.prevX ?? this.x) + (this.x - (this.prevX ?? this.x)) * mix;
+          const posY = (this.prevY ?? this.y) + (this.y - (this.prevY ?? this.y)) * mix;
+          const pose = window.MugenVisuals?.poseTransform(this, time) || { tilt: 0, bob: 0, stretchX: 1, stretchY: 1 };
           context.save();
-          context.translate(this.x + this.facing * lunge, this.y);
+          context.translate(posX + this.facing * lunge, posY + pose.bob);
           context.scale(this.facing * turnCompression, 1);
-          context.imageSmoothingEnabled = false;
+          context.rotate(pose.tilt);
+          context.scale(pose.stretchX, pose.stretchY);
+          context.imageSmoothingEnabled = true;
+          context.imageSmoothingQuality = "high";
+          if (this.cpu) context.filter = "hue-rotate(190deg) saturate(1.8) brightness(.70) contrast(1.18)";
 
-          if (this.state === "walk" && Math.abs(this.vx) > 250) {
+          if (!ghost && this.state === "walk" && Math.abs(this.vx) > 250) {
             const localDirection = Math.sign(this.vx * this.facing) || 1;
             for (let copy = 2; copy >= 1; copy -= 1) {
               context.globalAlpha = copy === 2 ? .08 : .14;
@@ -2667,8 +2679,8 @@
             context.globalAlpha = 1;
           }
 
-          if (this.state === "block") {
-            context.strokeStyle = "rgba(90,231,255,.76)";
+          if (!ghost && this.state === "block") {
+            context.strokeStyle = this.cpu ? "rgba(255,80,120,.78)" : "rgba(90,231,255,.76)";
             context.lineWidth = 5;
             context.shadowColor = "#5ae7ff";
             context.shadowBlur = 18;
@@ -2678,7 +2690,7 @@
             context.shadowBlur = 0;
           }
 
-          if (attackData[attackType]?.projectile) {
+          if (!ghost && attackData[attackType]?.projectile) {
             const specialAttack = attackData[attackType];
             const vfx = yusukeCombat.projectileVfx;
             const charge = Math.min(1, this.stateTime / specialAttack.spawnTime);
@@ -2709,7 +2721,7 @@
             context.globalAlpha = 1;
           }
 
-          if (attackType === "heavy" && attackData.heavy.spiritCoated) {
+          if (!ghost && attackType === "heavy" && attackData.heavy.spiritCoated) {
             const uppercut = this.attackVariant % 2 === 0;
             const strikeX = uppercut ? 56 : 112;
             const strikeY = uppercut ? -145 : -82;
@@ -2727,13 +2739,44 @@
             context.shadowBlur = 0;
           }
 
-          if (this.invulnerability > 0 && Math.floor(time / 34) % 2) context.globalAlpha = .68;
-          context.drawImage(
-            renderSheet,
-            frame.x, frame.y, frame.w, frame.h,
-            drawX, drawY, drawWidth, drawHeight
-          );
-          if (["light", "cross", "body", "upper"].includes(attackType) && attackProgress > .15 && attackProgress < .8) {
+          if (this.invulnerability > 0 && Math.floor(time / 34) % 2 && !ghost) context.globalAlpha = .68;
+          // Ease between existing sprite poses near frame boundaries rather than
+          // hard-snapping at 13/22 FPS. Collision remains fixed-step.
+          let animation = combatPose?.animation || (usesFiringAnimation ? firingSheet.fighterAnimation : null);
+          if (!animation) {
+            let animationName = "idle";
+            if (this.state === "hit") animationName = "hit";
+            else if (attackType) {
+              const attack = attackData[attackType];
+              animationName = !this.grounded && attack.airAnimation ? attack.airAnimation
+                : attackType === "heavy" ? attack.animations[this.attackVariant] : attack.animation;
+            } else if (!this.grounded || this.state === "jump") animationName = this.vy < 0 ? "jumpRise" : "jumpFall";
+            else if (this.state === "block") animationName = "guard";
+            else if (this.state === "walk") animationName = "run";
+            animation = yusukeAnimations[animationName];
+          }
+          const sourceFrames = usesFiringAnimation ? firingSheet.fighterFrames : combatPose?.frames || yusukeSpriteFrames;
+          const progressForFrames = this.state === "hit"
+            ? Math.min(1, this.stateTime / (yusukeCombat.effects.hitAnimationDuration || .3))
+            : attackProgress;
+          const tween = window.MugenVisuals?.animBlend(animation, this.stateTime, progressForFrames);
+          const nextFrame = sourceFrames?.[tween?.to];
+          const baseAlpha = context.globalAlpha;
+          if (tween && tween.mix > .005 && tween.mix < .995 && nextFrame && nextFrame !== frame) {
+            context.globalAlpha = baseAlpha * (1 - tween.mix);
+            context.drawImage(renderSheet,frame.x,frame.y,frame.w,frame.h,drawX,drawY,drawWidth,drawHeight);
+            context.globalAlpha = baseAlpha * tween.mix;
+            context.drawImage(renderSheet,nextFrame.x,nextFrame.y,nextFrame.w,nextFrame.h,
+              -nextFrame.ax * scale,
+              -nextFrame.h * scale + (drawY + frame.h * scale),
+              nextFrame.w * scale,nextFrame.h * scale);
+            context.globalAlpha = baseAlpha;
+          } else {
+            context.drawImage(renderSheet,frame.x,frame.y,frame.w,frame.h,drawX,drawY,drawWidth,drawHeight);
+          }
+          context.filter = "none";
+          if (!ghost) window.MugenVisuals?.drawCpuAccent(context,this,time);
+          if (!ghost && ["light", "cross", "body", "upper"].includes(attackType) && attackProgress > .15 && attackProgress < .8) {
             context.globalAlpha = Math.sin(attackProgress * Math.PI) * .7;
             context.strokeStyle = attackType === "upper" ? "#f6cc57" : "#d7faff";
             context.lineWidth = attackType === "cross" ? 5 : 3;
@@ -2749,9 +2792,9 @@
           context.restore();
         }
 
-        draw(context, time) {
-          if (!this.cpu && yusukeSpriteSheet.complete && yusukeSpriteSheet.naturalWidth > 0) {
-            this.drawYusukeSprite(context, time);
+        draw(context, time, alpha = 1) {
+          if (yusukeSpriteSheet.complete && yusukeSpriteSheet.naturalWidth > 0) {
+            this.drawYusukeSprite(context, time, alpha);
             return;
           }
           const palette = this.palette;
@@ -2995,6 +3038,9 @@
           this.winner = null;
           this.shake = 0;
           this.hitStop = 0;
+          this.visualEchoes = [];
+          this.visualHits = [];
+          this.renderAlpha = 1;
           battleResult.classList.remove("open");
           roundBanner.classList.add("show");
           roundBannerText.textContent = `Round ${this.roundNumber}`;
@@ -3038,6 +3084,7 @@
               this.update(step);
             }
           }
+          this.renderAlpha = this.paused ? 1 : Math.max(0, Math.min(1, this.accumulator * 60));
           this.render(time);
           this.frameId = requestAnimationFrame(this.loop);
         }
@@ -3054,6 +3101,7 @@
             return;
           }
           this.updateImpacts(dt);
+          window.MugenVisuals?.tick(this, dt);
           this.shake = Math.max(0, this.shake - dt * 26);
 
           if (this.state === "intro") {
@@ -3094,6 +3142,10 @@
             return;
           }
           const cpuInput = this.controller.update(dt, this.cpu, this.player, this.projectiles);
+          this.player.prevX = this.player.x;
+          this.player.prevY = this.player.y;
+          this.cpu.prevX = this.cpu.x;
+          this.cpu.prevY = this.cpu.y;
           this.player.update(dt, playerInput, this.cpu, this);
           this.cpu.update(dt, cpuInput, this.player, this);
           this.separateFighters();
@@ -3200,6 +3252,8 @@
         updateProjectiles(dt) {
           for (const projectile of this.projectiles) {
             projectile.age += dt;
+            projectile.prevX = projectile.x;
+            projectile.prevY = projectile.y;
             projectile.x += projectile.vx * dt;
             projectile.y += (projectile.vy || 0) * dt;
             projectile.life -= dt;
@@ -3252,6 +3306,7 @@
           const heavyHit = Boolean(attack.heavyImpact);
           const impactCount = blocked ? 8 : heavyHit ? 27 : 17;
           this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", impactCount);
+          window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
           this.shake = blocked ? effects.shake.block : heavyHit ? effects.shake.heavy : effects.shake.light;
@@ -3450,7 +3505,10 @@
           const radius = projectile.radius;
           const tail = Math.min(shotgun ? 52 : 180, projectile.age * Math.abs(projectile.vx));
           context.save();
-          context.translate(projectile.x, projectile.y);
+          const alpha = this.renderAlpha ?? 1;
+          const px = (projectile.prevX ?? projectile.x) + (projectile.x - (projectile.prevX ?? projectile.x)) * alpha;
+          const py = (projectile.prevY ?? projectile.y) + (projectile.y - (projectile.prevY ?? projectile.y)) * alpha;
+          context.translate(px, py);
           context.rotate(Math.atan2(projectile.vy || 0, projectile.vx));
           context.globalCompositeOperation = "lighter";
           const trail = context.createLinearGradient(-tail, 0, 10, 0);
@@ -3525,15 +3583,17 @@
           context.setTransform(1, 0, 0, 1, 0, 0);
           context.clearRect(0, 0, arena.width, arena.height);
           context.save();
-          if (this.shake > 0) context.translate((Math.random() - .5) * this.shake, (Math.random() - .5) * this.shake);
-          if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
+          if (this.shake > 0) context.translate((Math.sin(time * .11) + Math.sin(time * .067)) * this.shake * .28, (Math.cos(time * .097) + Math.cos(time * .053)) * this.shake * .28);
+          if (window.MugenVisuals?.drawArena) window.MugenVisuals.drawArena(context, time, arena);
+          else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
-
-          this.player.draw(context, time);
-          this.cpu.draw(context, time);
-          window.MugenCinematics?.aura(this, context, time);
+          window.MugenVisuals?.drawEchoes(this, context, time);
+          this.player.draw(context, time, this.renderAlpha ?? 1);
+          this.cpu.draw(context, time, this.renderAlpha ?? 1);
+          window.MugenVisuals?.drawCharge(this.player, context, time);
+          if (this.superSequence) window.MugenCinematics?.aura(this, context, time);
           for (const burst of this.energyBursts) this.drawSpiritBurst(context, burst, time);
           for (const impact of this.impacts) {
             context.globalAlpha = Math.min(1, impact.life / impact.maxLife);
@@ -3541,6 +3601,7 @@
             context.fillRect(impact.x, impact.y, impact.size, impact.size);
           }
           context.globalAlpha = 1;
+          window.MugenVisuals?.drawHits(this, context, time);
           context.restore();
           window.MugenCinematics?.render(this, context, time);
         }
