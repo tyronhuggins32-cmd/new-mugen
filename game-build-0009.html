@@ -1789,7 +1789,8 @@
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="mugen-sfx-v8.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=1"></script>
-  <script src="yusuke-directional-v8.js?v=1"></script>
+  <script src="yusuke-alpha-v9.js?v=1"></script>
+  <script src="yusuke-directional-v8.js?v=2"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
@@ -1844,6 +1845,8 @@
       let premiumArt = null;
       let premiumReady = false;
       let directionalAtlas = null;
+      let cleanPremiumCombatSheet = null;
+      let cleanPremiumMotionSheet = null;
       const yusukeKickSheet = new Image();
       yusukeKickSheet.decoding = "async";
       const yusukeSpiritGunSheet = new Image();
@@ -2266,16 +2269,23 @@
               loadSpriteAsset(premiumMotionSheet,metadata.movement,"Yusuke premium movement")
             ]);
             premiumArt = metadata;
-            premiumReady = true;
-            // Source-matched 12-direction + 12-combat transparent cels. Optional
-            // runtime atlases, sourced only from the paired V7 fighter artwork.
-            // If canvas allocation fails, the same premium PNG poses remain.
+            // Repair residual white matting at the cel source before any
+            // mirroring, CPU tint or directional texture generation. Keeping
+            // the primary and derived art on the same clean matte prevents
+            // momentary pale outlines on attack/idle transitions.
+            cleanPremiumCombatSheet = window.MugenAlphaMatte?.prepare(
+              premiumCombatSheet, metadata.combat.frames) || premiumCombatSheet;
+            cleanPremiumMotionSheet = window.MugenAlphaMatte?.prepare(
+              premiumMotionSheet, metadata.movement.frames) || premiumMotionSheet;
             directionalAtlas = window.MugenDirectional?.build(metadata,
-              {combat:premiumCombatSheet,movement:premiumMotionSheet}) || null;
+              {combat:cleanPremiumCombatSheet,movement:cleanPremiumMotionSheet}) || null;
+            premiumReady = true;
           } catch (error) {
             premiumReady = false;
             premiumArt = null;
             directionalAtlas = null;
+            cleanPremiumCombatSheet = null;
+            cleanPremiumMotionSheet = null;
             console.warn("Premium character art unavailable; using all original sprites.",error);
           }
 
@@ -2908,7 +2918,8 @@
             ? (window.MugenDirectional?.choosePose(this, attackType,
                 directionalAtlas, attackProgress)
               || window.MugenPremium?.choosePose(this, attackType, premiumArt,
-                {combat:premiumCombatSheet,movement:premiumMotionSheet},
+                {combat:cleanPremiumCombatSheet || premiumCombatSheet,
+                 movement:cleanPremiumMotionSheet || premiumMotionSheet},
                 attackProgress))
             : null;
           const combatPose = premiumPose ||
@@ -2967,7 +2978,8 @@
           context.scale(pose.stretchX, pose.stretchY);
           context.imageSmoothingEnabled = false;
 
-          if (!ghost && this.state === "walk" && Math.abs(this.vx) > 250) {
+          if (!ghost && !this._usingPremiumCel &&
+              this.state === "walk" && Math.abs(this.vx) > 250) {
             const localDirection = Math.sign(this.vx * this.facing) || 1;
             for (let copy = 2; copy >= 1; copy -= 1) {
               context.globalAlpha = copy === 2 ? .08 : .14;
