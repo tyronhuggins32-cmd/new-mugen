@@ -1,5 +1,18 @@
 # New Mugen — Browser Fighter
 
+## Rebirth 0011: full arcade front-end rebuild (November 2026)
+
+The menu system has been **structurally rebuilt**, not just recolored. The previous UI stylesheet is no longer loaded. The live presentation now uses `mugen-rebirth-ui.css`, and both screen layouts were replaced in `game-build-0009.html`.
+
+- **Attract screen / main menu:** a broad cinematic hero with the NEW MUGEN RISING wordmark, layered vector-lit arena horizon, animated rings, an oversized Yusuke portrait and system broadcast header. Beneath it sits a distinct dark command deck with five chunky, controller-focusable arcade options, a gold selected state and a live mission briefing.
+- **Character select:** a completely different layout built around a large Yusuke fighting poster, a detailed combat database on the right and a **horizontal eight-slot character strip** beneath. The select screen has a prominent launch bar and remains controller-first.
+- **Real availability:** Arcade and Options are the live entries; Versus, Training and Spectator display SOON. Mission briefing is contextual and only Arcade shows the actual Demon Scout matchup.
+- **Presentation:** original original background geometry and CSS effects, stronger high-contrast lime, teal, navy and gold style, fighter entrance animations, focus feedback, new status bars, modal styling and a responsive portrait / landscape layout.
+- **Preserved mechanics:** all existing game screen IDs and character data hooks, the PS5 DualSense D-pad/stick, Cross/confirm and Circle/back behavior, fighting controls and combat engine.
+- **Regression:** `node tests/neon-ui.cjs` now tests the new Rebirth screen structures and input hooks. GitHub Actions runs it alongside the gamepad, sprite, fighter engine and VFX suites. These automated checks do not replace physical iPhone/DualSense visual QA.
+
+The fighter roster still contains **one playable character, Yusuke**, with seven non-playable empty slots. The design has no hidden extra fighters or game modes.
+
 A browser fighting-game prototype featuring Yusuke versus the CPU Demon Scout. Run `python3 -m http.server 8000` in this folder, then visit http://localhost:8000. `index.html` opens the game build.
 
 ## Combat update
