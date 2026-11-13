@@ -94,7 +94,7 @@ const assert=require("node:assert/strict");
   assert.equal(result.deniedVoid,true,"cinematic energy cost is enforced");
   assert.equal(result.startedVoid,true);
   assert.equal(result.cinematicSeen,true);
-  assert.ok(result.voidHits>=6 && result.finalHealth<5000,
+  assert.ok(result.voidHits>=14 && result.finalHealth<5000,
    "cinematic must deal a sequenced set of real hits and finish");
   assert.ok(result.heavyHits>=1);
   assert.equal(errors.length,0,errors.join("\n"));
