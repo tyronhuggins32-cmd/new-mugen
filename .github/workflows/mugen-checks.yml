@@ -16,8 +16,10 @@ jobs:
         run: node tests/yusuke-sprites.cjs
       - name: Yusuke skin and costume palette consistency
         run: node tests/yusuke-palette.cjs
-      - name: Yusuke 30 FPS movement checks
+      - name: Yusuke 60 Hz virtual motion checks
         run: node tests/yusuke-motion.cjs
+      - name: Fluid 60 Hz combat and adaptive camera checks
+        run: node tests/fluid-v3.cjs
       - name: Visual effects and sprite interpolation checks
         run: node tests/visuals.cjs
       - name: DualSense controller checks
