@@ -72,8 +72,8 @@ assert.equal(simulate("spiritWave",1240,540),
  "wave has actual forward reach, unlike a close melee attack");
 assert.equal(simulate("spiritWave",1680,540),0,
  "wave cannot hit a target outside its maximum range");
-assert.equal(simulate("spiritWave",1240,270),0,
- "a ground-height beam must not hit a fighter floating 270px above it");
+assert.equal(simulate("spiritWave",1240,400),0,
+ "a ground-height beam must not hit a fighter 140px above the ground-level beam");
 attacks.reset(game);player.state="idle";player.grounded=true;
 player.energy=attacks.moves.spiritWave.cost-1;
 assert.equal(attacks.trigger(game,"spiritWave"),false,"energy gate");
