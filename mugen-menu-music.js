@@ -21,6 +21,7 @@
   const status = document.getElementById('menu-music-status');
   let enabled = true;
   let unlocked = false;
+  let autoplayBlocked = false;
   let preferredBlobUrl = null;
   let fadeFrame = 0;
   let fadeEpoch = 0;
@@ -57,17 +58,32 @@
   }
 
   function syncPlayback() {
-    const desired = enabled && isMenu() && unlocked;
+    // Start music on page load whenever the browser's autoplay policy allows.
+    // Browsers that reject audible autoplay will succeed on the first trusted
+    // button, key, or PS5 controller menu interaction instead.
+    const desired = enabled && isMenu();
     const epoch = ++playEpoch;
     if (!desired) {
       fadeTo(0, FADE_OUT_MS);
       return;
     }
-    const playing = audio.play();
+    const wasPaused = audio.paused;
+    const playing = wasPaused ? audio.play() : Promise.resolve();
     if (playing && typeof playing.then === 'function') {
       playing.then(() => {
-        if (epoch === playEpoch && enabled && isMenu()) fadeTo(TARGET_VOLUME, FADE_IN_MS);
-      }).catch(() => setStatus('Press Enter, X, or tap the menu to enable music.'));
+        if (epoch !== playEpoch || !enabled || !isMenu()) return;
+        autoplayBlocked = false;
+        fadeTo(TARGET_VOLUME, FADE_IN_MS);
+        setStatus(imported ? 'Custom theme playing' : 'Main menu theme playing');
+      }).catch(error => {
+        if (epoch !== playEpoch) return;
+        if (error?.name === 'NotAllowedError') {
+          autoplayBlocked = true;
+          setStatus('Press X, Enter, or tap to start the menu music.');
+        } else if (error?.name !== 'AbortError') {
+          setStatus('Theme could not play. Import an audio file in Options.');
+        }
+      });
     } else {
       fadeTo(TARGET_VOLUME, FADE_IN_MS);
     }
@@ -75,7 +91,7 @@
 
   function unlock() {
     unlocked = true;
-    syncPlayback();
+    if (enabled && isMenu() && (autoplayBlocked || audio.paused)) syncPlayback();
   }
 
   function setEnabled(value) {
@@ -158,7 +174,7 @@
   screenObserver.observe(document.body, { attributes: true, attributeFilter: ['data-screen'] });
   document.addEventListener('visibilitychange', syncPlayback);
   window.addEventListener('pagehide', () => { ++playEpoch; cancelAnimationFrame(fadeFrame); audio.pause(); audio.volume = 0; });
-  const gesture = () => { if (!unlocked || (enabled && isMenu() && audio.paused)) unlock(); };
+  const gesture = () => { if (enabled && isMenu() && (!unlocked || autoplayBlocked || audio.paused)) unlock(); };
   document.addEventListener('pointerdown', gesture);
   document.addEventListener('keydown', gesture);
   audio.addEventListener('error', () => {
