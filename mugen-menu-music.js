@@ -3,6 +3,7 @@
   'use strict';
 
   const TRACK_URL = 'assets/music/main-menu-theme.ogg';
+  const MP3_URL = 'assets/music/main-menu-theme.mp3';
   const DB_NAME = 'new-mugen-audio';
   const DB_STORE = 'settings';
   const DB_KEY = 'main-menu-track';
@@ -13,7 +14,8 @@
   audio.preload = 'auto';
   audio.loop = true;
   audio.volume = 0.01;
-  audio.src = TRACK_URL;
+  // Older iOS Safari versions cannot decode OGG Vorbis; use MP3 there.
+  audio.src = audio.canPlayType?.('audio/ogg; codecs="vorbis"') === '' ? MP3_URL : TRACK_URL;
 
   const toggle = document.getElementById('menu-music-toggle');
   const importButton = document.getElementById('menu-music-import');
@@ -29,6 +31,7 @@
   let playEpoch = 0;
   let imported = false;
   let sourceError = false;
+  let triedBackup = false;
 
   const isMenu = () => (document.body.dataset.screen || 'menu') === 'menu' && !document.hidden;
   const setStatus = message => { if (status) status.textContent = message; };
@@ -157,6 +160,7 @@
     audio.pause();
     audio.volume = 0.01;
     sourceError = false;
+    triedBackup = true;
     autoplayBlocked = false;
     if (preferredBlobUrl) URL.revokeObjectURL(preferredBlobUrl);
     preferredBlobUrl = URL.createObjectURL(blob);
@@ -197,9 +201,19 @@
   document.addEventListener('pointerdown', gesture);
   document.addEventListener('keydown', gesture);
   audio.addEventListener('error', () => {
+    if (!imported && !triedBackup) {
+      // A bad codec response, old Safari, or a temporarily missing cached
+      // asset can be recovered by trying the other hosted format once.
+      triedBackup = true;
+      sourceError = false;
+      audio.src = audio.src.includes('main-menu-theme.ogg') ? MP3_URL : TRACK_URL;
+      audio.load();
+      if (enabled && isMenu()) syncPlayback();
+      return;
+    }
     sourceError = true;
     showActivationButton(false);
-    setStatus('OGG failed to load or decode. Import an MP3 in Options.');
+    setStatus('The soundtrack could not load. Import your MP3 in Options.');
   });
   // Safari and other browsers can stop a media element on programmatic
   // volume changes, even after initially allowing a muted play().
