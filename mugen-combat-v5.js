@@ -19,13 +19,16 @@
     return { x: f.x - width/2, y: f.y - height, width, height };
   }
 
+  // Move-specific boxes based on the visible arm/foot extent of the
+  // 0.5-scale V7 Yusuke cels, not generic full-body rectangles.
+  // High punches deliberately pass over crouching opponents.
   const HITBOXES = Object.freeze({
-    light:     {forward:28, reach:112, above:168, height:74},
-    cross:     {forward:36, reach:125, above:162, height:78},
-    body:      {forward:29, reach:110, above:124, height:74},
-    upper:     {forward:17, reach:102, above:207, height:142},
-    heavy:     {forward:35, reach:126, above:183, height:122},
-    powerKick: {forward:44, reach:155, above:155, height:88}
+    light:     {forward:48, reach:88, above:175, height:52},
+    cross:     {forward:43, reach:102, above:174, height:64},
+    body:      {forward:40, reach:89, above:129, height:79},
+    upper:     {forward:25, reach:99, above:224, height:172},
+    heavy:     {forward:35, reach:110, above:192, height:125},
+    powerKick: {forward:46, reach:107, above:155, height:92}
   });
   function attackHitbox(f, attack, type) {
     if (!f || !attack || attack.projectile) return null;
@@ -42,13 +45,21 @@
   }
 
   function airCrossOver(a,b) {
+    // Airborne combatants may cross. Mark the crossover as soon as the
+    // jumper clears the grounded fighter's shoulders, then preserve that
+    // permission until landing; otherwise landing frames snap the fighter
+    // back across the opponent and produce the reported invisible wall.
+    if (!a.grounded && !b.grounded) return true;
     if (a.grounded === b.grounded) return false;
     const jumping = a.grounded ? b : a;
     const grounded = a.grounded ? a : b;
-    // Once the jumping fighter's feet clear the head/shoulder band,
-    // there is no horizontal push collision. The attack/hurtbox can still
-    // interact in mid-air, independently of body separation.
-    return jumping.y <= grounded.hurtbox.y + 61;
+    if (jumping._crossOverActive) return true;
+    const shoulderLine = grounded.hurtbox.y + 102;
+    if (jumping.y <= shoulderLine) {
+      jumping._crossOverActive = true;
+      return true;
+    }
+    return false;
   }
 
   // Body boxes define height overlap. Stage spacing remains readable even
@@ -59,7 +70,12 @@
     const abox = a.hurtbox, bbox = b.hurtbox;
     if (!abox || !bbox ||
         abox.y + abox.height <= bbox.y || bbox.y + bbox.height <= abox.y) return false;
-    const spacing = Math.max(distance, (a.width + b.width) / 2);
+    const airborne = !a.grounded || !b.grounded;
+    // Grounded combat needs room. An early jumping silhouette only needs
+    // a slim pushbox before the crossover lock opens, not a 142px wall.
+    const spacing = airborne
+      ? Math.max(52, (a.width + b.width) * .46)
+      : Math.max(distance, (a.width + b.width) / 2);
     const left = a.x <= b.x ? a : b;
     const right = left === a ? b : a;
     const deficit = spacing - (right.x - left.x);
@@ -77,9 +93,12 @@
     }
     left.x -= leftMove;
     right.x += rightMove;
-    // The players cannot push past one another just by holding forwards.
-    if (left.vx > 0) left.vx = 0;
-    if (right.vx < 0) right.vx = 0;
+    // Only grounded bodies halt one another. Airborne horizontal momentum
+    // must survive separation so a jump can actually clear the rival.
+    if (!airborne) {
+      if (left.vx > 0) left.vx = 0;
+      if (right.vx < 0) right.vx = 0;
+    }
     return true;
   }
 
