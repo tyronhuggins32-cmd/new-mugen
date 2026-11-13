@@ -39,12 +39,11 @@ const neutral={state:"idle",vx:0,vy:0,facing:1,grounded:true,stateTime:.3,
 const frame={x:120,y:40,w:130,h:190,ax:65};
 const canvas=ctx();
 assert.equal(fluid.drawCel(canvas,sprite,frame,-71,-209,143,209,neutral,1000),true);
-assert.equal(calls.length,8,"one sprite is bent using only eight light canvas strips");
-for(const args of calls) {
-  assert.equal(args.length,9);
-  assert.ok(args[2]>=frame.y && args[2]+args[4]<=frame.y+frame.h);
-  assert.ok(Number.isFinite(args[6]) && Number.isFinite(args[7]));
-}
+assert.equal(calls.length,1,"fallback animation must draw one intact sprite without seams");
+assert.equal(calls[0].length,9);
+assert.equal(calls[0][2],frame.y);
+assert.equal(calls[0][4],frame.h);
+assert.ok(Number.isFinite(calls[0][6]) && Number.isFinite(calls[0][7]));
 calls.length=0;
 fluid.drawCel(canvas,sprite,frame,-71,-209,143,209,neutral,1000,true);
 assert.equal(calls.length,1,"ghost echoes must use one cheap draw call");
@@ -105,7 +104,7 @@ const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(html,/MugenFluid\.beginFrame\(this, context, time, arena\)/);
 assert.match(html,/MugenFluid\?\.tick\(this, dt\)/);
 assert.match(html,/MugenFluid\?\.onHit\(this,/);
-assert.match(html,/<script src="mugen-fluid-v3\.js\?v=2"><\/script>/);
+assert.match(html,/<script src="mugen-fluid-v3\.js\?v=3"><\/script>/);
 assert.match(html,/if \(activeScreen === "fight"\)/);
 assert.match(html,/substeps < 5/);
 assert.match(html,/updateHud\(force = false\)/);

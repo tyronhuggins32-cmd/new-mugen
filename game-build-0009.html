@@ -1782,16 +1782,17 @@
 
   <script src="mugen-cinematics.js?v=1"></script>
   <script src="mugen-visuals-v2.js?v=2"></script>
-  <script src="mugen-fluid-v3.js?v=2"></script>
+  <script src="mugen-fluid-v3.js?v=3"></script>
   <script src="mugen-combat-v5.js?v=1"></script>
   <script src="mugen-spiritgun-v5.js?v=1"></script>
-  <script src="mugen-vfx-v8.js?v=1"></script>
+  <script src="mugen-vfx-v8.js?v=2"></script>
   <script src="mugen-combo-fx-v9.js?v=1"></script>
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="mugen-sfx-v8.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=1"></script>
-  <script src="yusuke-directional-v8.js?v=1"></script>
+  <script src="yusuke-alpha-v9.js?v=1"></script>
+  <script src="yusuke-directional-v8.js?v=2"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
@@ -1846,6 +1847,8 @@
       let premiumArt = null;
       let premiumReady = false;
       let directionalAtlas = null;
+      let cleanPremiumCombatSheet = null;
+      let cleanPremiumMotionSheet = null;
       const yusukeKickSheet = new Image();
       yusukeKickSheet.decoding = "async";
       const yusukeSpiritGunSheet = new Image();
@@ -2268,16 +2271,19 @@
               loadSpriteAsset(premiumMotionSheet,metadata.movement,"Yusuke premium movement")
             ]);
             premiumArt = metadata;
-            premiumReady = true;
-            // Source-matched 12-direction + 12-combat transparent cels. Optional
-            // runtime atlases, sourced only from the paired V7 fighter artwork.
-            // If canvas allocation fails, the same premium PNG poses remain.
+            cleanPremiumCombatSheet = window.MugenAlphaMatte?.prepare(
+              premiumCombatSheet, metadata.combat.frames) || premiumCombatSheet;
+            cleanPremiumMotionSheet = window.MugenAlphaMatte?.prepare(
+              premiumMotionSheet, metadata.movement.frames) || premiumMotionSheet;
             directionalAtlas = window.MugenDirectional?.build(metadata,
-              {combat:premiumCombatSheet,movement:premiumMotionSheet}) || null;
+              {combat:cleanPremiumCombatSheet,movement:cleanPremiumMotionSheet}) || null;
+            premiumReady = true;
           } catch (error) {
             premiumReady = false;
             premiumArt = null;
             directionalAtlas = null;
+            cleanPremiumCombatSheet = null;
+            cleanPremiumMotionSheet = null;
             console.warn("Premium character art unavailable; using all original sprites.",error);
           }
 
@@ -2912,7 +2918,8 @@
             ? (window.MugenDirectional?.choosePose(this, attackType,
                 directionalAtlas, attackProgress)
               || window.MugenPremium?.choosePose(this, attackType, premiumArt,
-                {combat:premiumCombatSheet,movement:premiumMotionSheet},
+                {combat:cleanPremiumCombatSheet || premiumCombatSheet,
+                 movement:cleanPremiumMotionSheet || premiumMotionSheet},
                 attackProgress))
             : null;
           const combatPose = premiumPose ||
@@ -2971,7 +2978,8 @@
           context.scale(pose.stretchX, pose.stretchY);
           context.imageSmoothingEnabled = false;
 
-          if (!ghost && this.state === "walk" && Math.abs(this.vx) > 250) {
+          if (!ghost && !this._usingPremiumCel &&
+              this.state === "walk" && Math.abs(this.vx) > 250) {
             const localDirection = Math.sign(this.vx * this.facing) || 1;
             for (let copy = 2; copy >= 1; copy -= 1) {
               context.globalAlpha = copy === 2 ? .08 : .14;
@@ -2995,7 +3003,8 @@
             context.shadowBlur = 0;
           }
 
-          if (!ghost && attackData[attackType]?.projectile) {
+          if (!ghost && attackData[attackType]?.projectile &&
+              !window.MugenVfxV8?.ready()) {
             const specialAttack = attackData[attackType];
             const vfx = yusukeCombat.projectileVfx;
             const charge = Math.min(1, this.stateTime / specialAttack.spawnTime);
@@ -3747,12 +3756,15 @@
           if (visualEffectsAllowed && !blocked && heavyHit && !attack.projectile)
             this.cinematicImpact = { x: impactX, y: impactY, life: .12, maxLife: .12 };
           if (visualEffectsAllowed) {
-            const impactCount = blocked ? 8 : heavyHit ? 27 : 17;
-            this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", impactCount);
-            window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
-            window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
-            if (!window.MugenVfxV8?.ready())
+            const authoredImpact = Boolean(window.MugenVfxV8?.ready());
+            if (!authoredImpact) {
+              this.addImpact(impactX, impactY,
+                blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff",
+                blocked ? 3 : heavyHit ? 8 : 5, attacker.facing);
+              window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
               window.MugenCinematicFX?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
+            }
+            window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
             window.MugenVfxV8?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
           }
           const effects = yusukeCombat.effects;
@@ -3763,24 +3775,31 @@
             if (!window.MugenSFX) playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
         }
 
-        addImpact(x, y, color, count) {
-          for (let index = 0; index < count; index += 1) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 90 + Math.random() * 360;
+        addImpact(x, y, color, count, direction = 1) {
+          // Fallback on older browsers: short, symmetrical, forward-facing
+          // sparks. No Math.random, no random colors or screenwide debris.
+          const total = Math.min(9, Math.max(0, Math.floor(count || 0)));
+          for (let index = 0; index < total; index += 1) {
+            const rank = index - (total - 1) / 2;
+            const angle = rank * .24;
+            const speed = 125 + (index % 3) * 25;
+            const duration = .16 + (index % 3) * .016;
             this.impacts.push({
-              x,
-              y,
-              vx: Math.cos(angle) * speed,
-              vy: Math.sin(angle) * speed,
-              life: .24 + Math.random() * .35,
-              maxLife: .59,
-              size: 2 + Math.random() * 5,
-              color
+              x, y,
+              vx: (direction < 0 ? -1 : 1) * Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed * .65,
+              life: duration,
+              maxLife: duration,
+              size: 2 + index % 2, color
             });
           }
+          if (this.impacts.length > 42) this.impacts.splice(0, this.impacts.length - 42);
         }
 
         addSpiritBurst(x, y, color, direction, scale = 1, kind = "impact") {
+          // The V8 effect atlas already supplies the authored muzzle and hit;
+          // don't lay a second random-phase glow on top of it.
+          if (window.MugenVfxV8?.ready()) return;
           const duration = kind === "muzzle" ? .14 : .28;
           this.energyBursts.push({
             x,
@@ -3791,7 +3810,7 @@
             kind,
             life: duration,
             maxLife: duration,
-            phase: Math.random() * Math.PI * 2
+            phase: (Math.round(x / 23) + Math.round(y / 29)) * .37
           });
         }
 
@@ -4089,14 +4108,16 @@
           else if (window.MugenVisuals?.drawArena) window.MugenVisuals.drawArena(context, time, arena);
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
-          window.MugenFluid?.drawBehind(this, context, time);
+          if (!window.MugenVfxV8?.ready())
+            window.MugenFluid?.drawBehind(this, context, time);
           window.MugenVfxV8?.drawBehind(this, context, time);
           window.MugenDirectional?.drawBehind(this, context, time);
           window.MugenCinematicFX?.drawBehind(this, context, time);
-          window.MugenShotgun?.drawFan(this, context, time);
+          if (!window.MugenVfxV8?.ready())
+            window.MugenShotgun?.drawFan(this, context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
-          window.MugenVisuals?.drawEchoes(this, context, time);
+          if (!premiumReady) window.MugenVisuals?.drawEchoes(this, context, time);
           this.player.draw(context, time, this.renderAlpha ?? 1);
           this.cpu.draw(context, time, this.renderAlpha ?? 1);
           window.MugenVisuals?.drawCharge(this.player, context, time);

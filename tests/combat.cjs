@@ -72,8 +72,9 @@ const assert = require('node:assert/strict');
       ok(g.impacts.length===0 && (fx?.active||0)===0,
         'Square ' + press + ' must be visually clean before COMBO 5');
     }else{
-      ok(g.impacts.length>0 && fx?.active>0,
-        'exactly COMBO 5 unlocks painted punch effects');
+      const painted=window.MugenVfxV8?.ready();
+      ok((painted ? g.impacts.length===0 : g.impacts.length>0) && fx?.active>0,
+        'COMBO 5 must unlock one authored punch effect without duplicate square sparks');
     }
     g.updateHud(true);
     if(press===5)ok(document.querySelector('#combo-label').textContent.includes('COMBO 5'),

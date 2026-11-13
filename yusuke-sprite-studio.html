@@ -14,7 +14,7 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
 #status{color:#cbfcee}small{color:#a6c5c0}
 </style></head><body>
 <header><small>NEW MUGEN / FIGHTER ASSET STUDIO</small><h1>Yusuke Directional Sprites</h1>
-<p>Preview and export transparent, source-matched movement and combat atlases. Every cel preserves pixels and colors from the existing high-resolution fighter art. These are synthesized action variations, not 24 separate hand illustrations. Left-facing animation is mirrored in the fighting engine.</p>
+<p>Preview and export transparent, source-matched movement and combat atlases. Every cel preserves pixels and colors from the existing high-resolution fighter art. These are 32 source-derived action variations with refined alpha edges, not 32 separate hand illustrations. Left-facing animation is mirrored in the fighting engine.</p>
 <a class="button" href="./index.html">Return to game</a><p id="status">Building sprite atlases…</p></header>
 <main><section class="art"><h2>01 / Directional movement (16 cels)</h2><p>Advancing, backpedaling, high-speed rush, diagonal air movement, defensive low stance and recovery.</p>
 <div class="preview" id="move-preview"></div><button type="button" id="movement-download" disabled>Download transparent movement PNG</button></section>
@@ -22,7 +22,8 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
 <div class="preview" id="combat-preview"></div><button type="button" id="combat-download" disabled>Download transparent combat PNG</button></section>
 <section class="art"><h2>Frame metadata</h2><p>Export frame coordinates, 512-pixel tile geometry, rendering scale, crop/foot-pivot alignment and 40 FPS playback rate for integration into a sprite editor.</p><button type="button" id="metadata-download" disabled>Download atlas frame JSON</button></section></main>
 <script src="./yusuke-premium-v6.js?v=1"></script>
-<script src="./yusuke-directional-v8.js?v=1"></script>
+<script src="./yusuke-alpha-v9.js?v=1"></script>
+<script src="./yusuke-directional-v8.js?v=2"></script>
 <script>
 (async()=>{
  const status=document.querySelector("#status"),button=id=>document.getElementById(id);
@@ -36,7 +37,11 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
    img.src="./"+meta[part].src;
   });
   const [movement,combat]=await Promise.all([load("movement"),load("combat")]);
-  const atlas=window.MugenDirectional.build(meta,{movement,combat});
+  const cleanedMovement=window.MugenAlphaMatte?.prepare(movement,meta.movement.frames)||movement;
+  const cleanedCombat=window.MugenAlphaMatte?.prepare(combat,meta.combat.frames)||combat;
+  const atlas=window.MugenDirectional.build(meta,{
+    movement:cleanedMovement,combat:cleanedCombat
+  });
   if(!atlas)throw Error("Canvas generation unavailable; the playable game still uses original sprites");
   const snapshots={fps:40,pixelScale:.5,cellSize:[512,512],columns:4,rows:4,
    source:{movement:meta.movement.src,combat:meta.combat.src},

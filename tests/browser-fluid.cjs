@@ -14,13 +14,13 @@ const path = require("node:path");
   await page.route("**/game-build-0009.html*",route=>route.fulfill({
     contentType:"text/html",
     body:html.replace("      function beginFight() {",
-      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get directionalAtlas() { return directionalAtlas; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, get premiumArt() { return premiumArt; }, get premiumImages() { return {combat:premiumCombatSheet,movement:premiumMotionSheet}; }, arena }; \n      function beginFight() {")
+      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get directionalAtlas() { return directionalAtlas; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, get premiumArt() { return premiumArt; }, get premiumImages() { return {combat:premiumCombatSheet,movement:premiumMotionSheet}; }, get cleanedPremium() { return {combat:cleanPremiumCombatSheet,movement:cleanPremiumMotionSheet}; }, arena }; \n      function beginFight() {")
   }));
   await page.goto("http://127.0.0.1:8000/");
   await page.locator('button.menu-item[data-mode="arcade"]').click();
   await page.locator("#choose-character").click();
   await page.waitForFunction(()=>window.testEngine?.game?.state==="play" && window.MugenFluid && window.MugenMotion,
-    {timeout:20000});
+    null,{timeout:30000});
   const result=await page.evaluate(async ()=>{
     const g=window.testEngine.game;
     g.stop();
@@ -87,6 +87,11 @@ const path = require("node:path");
     g.render(1990); // The collision splash must render without browser errors.
     const premiumMeta=window.testEngine.premiumArt;
     const premiumSources=[premiumMeta?.combat?.src,premiumMeta?.movement?.src];
+    const cleanedSources=window.testEngine.cleanedPremium;
+    const matteActive=Boolean(window.MugenAlphaMatte?.prepare);
+    const cleanedCanvas=Boolean(cleanedSources.combat?.getContext &&
+      cleanedSources.movement?.getContext);
+    const cleanedWidths=[cleanedSources.combat?.width,cleanedSources.movement?.width];
     const names=["light","cross","body","upper","gun","shotgun","powerKick"];
     const premiumAttackPoses=names.map(type=>{
       const pose=window.MugenPremium?.choosePose(g.player,type,premiumMeta,
@@ -98,6 +103,7 @@ const path = require("node:path");
       motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
       kickReady:window.testEngine.kickReady,
       premiumReady:window.testEngine.premiumReady,
+      matteActive,cleanedCanvas,cleanedWidths,
       premiumWidths:window.testEngine.premiumWidths,
       arenaWidth:window.testEngine.arena.width,lowAction,highAction,
       playerHealth:g.player.health,gamepadConnected:!!window.MugenGamepad};
@@ -119,6 +125,10 @@ const path = require("node:path");
   assert.equal(result.playerHealth,5000);
   assert.equal(result.kickReady,true,"the eight-frame kick PNG must load into the browser");
   assert.equal(result.premiumReady,true,"both high-detail Yusuke sprite families must load");
+  assert.equal(result.matteActive,true,"white-fringe cleanup must load before fighter initialization");
+  assert.equal(result.cleanedCanvas,true,"premium cels must use one-time cleaned alpha canvases");
+  assert.deepEqual(result.cleanedWidths,[2048,2048],
+    "both cleaned textures retain original pixel size and frame alignment");
   assert.ok(result.premiumSources.every(path=>path?.endsWith("-v8.png")),
     "live fighter must load sanitized V8 sprites without white matte gaps");
   assert.ok(result.premiumAttackPoses.every(Boolean),

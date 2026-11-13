@@ -34,7 +34,7 @@
  ]);
  const layouts=Object.freeze({movement,combat});
  function compose(part,image,meta) {
-  if(!image || !image.naturalWidth || !meta?.frames?.length ||
+  if(!image || !(image.naturalWidth || image.width) || !meta?.frames?.length ||
     !meta.frames.every(f=>f.w>0&&f.h>0&&f.w<=470&&f.h<=458))return null;
   const source=layouts[part];
   const canvas=document.createElement("canvas");
@@ -68,7 +68,8 @@
  }
  function build(meta,images){
   if(typeof document==="undefined" || !document.createElement ||
-    !images?.movement?.naturalWidth || !images?.combat?.naturalWidth ||
+    !(images?.movement?.naturalWidth || images?.movement?.width) ||
+    !(images?.combat?.naturalWidth || images?.combat?.width) ||
     meta?.movement?.scale!==.5 || meta?.combat?.scale!==.5)return null;
   try{
    const moved=compose("movement",images.movement,meta.movement);
