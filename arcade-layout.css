@@ -128,3 +128,112 @@ body[data-screen="arcade"] .select-playbar .choose-button { position: static; wi
   body[data-screen="fight"] .fight-screen { padding: 0; width: 100%; align-items: center; }
   body[data-screen="fight"] .game-shell { width: min(100%, 177.78vh); max-height: 99dvh; margin: auto; }
 }
+
+
+/* Visual pass 2: cinematic stage fills the available screen; touch buttons remain removed. */
+body[data-screen="fight"] {
+  background: #071421;
+  overflow: hidden;
+}
+body[data-screen="fight"] .grid,
+body[data-screen="fight"] .slash,
+body[data-screen="fight"] .scanlines,
+body[data-screen="fight"] .vignette,
+body[data-screen="fight"] #fx { display: none; }
+body[data-screen="fight"] .frame {
+  min-height: 100dvh;
+  height: 100dvh;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 2px;
+  padding: 6px;
+}
+body[data-screen="fight"] .fight-screen {
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  align-items: center;
+  justify-items: center;
+}
+body[data-screen="fight"] .game-shell {
+  width: min(100%, calc(82dvh * 16 / 9));
+  max-width: none;
+  max-height: min(82dvh, 100%);
+  aspect-ratio: 16 / 9;
+  border: 2px solid #315e73;
+  box-shadow: 0 0 0 1px #92cde533, 0 24px 72px #000b;
+}
+body[data-screen="fight"] .hud-name { color: #f6f9fa; text-shadow: 0 2px 3px #000; }
+body[data-screen="fight"] .health-track {
+  height: clamp(13px, 1.6vw, 20px);
+  background: #070d1b;
+  border: 2px solid #d0e0e8;
+  box-shadow: inset 0 2px 5px #000b, 0 2px 4px #0009;
+}
+body[data-screen="fight"] .health-fill {
+  background: linear-gradient(180deg, #f3f7c7 0 12%, #8ce1b1 21%, #38ac74 63%, #1d664e 100%);
+}
+body[data-screen="fight"] .hud-fighter.cpu .health-fill {
+  background: linear-gradient(180deg, #ffe5bc 0 12%, #ff7e78 25%, #e63e5f 66%, #792844 100%);
+}
+body[data-screen="fight"] .meter-track { height: 8px; background: #021324; border: 1px solid #87c9dd77; }
+body[data-screen="fight"] .round-clock {
+  border: 2px solid #c0e6f5c4;
+  background: linear-gradient(180deg, #061624e8, #16314be8);
+  box-shadow: 0 6px 18px #000b;
+}
+body[data-screen="fight"] .round-clock strong { font-family: Impact, 'Arial Black', sans-serif; font-size: clamp(20px, 2.7vw, 38px); }
+body[data-screen="fight"] .combo-panel {
+  top: 112px;
+  left: 22px;
+  background: #0416227f;
+  border-left: 4px solid #5edbff;
+  color: #f3fcff;
+  text-shadow: 0 2px 3px #000;
+  backdrop-filter: blur(3px);
+}
+body[data-screen="fight"] .battle-top-actions { opacity: .72; transform: scale(.88); transform-origin: top left; }
+body[data-screen="fight"] .battle-top-actions:hover { opacity: 1; }
+
+/* A controller-based fighter should never become a tiny 390px-wide battle in portrait.
+   Rotate the STAGE viewport, not the controls or the phone's physical orientation. */
+@media (orientation: portrait) and (max-width: 900px) {
+  body[data-screen="fight"],
+  body[data-screen="fight"] .frame { position: fixed; inset: 0; width: 100vw; height: 100dvh; padding: 0; margin: 0; overflow: hidden; }
+  body[data-screen="fight"] .frame { display: block; min-height: 0; }
+  body[data-screen="fight"] .topbar,
+  body[data-screen="fight"] .footer { display: none !important; }
+  body[data-screen="fight"] .fight-screen {
+    position: fixed;
+    display: block;
+    top: 0;
+    left: 100vw;
+    width: 100dvh;
+    height: 100vw;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    transform: rotate(90deg);
+    transform-origin: top left;
+  }
+  body[data-screen="fight"] .game-shell {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(100dvh, 177.7778vw);
+    height: min(100vw, 56.25dvh);
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    transform: translate(-50%, -50%);
+    aspect-ratio: 16 / 9;
+  }
+  body[data-screen="fight"] .fight-hud { inset: 9px 13px auto; grid-template-columns: 1fr 65px 1fr; gap: 8px; }
+  body[data-screen="fight"] .combo-panel { top: 92px; left: 16px; width: 178px; }
+}
+@media (orientation: landscape) and (max-height: 680px) {
+  body[data-screen="fight"] .frame { padding: 0; grid-template-rows: 0 minmax(0,1fr) 0; gap: 0; }
+  body[data-screen="fight"] .topbar, body[data-screen="fight"] .footer { display: none; }
+  body[data-screen="fight"] .fight-screen { height: 100dvh; }
+  body[data-screen="fight"] .game-shell { width: min(100vw,177.7778dvh); max-height: 100dvh; }
+}
