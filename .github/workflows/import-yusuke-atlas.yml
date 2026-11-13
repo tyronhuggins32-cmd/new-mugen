@@ -1,0 +1,40 @@
+name: Import Yusuke combat sprite atlas
+on:
+  push:
+    paths:
+      - ".github/workflows/import-yusuke-atlas.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-atlas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve and validate sprite atlas
+        env:
+          SOURCE_URL: "https://at.adobe.com/kGofo75DBCmsjL8Y"
+        run: |
+          set -euo pipefail
+          mkdir -p characters/yusuke
+          curl --fail --location --retry 3 --silent --show-error --output characters/yusuke/yusuke-combat-expansion.png "$SOURCE_URL"
+          echo "1b260ad3e5a8501741adfdecd4f706b5f76a01f49ffbbefb71114f4470f32b5c  characters/yusuke/yusuke-combat-expansion.png" | sha256sum --check
+          python3 - <<'PY'
+          import struct
+          path = "characters/yusuke/yusuke-combat-expansion.png"
+          with open(path, 'rb') as f:
+              header = f.read(24)
+          assert header[:8] == bytes.fromhex('89504e470d0a1a0a')
+          assert struct.unpack('>II', header[16:24]) == (1536, 768)
+          print('Yusuke atlas dimensions validated')
+          PY
+      - name: Commit atlas
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke-combat-expansion.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Add twelve new Yusuke combat sprite frames"
+            git push
+          fi
