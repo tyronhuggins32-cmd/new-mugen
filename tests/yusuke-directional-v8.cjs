@@ -8,8 +8,8 @@ const root={};vm.runInNewContext(script,{window:root,document:undefined,Math});
 const director=root.MugenDirectional;
 assert.ok(director,"directional atlas module should load");
 assert.equal(director.fps,40);
-assert.equal(director.layouts.movement.length,12);
-assert.equal(director.layouts.combat.length,12);
+assert.equal(director.layouts.movement.length,16);
+assert.equal(director.layouts.combat.length,16);
 const meta=JSON.parse(fs.readFileSync("characters/yusuke/premium-atlas.json","utf8"));
 const draws=[],allocated=[];
 const document={createElement(tag){
@@ -29,15 +29,15 @@ assert.equal(allocated.length,2,"movement and combat textures built once");
 for(const part of ["movement","combat"]){
  const sheet=atlas[part];
  assert.equal(sheet.image.width,2048);
- assert.equal(sheet.image.height,1536);
- assert.equal(sheet.frames.length,12);
+ assert.equal(sheet.image.height,2048);
+ assert.equal(sheet.frames.length,16);
  assert.equal(sheet.scale,.5);
  for(const f of sheet.frames){
-  assert.ok(f.x>=0&&f.y>=0&&f.w>0&&f.h>0&&f.x+f.w<=2048&&f.y+f.h<=1536);
+  assert.ok(f.x>=0&&f.y>=0&&f.w>0&&f.h>0&&f.x+f.w<=2048&&f.y+f.h<=2048);
   assert.ok(f.ax>=0&&f.ax<=f.w);
  }
 }
-assert.equal(draws.length,24*10,"each derived cel uses original source pixel strips");
+assert.equal(draws.length,32*10,"each derived cel uses original source pixel strips");
 assert.ok(draws.every(args=>images.movement===args[0]||images.combat===args[0]));
 const fighter={facing:1,state:"walk",grounded:true,vx:275,vy:0,stateTime:.13,dashTimer:0,currentAttack(){return null;}};
 const choose=(type,p=.5)=>director.choosePose(fighter,type,atlas,p);
@@ -53,6 +53,12 @@ assert.equal(pose.clip,"retreat","left-facing backpedal uses mirrored retreat ar
 fighter.facing=1;
 fighter.dashTimer=.1;fighter.vx=990;fighter.stateTime=.02;
 pose=choose(null);assert.equal(pose.clip,"rush");
+fighter.vx=-815;fighter.stateTime=.06;
+pose=choose(null);assert.equal(pose.clip,"backdash");
+assert.ok(pose.index===12 || pose.index===13,"backdash selects its own poses");
+fighter.facing=-1;fighter.vx=815;fighter.stateTime=.08;
+pose=choose(null);assert.equal(pose.clip,"backdash","backdash mirrors for left-facing Yusuke");
+fighter.facing=1;
 fighter.dashTimer=0;fighter.grounded=false;fighter.state="jump";fighter.vx=280;fighter.vy=-140;
 pose=choose(null);assert.equal(pose.clip,"aerialForward");
 fighter.vx=-240;fighter.vy=185;
@@ -63,8 +69,16 @@ fighter.grounded=true;fighter.state="attack-cross";fighter.stateTime=.05;
 pose=choose("cross",.45);assert.equal(pose.clip,"cross");
 fighter.state="attack-upper";
 pose=choose("upper",.58);assert.equal(pose.clip,"upper");
+fighter.state="attack-heavy";
+pose=choose("heavy",.52);assert.equal(pose.clip,"heavy");
+assert.equal(pose.index,13,"heavy strike has a dedicated contact pose");
 fighter.state="attack-powerKick";
 pose=choose("powerKick",.7);assert.equal(pose.clip,"finisher");
+fighter.state="block";fighter.stateTime=.08;
+pose=choose(null);assert.equal(pose.clip,"guard");
+assert.equal(pose.part,"combat");assert.equal(pose.index,14);
+fighter.state="hit";fighter.hitReaction="knockback";
+pose=choose(null);assert.equal(pose.clip,"knockback");
 fighter.state="idle";fighter.stateTime=.4;
 assert.equal(choose(null),null,"idle keeps authentic premium idle art");
 fighter.state="attack-gun";
@@ -90,6 +104,7 @@ assert.equal(allocated.length,2,"rendering never allocates new textures");
 const studio=fs.readFileSync("yusuke-sprite-studio.html","utf8");
 assert.ok(studio.includes('"yusuke-directional-"+part+"-v8.png"'),
  "studio exports each transparent sheet with a stable file name");
+assert.ok(studio.includes("columns:4,rows:4"),"sprite studio must export the 4x4 atlas");
 assert.ok(studio.includes("yusuke-directional-v8-frames.json"),
  "studio exports frame crop metadata for external import");
 const html=fs.readFileSync("game-build-0009.html","utf8");
@@ -99,4 +114,4 @@ assert.match(html,/MugenDirectional\?\.choosePose/);
 assert.match(html,/premiumPose\.frames \|\| premiumArt/);
 new vm.Script([...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
   .map(x=>x[1]).find(x=>x.includes("function selectYusukeCombatPose")));
-console.log("PASS: 24 consistent directional/combat-derived frames, 40 FPS clips and browser fallback.");
+console.log("PASS: 32 source-matched directional/combat cels, backdash both facings, 40 FPS and fallback.");
