@@ -1,30 +1,36 @@
-/* Yusuke Directional V8: 24 supplementary, 1:1-source pixel-anime cels.
+/* Yusuke Directional V8.1: 32 supplementary, 1:1-source pixel-anime cels.
  * Reference goals: backward footwork, forward rush, aerial direction changes,
  * individual punch windup/contact/recovery and readable aerial strikes.
- * These are ORIGINAL-source-derived cels, not copied video images or twenty-four
+ * These are ORIGINAL-source-derived cels, not copied video images or thirty-two
  * independent hand drawings. The two static 8-frame premium PNGs stay primary.
  */
 (function(root){
  "use strict";
- const FPS=40,CELL=512,COLS=4,ROWS=3;
+ const FPS=40,CELL=512,COLS=4,ROWS=4;
  const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
- // movement atlas: 3 advance, 3 retreat, 2 rush, 2 directional air, 2 low/reset
+ // movement atlas: 3 advance, 3 retreat, 2 rush, 2 directional air, 2 low/reset,
+ // plus 2 fast backsteps, 1 pivot and 1 planted landing pose.
  const movement=Object.freeze([
   {src:1,lean:7,twist:3,lift:1},{src:2,lean:13,twist:5,lift:-2},
   {src:1,lean:4,twist:-2,lift:0},{src:2,lean:-12,twist:-4,lift:0},
   {src:1,lean:-17,twist:3,lift:-1},{src:2,lean:-8,twist:-2,lift:1},
   {src:3,lean:18,twist:7,lift:0},{src:4,lean:24,twist:9,lift:-3},
   {src:5,lean:12,twist:5,lift:-5},{src:6,lean:-13,twist:-3,lift:-2},
-  {src:7,lean:-7,twist:3,lift:1},{src:0,lean:-10,twist:-5,lift:0}
+  {src:7,lean:-7,twist:3,lift:1},{src:0,lean:-10,twist:-5,lift:0},
+  {src:2,lean:-23,twist:-10,lift:-3},{src:1,lean:-17,twist:-8,lift:-1},
+  {src:0,lean:-13,twist:7,lift:0},{src:7,lean:-5,twist:-3,lift:3}
  ]);
- // combat atlas: jab/cross/body/uppercut air follow-up and impact recovery
+ // combat atlas: jab/cross/body/uppercut, air follow-up, recoil/recovery,
+ // plus 2 heavy-charge/contact poses, 1 defensive parry and 1 follow-through.
  const combat=Object.freeze([
   {src:0,lean:-12,twist:-7,lift:0},{src:1,lean:19,twist:9,lift:-1},
   {src:2,lean:-8,twist:-6,lift:0},{src:2,lean:25,twist:11,lift:-1},
   {src:3,lean:14,twist:8,lift:3},{src:4,lean:-9,twist:11,lift:4},
   {src:4,lean:18,twist:-10,lift:-8},{src:7,lean:10,twist:5,lift:-6},
   {src:7,lean:23,twist:10,lift:-9},{src:4,lean:20,twist:8,lift:0},
-  {src:7,lean:25,twist:-8,lift:-10},{src:5,lean:-15,twist:-9,lift:2}
+  {src:7,lean:25,twist:-8,lift:-10},{src:5,lean:-15,twist:-9,lift:2},
+  {src:0,lean:-20,twist:-11,lift:0},{src:4,lean:27,twist:13,lift:-2},
+  {src:0,lean:-8,twist:-6,lift:0},{src:5,lean:-5,twist:-4,lift:2}
  ]);
  const layouts=Object.freeze({movement,combat});
  function compose(part,image,meta) {
@@ -66,11 +72,11 @@
   try{
    const moved=compose("movement",images.movement,meta.movement);
    const striking=compose("combat",images.combat,meta.combat);
-   return moved&&striking?{movement:moved,combat:striking,frameCount:24,fps:FPS}:null;
+   return moved&&striking?{movement:moved,combat:striking,frameCount:32,fps:FPS}:null;
   }catch(e){return null;}
  }
  const frameAt=(keys,time,rate=FPS)=>keys[Math.floor(Math.max(0,time)*rate)%keys.length];
- const phase=(p,wind,release,k0,k1)=>p<wind?k0:p<release?k1:0;
+ const phase=(p,wind,release,k0,k1)=>p<wind?k0:p<release?k1:15;
  function choosePose(fighter,attack,atlas,progress=0) {
   if(!fighter || !atlas?.movement?.image || !atlas?.combat?.image)return null;
   const grounded=Boolean(fighter.grounded);
@@ -88,25 +94,34 @@
      case "cross":clip="cross";index=phase(p,.19,.84,2,3);break;
      case "body":clip="body";index=phase(p,.16,.82,4,4);break;
      case "upper":clip="upper";index=phase(p,.18,.83,5,6);break;
-     case "heavy":clip="upper";index=phase(p,.2,.84,5,6);break;
+     case "heavy":clip="heavy";index=phase(p,.2,.84,12,13);break;
      case "powerKick":clip="finisher";index=phase(p,.2,.85,9,10);break;
      // Spirit Gun, fist-fired Shotgun and their canonical VFX stay untouched.
      default:return null;
     }
    }
   }else if(fighter.state==="hit"){
-   clip="stagger";part="combat";index=11;
-  }else if(fighter.state==="block" || fighter.state==="crouch"){
+   clip=fighter.hitReaction==="knockback"?"knockback":"stagger";
+   part="combat";index=fighter.hitReaction==="knockback"?15:11;
+  }else if(fighter.state==="block"){
+   clip="guard";part="combat";index=14;
+  }else if(fighter.state==="crouch"){
    clip="lowGuard";index=frameAt([10,11],t,9);
   }else if(!grounded || fighter.state==="jump"){
    if(Math.abs(relative)<45)return null; // use the premium vertical jump
    clip=relative>0?"aerialForward":"aerialBack";
    index=relative>0?8:9;
   }else if((fighter.dashTimer||0)>0 && fighter.state==="walk"){
-   clip="rush";index=frameAt([6,7,7,6],t,20);
+   clip=relative>=0?"rush":"backdash";
+   index=frameAt(relative>=0?[6,7,7,6]:[12,13,13,12],t,20);
   }else if(fighter.state==="walk" && Math.abs(relative)>35){
    clip=relative>0?"advance":"retreat";
    index=frameAt(relative>0?[0,1,2,1]:[3,4,5,4],t,12);
+  }else if(fighter.state==="walk" && (fighter.turnTimer||0)>0){
+   clip="pivot";index=14;
+  }else if(fighter.state==="idle" && t<.18 &&
+    /^aerial/.test(fighter._directionalSprite?.clip||"")){
+   clip="landing";index=15;
   }else{return null;}
   const atlasSheet=atlas[part],frame=atlasSheet.frames[index];
   if(!frame)return null;
