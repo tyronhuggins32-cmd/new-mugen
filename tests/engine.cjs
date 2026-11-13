@@ -23,7 +23,7 @@ vm.runInContext(fs.readFileSync(path.join(root,'mugen-cinematics.js'),'utf8'),co
 vm.runInContext(`
  const g=new ArcadeFight(null); const neutral={left:false,right:false,block:false};
  g.player.x=400;g.cpu.x=900;g.player.update(1/60,{...neutral,left:true},g.cpu,g);
- assert.equal(g.player.facing,1);assert.ok(g.player.vx<0);
+ assert.equal(g.player.facing,-1);assert.ok(g.player.vx<0);
  pressFightControl('left','KeyA');pressFightControl('left','ArrowLeft');releaseFightControl('left','KeyA');assert.ok(humanInput().left);clearFightInput();
  // Backward input must NEVER auto-block, even during enemy attacks.
  g.reset();g.state='play';g.player.x=460;g.cpu.x=610;
@@ -32,7 +32,7 @@ vm.runInContext(`
  g.player.update(1/60,{...neutral,left:true},g.cpu,g);
  assert.equal(g.player.state,'walk','back direction should be walking, not auto guard');
  assert.ok(g.player.x<retreatX,'walk backward travels away from an attacking opponent');
- assert.equal(g.player.facing,1,'retreat keeps facing opponent');
+ assert.equal(g.player.facing,-1,'walking backward must turn the fighter');
  // R1 + away dashes backward without a facing flip, and direction stays
  // latched when the dpad/stick is released.
  g.reset();g.state='play';g.player.x=500;g.cpu.x=950;g.player.facing=1;
@@ -61,25 +61,25 @@ vm.runInContext(`
  g.state='play';g.cpu.health=0;g.finishRound();g.update(2);assert.equal(g.state,'finished');assert.equal(g.roundWins[0],2);
  g.reset();assert.equal(g.roundNumber,1);assert.ok(g.roundWins.every(x=>x===0));
  g.state='play';g.timer=0;g.finishRound();g.update(2);assert.equal(g.roundNumber,2);assert.ok(g.roundWins.every(x=>x===0));
- g.reset();g.player.setState('block');g.player.facing=1;g.damageFighter(g.cpu,g.player,{damage:10,facing:1,hitstun:.2,knockback:10},0,0);assert.equal(g.player.health,990);
- g.reset();g.player.setState('block');g.player.facing=1;g.damageFighter(g.cpu,g.player,{damage:10,facing:-1,hitstun:.2,knockback:10},0,0);assert.equal(g.player.health,997.5);
+ g.reset();g.player.setState('block');g.player.facing=1;g.damageFighter(g.cpu,g.player,{damage:10,facing:1,hitstun:.2,knockback:10},0,0);assert.equal(g.player.health,4990);
+ g.reset();g.player.setState('block');g.player.facing=1;g.damageFighter(g.cpu,g.player,{damage:10,facing:-1,hitstun:.2,knockback:10},0,0);assert.equal(g.player.health,4997.5);
  g.reset();g.state='play';g.player.beginAttack('gun');for(let i=0;i<30;i++)g.player.update(1/60,neutral,g.cpu,g);assert.equal(g.projectiles.length,1);
- g.reset();g.player.x=500;g.cpu.x=580;g.player.beginAttack('light');g.cpu.beginAttack('light');g.player.stateTime=g.cpu.stateTime=config.combat.attacks.light.activeStart;const contacts=[g.prepareMelee(g.player,g.cpu),g.prepareMelee(g.cpu,g.player)];assert.ok(contacts.every(Boolean));contacts.forEach(hit=>hit());assert.ok(g.player.health<1000 && g.cpu.health<1000);
+ g.reset();g.player.x=500;g.cpu.x=580;g.player.beginAttack('light');g.cpu.beginAttack('light');g.player.stateTime=g.cpu.stateTime=config.combat.attacks.light.activeStart;const contacts=[g.prepareMelee(g.player,g.cpu),g.prepareMelee(g.cpu,g.player)];assert.ok(contacts.every(Boolean));contacts.forEach(hit=>hit());assert.ok(g.player.health<g.player.maxHealth && g.cpu.health<g.cpu.maxHealth);
  g.start();assert.equal(pending(),1);g.start();assert.equal(pending(),1);g.stop();assert.equal(pending(),0);g.start();assert.equal(pending(),1);
  g.render=()=>{};g.setPaused(true);const time=g.timer;g.loop(100);assert.equal(g.timer,time);g.stop();
  // Simulate render cadences without scheduling; each must advance one second of gameplay.
  for(const hz of [30,60,120,144]){g.reset();g.state='play';g.controller.update=()=>neutral;g.running=true;g.lastFrame=0;for(let i=1;i<=hz;i++)g.loop(i*1000/hz);assert.ok(Math.abs(g.timer-179)<.018,'fixed tick at '+hz);g.stop();}
- g.reset();const sequence=[];for(let i=0;i<4;i++){g.player.beginAttack('light');sequence.push(g.player.currentAttack());}assert.equal(sequence.join(','),'light,cross,body,upper');g.player.punchWindow=0;g.player.beginAttack('light');assert.equal(g.player.currentAttack(),'light');assert.equal(g.player.maxHealth,1000);assert.equal(g.cpu.maxHealth,1000);
+ g.reset();const sequence=[];for(let i=0;i<4;i++){g.player.beginAttack('light');sequence.push(g.player.currentAttack());}assert.equal(sequence.join(','),'light,cross,body,upper');g.player.punchWindow=0;g.player.beginAttack('light');assert.equal(g.player.currentAttack(),'light');assert.equal(g.player.maxHealth,5000);assert.equal(g.cpu.maxHealth,5000);
  g.reset();for(let i=0;i<3;i++)g.player.beginAttack('light');assert.equal(g.player.comboActive,true);g.player.beginAttack('gun');assert.equal(g.player.currentAttack(),'gun');assert.equal(g.player.punchStep,0);
  g.reset();g.player.beginAttack('gun');assert.equal(g.player.currentAttack(),'gun');
- g.reset();for(let i=0;i<10;i++)g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);assert.equal(g.cpu.health,900);
+ g.reset();for(let i=0;i<10;i++)g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);assert.equal(g.cpu.health,4900);
  g.player.update(2.1,neutral,g.cpu,g);assert.equal(g.player.comboHits,0);
- g.reset();g.cpu.setState('block');g.cpu.facing=-1;g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);assert.equal(g.cpu.health,997.5);
+ g.reset();g.cpu.setState('block');g.cpu.facing=-1;g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);assert.equal(g.cpu.health,4997.5);
  g.reset();g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);g.damageFighter(g.cpu,g.player,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);
  g.reset();g.player.energy=80;g.player.beginAttack('heavy');assert.equal(g.player.currentAttack(),'shotgun');for(let t=0;t<20;t++)g.player.update(1/60,neutral,g.cpu,g);assert.equal(g.projectiles.length,7);assert.ok(g.projectiles.every(p=>p.kind==='spiritShotgun'));
  g.reset();g.state='play';g.player.energy=100;assert.ok(window.MugenCinematics.begin(g),'MAX Spirit Gun can activate at full meter');assert.equal(g.player.energy,0);
  for(let tick=0;tick<360&&g.superSequence;tick++)g.update(1/60);
- assert.equal(g.superSequence,null,'cinematic completes');assert.equal(g.player.energy,0,'MAX drains energy');assert.equal(g.player.comboHits,0,'MAX Spirit Gun does not bypass the three-Square combo gate');assert.ok(g.cpu.health<680,'beam damages opponent');
+ assert.equal(g.superSequence,null,'cinematic completes');assert.equal(g.player.energy,0,'MAX drains energy');assert.equal(g.player.comboHits,0,'MAX Spirit Gun does not bypass the three-Square combo gate');assert.ok(g.cpu.health<g.cpu.maxHealth-320,'beam damages opponent');
  g.reset();g.state='play';g.player.energy=0;g.player.update(1/60,{charge:true},g.cpu,g);assert.ok(g.player.energy>0,'hold-to-charge refills energy');
  g.reset();g.state='play';const dashX=g.player.x;g.player.update(1/60,{dashPressed:true},g.cpu,g);assert.ok(g.player.x>dashX+10,'dash crosses space');
  // Retreat + jump must take priority over nearby attacks and preserve air control.
@@ -94,7 +94,7 @@ vm.runInContext(`
  g.player.update(1/60,{...neutral,left:true},g.cpu,g);
  assert.equal(g.player.state,'walk','backpedal should animate even near a punch');
  assert.ok(g.player.vx<0 && g.player.x<beforeRetreat,'left retreat escapes close range');
- assert.equal(g.player.facing,1,'backpedal keeps facing the opponent');
+ assert.equal(g.player.facing,-1,'held left turns the player away from the opponent');
  // The same R1/Keyboard dash input plus held direction must honor backward.
  g.reset();g.state='play';g.player.x=550;g.cpu.x=800;
  const beforeBackDash=g.player.x;
