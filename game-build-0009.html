@@ -2984,18 +2984,9 @@
           context.scale(pose.stretchX, pose.stretchY);
           context.imageSmoothingEnabled = false;
 
-          if (!ghost && this.state === "walk" && Math.abs(this.vx) > 250) {
-            const localDirection = Math.sign(this.vx * this.facing) || 1;
-            for (let copy = 2; copy >= 1; copy -= 1) {
-              context.globalAlpha = copy === 2 ? .08 : .14;
-              context.drawImage(
-                renderSheet,
-                frame.x, frame.y, frame.w, frame.h,
-                drawX - localDirection * copy * 15, drawY, drawWidth, drawHeight
-              );
-            }
-            context.globalAlpha = 1;
-          }
+          // Whole-body translucent speed copies caused pale/white duplicate
+          // outlines during dashes. Directional streak VFX now handles speed
+          // behind the fighter without re-painting a second silhouette.
 
           if (!ghost && this.state === "block") {
             context.strokeStyle = this.cpu ? "rgba(255,80,120,.78)" : "rgba(90,231,255,.76)";
