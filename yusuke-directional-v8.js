@@ -49,18 +49,19 @@
    const x=(i%COLS)*CELL,y=Math.floor(i/COLS)*CELL;
    const origin=Math.floor((CELL-base.w)/2);
    const fy=y+CELL-base.h;
-   for(let strip=0;strip<10;strip++){
-    const srcY=Math.floor(base.h*strip/10);
-    const end=strip===9?base.h:Math.floor(base.h*(strip+1)/10);
-    const t=(strip+.5)/10;
-    const upper=Math.pow(1-t,1.55),torso=Math.sin(Math.PI*t);
-    const shift=Math.round(spec.lean*upper+spec.twist*torso);
-    const lift=Math.round(spec.lift*upper);
-    // Preserve all source pixels and the grounded pivot. Overlap a source
-    // row in destination space only, never smooth or recolor the character.
-    ctx.drawImage(image,base.x,base.y+srcY,base.w,end-srcY,
-      x+origin+shift,fy+srcY+lift,base.w,end-srcY+(strip===9?0:1));
-   }
+   // Composite each source sprite ONCE, without chopping limbs into
+   // ten offset strips. Those slice boundaries created white seams,
+   // detached wrists and visibly changing silhouettes during attacks.
+   // A very small shear around the original foot pivot preserves all source
+   // pixels and keeps animation variants seamless at 40 sample FPS.
+   const shear=-(spec.lean+spec.twist*.45)/base.h;
+   const rise=Math.min(0,spec.lift);
+   ctx.save();
+   ctx.translate(x+origin+base.ax,y+CELL);
+   ctx.transform(1,0,shear,1,0,0);
+   ctx.drawImage(image,base.x,base.y,base.w,base.h,
+     -base.ax,-base.h+rise,base.w,base.h);
+   ctx.restore();
    frames.push({x,y:y+32,w:CELL,h:CELL-32,ax:origin+base.ax});
   }
   return {image:canvas,frames,scale:meta.scale,part};
