@@ -1781,10 +1781,10 @@
 
   <script src="mugen-cinematics.js?v=1"></script>
   <script src="mugen-visuals-v2.js?v=2"></script>
-  <script src="mugen-fluid-v3.js?v=2"></script>
+  <script src="mugen-fluid-v3.js?v=3"></script>
   <script src="mugen-combat-v5.js?v=1"></script>
   <script src="mugen-spiritgun-v5.js?v=1"></script>
-  <script src="mugen-vfx-v8.js?v=1"></script>
+  <script src="mugen-vfx-v8.js?v=2"></script>
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="mugen-sfx-v8.js?v=1"></script>
@@ -3003,7 +3003,8 @@
             context.shadowBlur = 0;
           }
 
-          if (!ghost && attackData[attackType]?.projectile) {
+          if (!ghost && attackData[attackType]?.projectile &&
+              !window.MugenVfxV8?.ready()) {
             const specialAttack = attackData[attackType];
             const vfx = yusukeCombat.projectileVfx;
             const charge = Math.min(1, this.stateTime / specialAttack.spawnTime);
@@ -4105,11 +4106,15 @@
           else if (window.MugenVisuals?.drawArena) window.MugenVisuals.drawArena(context, time, arena);
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
-          window.MugenFluid?.drawBehind(this, context, time);
+          // The authored VFX atlas replaces random procedural hit dust and
+          // square sparks; never stack two impact systems over the sprite.
+          if (!window.MugenVfxV8?.ready())
+            window.MugenFluid?.drawBehind(this, context, time);
           window.MugenVfxV8?.drawBehind(this, context, time);
           window.MugenDirectional?.drawBehind(this, context, time);
           window.MugenCinematicFX?.drawBehind(this, context, time);
-          window.MugenShotgun?.drawFan(this, context, time);
+          if (!window.MugenVfxV8?.ready())
+            window.MugenShotgun?.drawFan(this, context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
           window.MugenVisuals?.drawEchoes(this, context, time);
