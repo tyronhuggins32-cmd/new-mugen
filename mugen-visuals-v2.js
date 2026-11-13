@@ -236,7 +236,7 @@
     if(game.state!=="play")return;
     for(const fighter of [game.player,game.cpu]){
       if(!fighter)return;
-      if(Math.abs(fighter.vx)<285 && fighter.dashTimer<=0)return;
+      if(Math.abs(fighter.vx)<285 && fighter.dashTimer<=0)continue;
       const interval=fighter.dashTimer>0?.028:.055;
       fighter.echoClock=(fighter.echoClock||0)+dt;
       if(fighter.echoClock>=interval){
