@@ -1667,7 +1667,7 @@
               <img src="characters/yusuke/portrait.webp" alt="Yusuke Urameshi"><span>YUSUKE</span>
             </button>
             <button class="roster-card" type="button" data-character="thorfinn_karlsefni" aria-label="Select Thorfinn" disabled>
-              <img src="characters/thorfinn/portrait.svg" alt="Thorfinn"><span>THORFINN</span>
+              <img src="characters/thorfinn/user-portrait.webp" alt="Thorfinn"><span>THORFINN</span>
             </button>
             <div class="roster-card locked" aria-label="Unreleased fighter slot 3"><span>EMPTY</span></div>
             <div class="roster-card locked" aria-label="Unreleased fighter slot 4"><span>EMPTY</span></div>
@@ -2393,7 +2393,7 @@
           if (character.id !== "thorfinn_karlsefni" || character.formatVersion < 3 ||
               !character.combat?.movement || !character.combat?.attacks ||
               !Array.isArray(character.moves) || !character.profile ||
-              !sheet?.src || !Array.isArray(sheet.frames) || sheet.frames.length < 24) {
+              !sheet?.src || !Array.isArray(sheet.frames) || sheet.frames.length < 40) {
             throw Error("Thorfinn character definition is incomplete");
           }
           for (const frame of sheet.frames) {
@@ -3330,11 +3330,11 @@
           } else if (this.state === "block") animName = "guard";
           else if (!this.grounded || this.state === "jump")
             animName = this.vy < 0 ? "jumpRise" : "jumpFall";
-          else if (this.dashTimer > 0) animName = "run";
-          else if (this.state === "walk") animName = "run";
+          else if (this.dashTimer > 0) animName = "sprint";
+          else if (this.state === "walk") animName = "walk";
           const chosen = sprite.animations[animName] || sprite.animations.idle;
           let index = animationFrameFrom(chosen, this.stateTime, progress);
-          if (this.dashTimer > 0 && this.state === "walk") index = 22;
+          // Sprint uses the uploaded frames rather than the old placeholder frame 22.
           const frame = sprite.frames[index] || sprite.frames[0];
           const scale = sprite.scale || 1;
           context.save();
