@@ -2441,7 +2441,7 @@
         // Spirit Shotgun is fist-fired like the anime, not finger-fired.
         // The finger-pointing animation remains exclusive to Spirit Gun.
         if (attackType === "gun") return null;
-        if (attackType === "shotgun") return choose("straightCross");
+        if (attackType === "shotgun") return choose("shotgunFist") || choose("straightCross");
         if (attackType === "light" && !fighter.grounded) return choose("jumpingKick");
         if (attackType === "light") return choose("lightJab") || choose("straightCross");
         if (attackType === "cross") return choose("straightCross");
