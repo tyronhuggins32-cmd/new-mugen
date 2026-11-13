@@ -52,8 +52,15 @@ const assert=require("node:assert/strict");
    const immediate=window.YusukeAttackLab.status()?.move;
    game.render(3000);
    const drew=atlasDrawCount;
-   for(let i=0;i<150;i++)game.update(1/60);
-   const flash={hits:hitCount,remaining:game.cpu.health,advanced:game.player.x>480};
+   let peakRushX=game.player.x;
+   for(let i=0;i<150;i++){
+    game.update(1/60);
+    peakRushX=Math.max(peakRushX,game.player.x);
+   }
+   // Verify the actual attack burst rather than the final position after
+   // two more seconds of enemy pushbox and round physics.
+   const flash={hits:hitCount,remaining:game.cpu.health,
+    advanced:peakRushX>480+20,peakRushX};
    setUp();hitCount=0;
    const groundAirDenied=!window.YusukeAttackLab.play("skyPursuit");
    game.player.y-=170;game.player.state="jump";
