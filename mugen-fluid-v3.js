@@ -1,6 +1,7 @@
-/* New Mugen Fluid Motion v3.
- * Continuous 60 Hz pose deformation, an adaptive camera and bounded impact FX.
- * No assets, CSS filters on each frame, or large ghost-frame atlases required.
+/* New Mugen Fluid Motion v3.2.
+ * 60Hz physics and continuous render-time pose deformation, plus new
+ * directional sparks, flash cores, recoil streaks and grounded skid trails.
+ * Effects are pooled/bounded and respect the existing adaptive quality gate.
  */
 (function (root) {
   "use strict";
@@ -51,8 +52,10 @@
       lean = clamp((fighter.vx || 0) / 670, -1, 1) * 4;
       sway = Math.sin(t * 10) * 1.3;
     } else if (state === "hit") {
-      recoil = -Math.exp(-t * 7) * 8;
-      rise = Math.sin(t * 16) * 1.5;
+      const violent = fighter.hitReaction === "knockback";
+      recoil = -Math.exp(-t * (violent ? 4.5 : 7)) * (violent ? 15 : 8);
+      sway = violent ? Math.sin(t * 21) * 3.3 : Math.sin(t * 16) * 1.5;
+      rise = Math.sin(t * 16) * (violent ? 2.4 : 1.5);
     }
     if (attack) {
       const impulse = Math.sin(progress * Math.PI);
@@ -94,7 +97,8 @@
     let data = trackers.get(game);
     if (!data) {
       data = { camera: { x: 640, y: 360, zoom: 1, last: 0 },
-        dust: [], rings: [], tick: 0, slowFrames: 0, quality: 1 };
+        dust: [], rings: [], slashes: [], flashes: [], trails: [],
+        tick: 0, slowFrames: 0, quality: 1 };
       trackers.set(game, data);
     }
     return data;
@@ -156,11 +160,32 @@
     if (!game) return;
     const t = getTracker(game);
     const power = blocked ? .6 : heavy ? 1.4 : 1;
-    t.rings.push({ x: Number.isFinite(x) ? x : defender.x,
-      y: Number.isFinite(y) ? y : defender.y - 120,
-      time: 0, life: .28 * power, power, blocked, red: Boolean(attacker?.cpu) });
+    const px = Number.isFinite(x) ? x : defender?.x || 0;
+    const py = Number.isFinite(y) ? y : (defender?.y || 0) - 120;
+    const direction = Math.sign(attacker?.facing || 1);
+    const red = Boolean(attacker?.cpu);
+    t.rings.push({ x:px, y:py, time:0, life:.28 * power,
+      maxLife:.28 * power, power, blocked, red });
     if (t.rings.length > 12) t.rings.shift();
-    if (!blocked && defender) dust(game, defender.x, defender.y, attacker?.facing || 1, heavy ? 9 : 4);
+    t.flashes.push({ x:px, y:py, life:blocked ? .11 : .17,
+      maxLife:blocked ? .11 : .17, power, blocked, red });
+    if (t.flashes.length > 5) t.flashes.splice(0,t.flashes.length-5);
+
+    // Angular spark blades travel in the direction of impact, not a
+    // symmetrical spray that hides the defender. No additional hitboxes.
+    const count = blocked ? 3 : heavy ? 12 : 7;
+    for(let i=0;i<count;i++) {
+      const phase = (i + .45) * TAU / count;
+      const angle = Math.sin(phase) * (heavy ? .9 : 1.05);
+      const speed = (heavy ? 220 : 155) + (i % 4) * 46;
+      const life = .13 + (i % 4) * .045;
+      t.slashes.push({ x:px, y:py, vx:Math.cos(angle)*direction*speed,
+        vy:Math.sin(angle)*speed*.8, life, maxLife:life,
+        angle, length:blocked ? 15 : heavy ? 38 : 25,
+        width:heavy ? 4 : 2.5, blocked, red });
+    }
+    if (t.slashes.length > 88) t.slashes.splice(0,t.slashes.length-88);
+    if (!blocked && defender) dust(game, defender.x, defender.y, direction, heavy ? 9 : 4);
   }
 
   function tick(game, dt) {
@@ -173,10 +198,25 @@
     t.dust = t.dust.filter(p => p.life > 0);
     for (const ring of t.rings) { ring.time += dt; ring.life -= dt; }
     t.rings = t.rings.filter(r => r.life > 0);
+    for (const f of t.flashes) f.life -= dt;
+    t.flashes = t.flashes.filter(f => f.life > 0);
+    for (const slash of t.slashes) {
+      slash.x += slash.vx * dt;
+      slash.y += slash.vy * dt;
+      slash.vx *= Math.max(0, 1 - dt * 5);
+      slash.vy += 150 * dt;
+      slash.life -= dt;
+    }
+    t.slashes = t.slashes.filter(s => s.life > 0);
+    for (const trail of t.trails) trail.life -= dt;
+    t.trails = t.trails.filter(p => p.life > 0);
     for (const f of [game.player, game.cpu]) {
       if (!f) continue;
-      const memo = f._fluidState || (f._fluidState = { grounded: f.grounded, state: f.state, x: f.x, timer: 0 });
+      const memo = f._fluidState || (f._fluidState = {
+        grounded: f.grounded, state: f.state, x: f.x, timer: 0, hitTrailTime: 0
+      });
       memo.timer += dt;
+      memo.hitTrailTime = (memo.hitTrailTime || 0) + dt;
       const landed = f.grounded && !memo.grounded;
       const dashed = f.dashTimer > 0 && memo.state !== "walk";
       if (landed) dust(game, f.x, f.y, f.facing, 10);
@@ -184,6 +224,20 @@
       if (f.grounded && f.state === "walk" && Math.abs(f.vx) > 170 && memo.timer >= .095) {
         dust(game, f.x - f.facing * 20, f.y, f.facing, 2);
         memo.timer = 0;
+      }
+      // A knockback fighter leaves speed streaks in air and a friction
+      // scrape on the floor. Throttle creation to avoid particle spam.
+      if (f.state === "hit" && Math.abs(f.vx) > 160 && memo.hitTrailTime >= .045) {
+        const direction = Math.sign(f.vx);
+        const grounded = f.grounded;
+        t.trails.push({ x:f.x - direction * 24,
+          y:f.y - (grounded ? 7 : 95), direction,
+          length:clamp(Math.abs(f.vx) * .13, 25, 100),
+          grounded, red:Boolean(f.cpu), life:.23, maxLife:.23 });
+        if (t.trails.length > 48) t.trails.splice(0,t.trails.length-48);
+        if (grounded) dust(game,f.x-direction*24,f.y,direction,3,
+          f.cpu ? "216,128,144" : "172,211,239");
+        memo.hitTrailTime = 0;
       }
       memo.state = f.state; memo.grounded = f.grounded; memo.x = f.x;
     }
@@ -200,6 +254,25 @@
         p.radius * (.5 + 1 - alpha), 0, 0, TAU);
       ctx.fill();
     }
+    for (const p of t.trails) {
+      const alpha = clamp(p.life / p.maxLife);
+      ctx.globalAlpha = alpha * (p.grounded ? .47 : .7);
+      ctx.strokeStyle = p.red ? "#ff8eae" : "#a0efff";
+      ctx.lineWidth = p.grounded ? 4 : 2.5;
+      ctx.beginPath();
+      ctx.moveTo(p.x,p.y);
+      ctx.lineTo(p.x-p.direction*p.length,p.y+(p.grounded ? -2 : 7));
+      ctx.stroke();
+      if (p.grounded) {
+        ctx.strokeStyle = "#e5fbff";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y-4);
+        ctx.lineTo(p.x-p.direction*p.length*.6, p.y-7);
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
@@ -207,8 +280,42 @@
     const t = getTracker(game);
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
+    for (const flash of t.flashes) {
+      const alpha = clamp(flash.life / flash.maxLife);
+      const radius = (8 + flash.power * 39) * (1.25 - alpha * .25);
+      // Brief centered starburst: brightest at contact, not a full-screen flash.
+      const halo = ctx.createRadialGradient(flash.x,flash.y,2,flash.x,flash.y,radius);
+      halo.addColorStop(0,flash.blocked ? "rgba(255,255,255,.85)" : "rgba(245,255,255,.94)");
+      halo.addColorStop(.28, flash.red ? "rgba(255,91,142,.6)" : "rgba(98,224,255,.64)");
+      halo.addColorStop(1,"rgba(0,0,0,0)");
+      ctx.globalAlpha = alpha * alpha * .75 * t.quality;
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(flash.x,flash.y,radius,0,TAU);
+      ctx.fill();
+    }
+    for (const slash of t.slashes) {
+      const alpha = clamp(slash.life / slash.maxLife);
+      ctx.globalAlpha = alpha * .95;
+      ctx.strokeStyle = slash.blocked ? "#efffff" : slash.red ? "#ff7ca9" : "#79ecff";
+      ctx.lineWidth = slash.width * alpha;
+      ctx.beginPath();
+      ctx.moveTo(slash.x,slash.y);
+      const dx = Math.sign(slash.vx) * slash.length;
+      const dy = Math.sin(slash.angle) * slash.length * .8;
+      ctx.lineTo(slash.x+dx,slash.y+dy);
+      ctx.stroke();
+      if (t.quality > .5 && !slash.blocked) {
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = Math.max(1,slash.width*.25*alpha);
+        ctx.beginPath();
+        ctx.moveTo(slash.x+dx*.18,slash.y+dy*.18);
+        ctx.lineTo(slash.x+dx*.72,slash.y+dy*.72);
+        ctx.stroke();
+      }
+    }
     for (const ring of t.rings) {
-      const progress = clamp(ring.time / (ring.time + ring.life || 1));
+      const progress = clamp(ring.time / ring.maxLife);
       const alpha = 1 - ease(progress);
       const radius = (16 + 82 * progress) * ring.power;
       ctx.globalAlpha = alpha * .8;
@@ -217,7 +324,15 @@
       ctx.beginPath();
       ctx.ellipse(ring.x, ring.y, radius * 1.16, radius * .62, -.1, 0, TAU);
       ctx.stroke();
-      for (let i = 0; i < 6; i++) {
+      if (t.quality > .5 && !ring.blocked) {
+        // A second compressed ripple catches the knockback direction.
+        ctx.globalAlpha = alpha * .38;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.ellipse(ring.x,ring.y,radius*1.35,radius*.32,.17,0,TAU);
+        ctx.stroke();
+      }
+      for (let i = 0; i < (t.quality > .5 ? 6 : 3); i++) {
         const angle = i * TAU / 6 + ring.time * 3;
         ctx.beginPath();
         ctx.moveTo(ring.x + Math.cos(angle) * radius, ring.y + Math.sin(angle) * radius * .6);
@@ -233,8 +348,9 @@
     drawCel, tintForCpu, beginFrame, tick, onHit, drawBehind, drawFront, reset,
     bend, getStats(game) {
       const t = getTracker(game);
-      return { dust: t.dust.length, rings: t.rings.length,
-        cameraX: t.camera.x, zoom: t.camera.zoom, quality: t.quality };
+      return { dust:t.dust.length, rings:t.rings.length, slashes:t.slashes.length,
+        flashes:t.flashes.length, trails:t.trails.length,
+        cameraX:t.camera.x, zoom:t.camera.zoom, quality:t.quality };
     }
   });
 })(typeof window === "undefined" ? globalThis : window);
