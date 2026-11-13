@@ -3758,8 +3758,12 @@
             // Do not overlay random dust, rings and legacy impact bursts.
             if (window.MugenVfxV8?.ready())
               window.MugenVfxV8.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
+            else if (window.MugenCinematicFX?.onHit)
+              window.MugenCinematicFX.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
             else
-              window.MugenCinematicFX?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
+              this.addImpact(impactX, impactY,
+                blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff",
+                blocked ? 4 : heavyHit ? 9 : 6, attacker.facing);
           }
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
