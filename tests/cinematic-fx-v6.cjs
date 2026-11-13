@@ -33,7 +33,9 @@ fx.reset(game);
 assert.equal(fx.stats(game).activeHits,0,"round reset clears stale sparks");
 const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(html,/mugen-cinematic-fx-v6\.js\?v=1/);
-assert.match(html,/MugenCinematicFX\?\.onHit\(this, attacker, defender, attack, blocked/);
+assert.match(html,/else if \(window\.MugenCinematicFX\?\.onHit\)/,
+  "cinematic impact is the fallback only when authored V8 sprites are not ready");
+assert.match(html,/MugenCinematicFX\.onHit\(this, attacker, defender, attack, blocked/);
 assert.match(html,/MugenCinematicFX\?\.drawBehind\(this, context, time\)/);
 assert.match(html,/MugenCinematicFX\?\.drawFront\(this, context, time\)/);
 assert.match(html,/MugenCinematicFX\?\.tick\(this, dt\)/);
