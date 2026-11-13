@@ -5,7 +5,7 @@
 (function(root) {
   "use strict";
   function validate(data) {
-    if (!data || ![2,3].includes(data.version)) throw Error("Premium sprite metadata version unsupported");
+    if (!data || ![2,3,4].includes(data.version)) throw Error("Premium sprite metadata version unsupported");
     for (const part of ["combat","movement"]) {
       const sh=data[part];
       if (!sh || sh.width!==2048 || sh.height!==1024 || sh.scale!==.5 ||
