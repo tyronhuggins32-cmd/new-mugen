@@ -12,6 +12,8 @@ jobs:
           node-version: "22"
       - name: Combat engine regression tests
         run: node tests/engine.cjs
+      - name: Three-Square combo and Triangle energy threshold
+        run: node tests/triangle-combo.cjs
       - name: Yusuke sprite expansion checks
         run: node tests/yusuke-sprites.cjs
       - name: Yusuke skin and costume palette consistency
