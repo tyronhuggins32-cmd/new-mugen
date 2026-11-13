@@ -119,8 +119,8 @@ const path = require("node:path");
   assert.equal(result.playerHealth,1000);
   assert.equal(result.kickReady,true,"the eight-frame kick PNG must load into the browser");
   assert.equal(result.premiumReady,true,"both high-detail Yusuke sprite families must load");
-  assert.ok(result.premiumSources.every(path=>path?.endsWith("-v7.png")),
-    "live premium fighter must use the polished V7 pixel-art sheets");
+  assert.ok(result.premiumSources.every(path=>path?.endsWith("-v8.png")),
+    "live fighter must load sanitized V8 sprites without white matte gaps");
   assert.ok(result.premiumAttackPoses.every(Boolean),
     "every punch, kick, Spirit Gun, and Shotgun must use correct premium atlas frames");
 
