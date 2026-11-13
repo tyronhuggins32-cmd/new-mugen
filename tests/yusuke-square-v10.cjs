@@ -57,6 +57,28 @@ for(const [attack,duration] of Object.entries(durations)){
     timeline.at(-1)!==timeline[Math.floor(timeline.length/2)],
     attack+" should contain distinct wind-up, contact and return silhouettes");
 }
+// No entire previous body is painted over the new punch at chain boundaries.
+fighter.grounded=true;
+fighter._directionalSprite=null;
+for(const attack of ["light","cross","body","upper"]){
+ fighter.state="attack-"+attack;fighter.stateTime=.01;
+ const early=motion.choosePose(fighter,attack,atlas,.02);
+ assert.equal(early.transitionFrame,null,
+   "Square "+attack+" must not alpha-blend two full-body silhouettes");
+ assert.equal(early.part,"square");
+ fighter.stateTime=.21;
+ const end=motion.choosePose(fighter,attack,atlas,.97);
+ assert.equal(end.transitionFrame,null);
+}
+fighter.state="walk";fighter.stateTime=.01;fighter.vx=420;
+const afterCombo=motion.choosePose(fighter,null,atlas);
+assert.equal(afterCombo.transitionFrame,null,
+ "exit from a Square combo should not leave a transparent double-Yusuke image");
+assert.equal(afterCombo.part,"movement");
+fighter.state="walk";fighter.stateTime=.2;fighter.vx=-240;
+const continuousFootwork=motion.choosePose(fighter,null,atlas);
+assert.equal(continuousFootwork.part,"movement");
+
 fighter.grounded=false;fighter.state="attack-upper";
 assert.equal(motion.choosePose(fighter,"upper",atlas,.5)?.clip,"airStrike",
   "air attacks keep existing direction-sensitive animation");
