@@ -47,6 +47,10 @@ assert.ok(pose.index>=0&&pose.index<3);
 fighter.vx=-170;fighter.stateTime=.23;
 pose=choose(null);
 assert.equal(pose.clip,"retreat");assert.ok(pose.index>=3&&pose.index<6);
+fighter.facing=-1;fighter.vx=180;fighter.stateTime=.31;
+pose=choose(null);
+assert.equal(pose.clip,"retreat","left-facing backpedal uses mirrored retreat art");
+fighter.facing=1;
 fighter.dashTimer=.1;fighter.vx=990;fighter.stateTime=.02;
 pose=choose(null);assert.equal(pose.clip,"rush");
 fighter.dashTimer=0;fighter.grounded=false;fighter.state="jump";fighter.vx=280;fighter.vy=-140;
@@ -69,6 +73,25 @@ assert.equal(director.choosePose(fighter,"cross",null,.4),null,"no derived atlas
 assert.ok(pose.image);
 const failed=director.build(meta,{movement:images.movement,combat:null});
 assert.equal(failed,null,"missing source art must not break the game");
+// Impact anticipation and speed streaks are visible, finite and non-mutating.
+let streaks=0;
+const ctx=new Proxy({save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},stroke(){streaks++;},
+ translate(){},scale(){},quadraticCurveTo(){},arc(){}},{
+ get(o,k){return k in o?o[k]:()=>{}},set(o,k,v){o[k]=v;return true}
+});
+const runner={state:"walk",grounded:true,x:280,y:600,vx:700,facing:1,dashTimer:.06,
+ stateTime:.12,currentAttack(){return "cross"}};
+const opponent={state:"idle",grounded:true,x:900,y:600,vx:0,facing:-1,
+ currentAttack(){return null}};
+director.drawBehind({player:runner,cpu:opponent},ctx,1200);
+director.drawFront({player:runner,cpu:opponent},ctx,1200);
+assert.ok(streaks>=6,"rush and cross release have bounded visible speed arcs");
+assert.equal(allocated.length,2,"rendering never allocates new textures");
+const studio=fs.readFileSync("yusuke-sprite-studio.html","utf8");
+assert.match(studio,/yusuke-directional-movement-v8\\.png/);
+assert.match(studio,/yusuke-directional-combat-v8\\.png/);
+assert.match(studio,/yusuke-directional-v8-frames\\.json/);
+
 const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(html,/yusuke-directional-v8\.js\?v=1/);
 assert.match(html,/MugenDirectional\?\.build/);
