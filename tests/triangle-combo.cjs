@@ -1,0 +1,30 @@
+"use strict";
+const fs=require("node:fs"),vm=require("node:vm"),assert=require("node:assert/strict");
+const html=fs.readFileSync("game-build-0009.html","utf8");
+const config=JSON.parse(fs.readFileSync("characters/yusuke/yusuke.json","utf8"));
+const elements=new Map();
+const element=()=>({hidden:false,classList:{add(){},remove(){},toggle(){}},style:{},
+  dataset:{},parentElement:{},addEventListener(){},focus(){},textContent:""});
+const node=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id)};
+const callbacks=new Map();let next=0;
+const scope=vm.createContext({
+ console,config,assert,performance:{now:()=>100},
+ requestAnimationFrame:fn=>{callbacks.set(++next,fn);return next;},
+ cancelAnimationFrame:id=>callbacks.delete(id),
+ document:{querySelector:node,addEventListener(){}},
+ window:{addEventListener(){}},touchButtons:[],
+ fightCanvas:{width:1280,height:720},activeScreen:"fight",arcadeGame:null,
+ roundBanner:element(),roundBannerText:element(),battleResult:element(),
+ battleResultKicker:element(),battleResultTitle:element(),battleResultMessage:element(),
+ rematchButton:element(),playerHealth:element(),cpuHealth:element(),
+ playerEnergy:element(),cpuEnergy:element(),roundTimer:element(),playTone(){}
+});
+const start=html.indexOf("      const arena =");
+const end=html.indexOf("      function beginFight()",start);
+assert.ok(start>0&&end>start);
+vm.runInContext(
+ "const yusukeCombat=config.combat;const activeCharacterDefinition=config;const yusukeAnimations=config.spriteSheet.animations;\n"+
+ html.slice(start,end)+"\nattackData=config.combat.attacks;",scope
+);
+
+vm.runInContext("\nconst g=new ArcadeFight(null),neutral={left:false,right:false,block:false};\nassert.equal(g.player.energy,64);\ng.state=\"play\";\ng.player.energy=50;\ng.player.beginAttack(\"heavy\");\nassert.equal(g.player.currentAttack(),\"powerKick\",\"exactly 50% must be a power kick\");\nassert.equal(g.player.energy,50,\"power kick is free\");\ng.reset();g.player.energy=0;g.player.beginAttack(\"heavy\");\nassert.equal(g.player.currentAttack(),\"powerKick\",\"low energy selects kick\");\ng.reset();g.player.energy=50.001;g.player.beginAttack(\"heavy\");\nassert.equal(g.player.currentAttack(),\"shotgun\",\"shotgun requires strictly greater than 50\");\nassert.ok(g.player.energy<21 && g.player.energy>20,\"shotgun costs 30 Spirit\");\ng.reset();g.player.energy=100;g.player.beginAttack(\"heavy\");\nassert.equal(g.player.currentAttack(),\"shotgun\");\nfor(let i=0;i<20;i++)g.player.update(1/60,neutral,g.cpu,g);\nassert.equal(g.projectiles.length,7,\"shotgun fires seven pellets\");\nassert.ok(new Set(g.projectiles.map(p=>p.vy)).size>3,\"pellets fan out\");\ng.reset();g.state=\"play\";\ng.player.beginAttack(\"light\");\nassert.equal(g.player.currentAttack(),\"light\");\nassert.equal(g.player.squarePresses,1);\nassert.equal(g.player.comboActive,false);\ng.updateHud(true);\nassert.equal(document.querySelector(\".combo-panel\").hidden,true,\"meter hidden before third press\");\ng.damageFighter(g.player,g.cpu,config.combat.attacks.light,0,0);\nassert.equal(g.cpu.health,980,\"first punch deals normal damage\");\nassert.equal(g.player.comboHits,0);\ng.cpu.invulnerability=0;\ng.player.beginAttack(\"light\");\nassert.equal(g.player.currentAttack(),\"cross\");\nassert.equal(g.player.squarePresses,2);\nassert.equal(g.player.comboActive,false);\ng.updateHud(true);\nassert.equal(document.querySelector(\".combo-panel\").hidden,true);\ng.damageFighter(g.player,g.cpu,config.combat.attacks.cross,0,0);\nassert.equal(g.cpu.health,954,\"second punch deals normal damage\");\ng.cpu.invulnerability=0;\ng.player.beginAttack(\"light\");\nassert.equal(g.player.currentAttack(),\"body\");\nassert.equal(g.player.squarePresses,3);\nassert.equal(g.player.comboActive,true);\ng.updateHud(true);\nassert.equal(document.querySelector(\".combo-panel\").hidden,false,\"meter appears after third Square\");\ng.damageFighter(g.player,g.cpu,config.combat.attacks.body,0,0);\nassert.equal(g.player.comboHits,1);\nassert.equal(g.player.comboMultiplier,1.2);\nassert.ok(Math.abs(g.cpu.health-918)<.001,\"third punch 30 x1.2\");\ng.cpu.invulnerability=0;\ng.player.beginAttack(\"light\");\nassert.equal(g.player.currentAttack(),\"upper\");\ng.damageFighter(g.player,g.cpu,config.combat.attacks.upper,0,0);\nassert.equal(g.player.comboMultiplier,1.4);\nassert.ok(Math.abs(g.cpu.health-(918-42*1.4))<.001,\"fourth punch x1.4\");\nassert.ok(g.player.comboBonusDamage>0);\ng.player.update(3,neutral,g.cpu,g);\nassert.equal(g.player.comboActive,false,\"combo times out\");\ng.updateHud(true);\nassert.equal(document.querySelector(\".combo-panel\").hidden,true);\ng.reset();g.state=\"play\";g.player.energy=50;g.player.beginAttack(\"heavy\");\nconst startX=g.cpu.x;\ng.damageFighter(g.player,g.cpu,config.combat.attacks.powerKick,g.cpu.x,g.cpu.y-100);\nassert.equal(g.cpu.vy,-515,\"kick launches target vertically\");\nassert.equal(g.cpu.vx,1150,\"kick launches backward\");\nassert.equal(g.cpu.hitstun,.57);\nassert.equal(g.cpu.knockbackDrag,1.45);\nfor(let i=0;i<18;i++)g.cpu.update(1/60,neutral,g.player,g);\nassert.ok(g.cpu.x>startX+200,\"kick sends target flying\");\nassert.ok(g.cpu.y<600,\"kick sends target up\");\nconsole.log(\"PASS: 3-Square combo, delayed multiplier and conditional Triangle special.\");\n",scope);
