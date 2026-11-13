@@ -32,6 +32,7 @@ assert.notEqual(tinted,sprite,"enemy tint must be cached to a new surface");
 assert.equal(fluid.tintForCpu(sprite,true),tinted);
 assert.equal(canvasAllocations,1,"recolor texture is created only once");
 assert.equal(fluid.tintForCpu(sprite,false),sprite);
+calls.length=0; // Exclude the one-time CPU atlas prepaint from sprite draw measurements.
 
 const neutral={state:"idle",vx:0,vy:0,facing:1,grounded:true,stateTime:.3,
   currentAttack:()=>null};
