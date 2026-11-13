@@ -2781,7 +2781,18 @@
           const tween = motionPose ? null : window.MugenVisuals?.animBlend(animation, this.stateTime, progressForFrames);
           const nextFrame = sourceFrames?.[tween?.to];
           const baseAlpha = context.globalAlpha;
-          if (tween && tween.mix > .005 && tween.mix < .995 && nextFrame && nextFrame !== frame) {
+          if (motionPose?.transitionFrame && motionPose.transitionMix < .995) {
+            // State changes crossfade the last movement cel into the new one
+            // over 160 ms without touching the input/physics tick.
+            const previous = motionPose.transitionFrame;
+            context.globalAlpha = baseAlpha * (1 - motionPose.transitionMix);
+            context.drawImage(renderSheet, previous.x, previous.y, previous.w, previous.h,
+              -previous.ax * scale, -previous.h * scale, previous.w * scale, previous.h * scale);
+            context.globalAlpha = baseAlpha * motionPose.transitionMix;
+            context.drawImage(renderSheet, frame.x, frame.y, frame.w, frame.h,
+              drawX, drawY, drawWidth, drawHeight);
+            context.globalAlpha = baseAlpha;
+          } else if (tween && tween.mix > .005 && tween.mix < .995 && nextFrame && nextFrame !== frame) {
             context.globalAlpha = baseAlpha * (1 - tween.mix);
             context.drawImage(renderSheet,frame.x,frame.y,frame.w,frame.h,drawX,drawY,drawWidth,drawHeight);
             context.globalAlpha = baseAlpha * tween.mix;
