@@ -14,3 +14,7 @@ jobs:
         run: node tests/engine.cjs
       - name: Yusuke sprite expansion checks
         run: node tests/yusuke-sprites.cjs
+      - name: Visual effects and sprite interpolation checks
+        run: node tests/visuals.cjs
+      - name: DualSense controller checks
+        run: node tests/gamepad.cjs
