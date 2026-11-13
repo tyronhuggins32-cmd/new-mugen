@@ -93,16 +93,16 @@ for(let i=0;i<36;i++)fx.tick(game,1/60);
 assert.equal(fx.stats(game).active,0);
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/yusuke-alpha-v9\\.js\\?v=1/);
-assert.match(html,/MugenAlphaMatte\\?\\.prepare/);
-assert.match(html,/mugen-vfx-v8\\.js\\?v=2/);
-assert.match(html,/mugen-fluid-v3\\.js\\?v=3/);
-assert.match(html,/const authoredImpact = Boolean\\(window\\.MugenVfxV8\\?\\.ready\\(\\)\\)/);
-assert.match(html,/!this\\._usingPremiumCel/);
+assert.match(html,/yusuke-alpha-v9\.js\?v=1/);
+assert.match(html,/MugenAlphaMatte\?\.prepare/);
+assert.match(html,/mugen-vfx-v8\.js\?v=2/);
+assert.match(html,/mugen-fluid-v3\.js\?v=3/);
+assert.match(html,/const authoredImpact = Boolean\(window\.MugenVfxV8\?\.ready\(\)\)/);
+assert.match(html,/!this\._usingPremiumCel/);
 const fluid=fs.readFileSync("mugen-fluid-v3.js","utf8");
 assert.doesNotMatch(fluid,/const strips = 8;/);
 assert.match(fluid,/single transformed source rect/);
-assert.doesNotMatch(html,/const angle = Math\\.random\\(\\) \\* Math\\.PI \\* 2;/);
-new vm.Script([...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/g)]
+assert.doesNotMatch(html,/const angle = Math\.random\(\) \* Math\.PI \* 2;/);
+new vm.Script([...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
  .map(x=>x[1]).find(x=>x.includes("function selectYusukeCombatPose")));
 console.log("PASS: clean alpha edges/gaps, preserve eye highlights, deterministic authored contacts and seamless cels.");
