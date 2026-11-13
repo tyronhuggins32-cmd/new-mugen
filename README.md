@@ -151,3 +151,18 @@ The playable character now uses **one consistent design language across its spri
 - Animations may intentionally be shorter for crouching and taller with a raised arm or jumping. No attack changes Yusuke's character scale as an unintended effect. PS5 controller mappings, collisions, timing, HP, and combat balance are unchanged.
 
 For verification run `node tests/engine.cjs`, `node tests/yusuke-sprites.cjs`, and `node tests/yusuke-palette.cjs` or view the GitHub Actions regression workflow.
+
+## Fluid combat renderer v3 (November 2026)
+
+The fighting experience has been reworked to address slideshow-like motion and mobile GPU stalls. This pass replaces the heavy 30-FPS ghost-frame generation pipeline with a lighter, render-time system while retaining all pre-existing 24 base, 12 combat, and 17 Spirit Gun poses.
+
+### Runtime changes
+
+- **60 Hz virtual animation sampling and per-render motion:** yusuke-motion.js selects the original hand-drawn key sprites on a 60 Hz timeline. mugen-fluid-v3.js procedurally shifts eight image bands around a stable foot pivot between source poses. This adds continuous body lean, breathing, running sway, recoil and attacks without re-rendering full ghost characters.
+- **Performance:** no 2400×2880 cached alpha-blended animation atlas, no permanent GPU-hungry menu particle rendering behind fights, and no per-frame CPU hue-rotation filter. Enemy palette textures are generated once during character load. HUD text updates are capped near 15 Hz while health/energy bars remain visually smooth.
+- **Fight camera:** smoothly eases between fighters, subtly zooms as they close distance, clamps to the stage boundaries, and integrates bounded hit shake.
+- **Action feedback:** landing/acceleration dust, impact shockwaves, additional burst feedback and maintained projectile trails. Screen effects are bounded to avoid unlimited particle growth.
+- **Fixed 60 Hz combat engine:** five-step per-frame catch-up limit avoids a simulation death spiral after Safari backgrounding. Inputs, hitboxes, PS5/DualSense mapping, blocking, combos and damage rules remain the same.
+- **Tests:** run \`node tests/engine.cjs\`, \`node tests/yusuke-motion.cjs\` and \`node tests/fluid-v3.cjs\`. The GitHub Actions browser smoke suite uses Playwright to enter Arcade, fight, pause, shoot, restart, then check actual changing canvas pixels and camera easing.
+
+**Art limitation:** The 60 Hz animation timeline is *not* 60 unique hand-drawn frames per second. These still use the original sprite poses with procedural in-between deformation. Fully new anatomy-correct frame-by-frame motions would require additional art authored pose-by-pose.
