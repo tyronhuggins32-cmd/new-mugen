@@ -229,3 +229,16 @@ Unblocked light punches now select the stagger cel sequence. Heavy hits, powerfu
 The fluid VFX renderer also adds hit-direction **spark slashes**, compact **contact flashes**, a secondary ripple, airborne **recoil streaks**, and **floor skid marks** for fast knockback. Effects are cosmetic and expire in fractions of a second. Bounded arrays (88 slashes, 48 trails, 5 flashes) and the existing adaptive quality gate prevent unlimited particle accumulation. Spirit Shotgun's seven collision pellets and cosmetic fan remain mechanically unchanged. DualSense controls remain unchanged.
 
 Run `node tests/yusuke-motion.cjs`, `node tests/fluid-v3.cjs` and `node tests/engine.cjs` to check frame counts/40 FPS timing, atlas limits, animation reaction assignment, impact effects, and physical stagger/launch. Automated checks cannot confirm subjective animation quality or actual PS5/iPhone frame rates; visual/device QA remains useful.
+
+
+## High-detail Yusuke and wider rooftop V6 (13 November 2026)
+
+The playable fighter now has two new **2048 × 1024 transparent pixel-art atlases** with 16 additional high-detail poses: eight movement/landing poses and eight punch/uppercut/Spirit Gun/kick poses. Both use the **same 0.5 in-game scale**, anchored foot pivots, dark navy pants, yellow sleeveless shirt, green wristbands and consistent hair/skin shading. The paired atlas metadata is in `characters/yusuke/premium-atlas.json`; the optional selector is `yusuke-premium-v6.js`.
+
+A failed or partial atlas download falls back **as a pair** to the original graphics. This prevents a premium idle pose switching back to an unrelated hand-drawn attack style. All original art is preserved for rollback.
+
+The fighting stage is now a scrollable **2,600 × 720 world**, compared with the previous 1,280-pixel width. The camera shows a 1,280-pixel viewport, follows the combatants, and clamps to world edges. `mugen-rooftop-v6.js` renders a layered moonlit skyline, dense building windows, rooftop beacons, tile reflections and a detailed metal floor from a single cached world image. Its viewport cropping reduces per-frame drawing work.
+
+`mugen-cinematic-fx-v6.js` adds crisp, short-lived impact crescents, white-hot punch sparks and blue directional streaks without altering hitboxes. Spirit Gun and Shotgun continue using their separate nonpiercing collision and energy-VFX systems. The existing three-Square combo, Triangle Spirit Shotgun threshold, Power Kick, PS5 controller mappings and combat damage rules are retained.
+
+Run `node tests/premium-v6.cjs`, `node tests/cinematic-fx-v6.cjs`, plus the normal engine and browser smoke tests to verify frame bounds, transparent PNG hashes, uniform sprite scale, stage caching, motion and impact effect lifetimes. Visual improvements are sourced from newly authored 2D artwork; this is **not** a claim that every action has 60 newly hand-drawn frames.
