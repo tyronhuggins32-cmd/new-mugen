@@ -71,7 +71,7 @@ gfx.reset(game);
 assert.equal(gfx.stats(game).shots,0);
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/mugen-vfx-v8\.js\?v=1/);
+assert.match(html,/mugen-vfx-v8\.js\?v=2/);
 assert.match(html,/MugenVfxV8\?\.onHit/);
 assert.match(html,/MugenVfxV8\?\.onShot/);
 assert.match(html,/MugenVfxV8\?\.drawFront/);
