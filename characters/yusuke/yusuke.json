@@ -1209,4 +1209,21 @@
       }
     }
   }
+  ,
+  "movementSprites": {
+    "source": "spriteSheet",
+    "generation": "cached-foot-aligned-inbetweens",
+    "renderer": "yusuke-motion.js",
+    "fps": 10,
+    "generatedFrames": 40,
+    "animations": {
+      "idle": 10,
+      "run": 10,
+      "walkStart": 4,
+      "walkStop": 4,
+      "jumpRise": 4,
+      "jumpFall": 4,
+      "landing": 4
+    }
+  }
 }
