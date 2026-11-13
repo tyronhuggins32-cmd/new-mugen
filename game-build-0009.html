@@ -3532,10 +3532,11 @@
               + (attacker.comboHits - 1) * (yusukeCombat.combo?.extraPerHit ?? .2));
             attacker.comboMultiplier = Math.round(multiplier * 100) / 100;
           }
-          const gumball=attacker.characterId==="gumball_watterson"&&!attacker.cpu;
-          if(gumball&&!blocked&&attacker.comboActive)multiplier=Math.min(window.GumballCharacter.combo.maxScale,window.GumballCharacter.combo.scaleStart+attacker.comboHits*window.GumballCharacter.combo.scaleStep);
           const gumballAttack=attacker.characterId==="gumball_watterson"&&!attacker.cpu;
-          if(gumballAttack&&!blocked&&attacker.comboActive)multiplier=Math.min(window.GumballCharacter.combo.maxScale,window.GumballCharacter.combo.scaleStart+Math.max(0,attacker.comboHits-1)*window.GumballCharacter.combo.scaleStep);
+          if(gumballAttack&&!blocked&&attacker.comboActive){
+            if(attacker.comboHits>=window.GumballCharacter.combo.maxHits){attacker.resetCombo();}
+            else multiplier=Math.min(window.GumballCharacter.combo.maxScale,window.GumballCharacter.combo.scaleStart+Math.max(0,attacker.comboHits-1)*window.GumballCharacter.combo.scaleStep);
+          }
           const baseDamage = attack.damage * instinctBoost;
           const damage = baseDamage * multiplier * (blocked ? .25 : 1);
           if (!blocked && attacker.comboActive) attacker.comboBonusDamage += damage - baseDamage;
@@ -3557,8 +3558,8 @@
           window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
           window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
           const effects = yusukeCombat.effects;
-          this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
-          this.shake = blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light;
+          this.hitStop = gumballAttack ? (blocked ? window.GumballCharacter.reactions.blockStun*.3 : heavyHit ? window.GumballCharacter.reactions.hitStopHeavy : window.GumballCharacter.reactions.hitStopLight) : (blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light);
+          this.shake = gumballAttack ? (blocked ? 5 : heavyHit ? 14 : 8) : (blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light);
           playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
         }
 
