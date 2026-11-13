@@ -1782,21 +1782,22 @@
 
   <script src="mugen-cinematics.js?v=1"></script>
   <script src="mugen-visuals-v2.js?v=2"></script>
-  <script src="mugen-fluid-v3.js?v=2"></script>
+  <script src="mugen-fluid-v3.js?v=3"></script>
   <script src="mugen-combat-v5.js?v=1"></script>
   <script src="mugen-spiritgun-v5.js?v=1"></script>
-  <script src="mugen-vfx-v8.js?v=2"></script>
+  <script src="mugen-vfx-v8.js?v=3"></script>
   <script src="mugen-combo-fx-v9.js?v=1"></script>
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="mugen-sfx-v8.js?v=1"></script>
-  <script src="yusuke-alpha-cleanup-v9.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=1"></script>
-  <script src="yusuke-directional-v8.js?v=1"></script>
+  <script src="yusuke-alpha-v9.js?v=1"></script>
+  <script src="yusuke-alpha-cleanup-v9.js?v=1"></script>
+  <script src="yusuke-directional-v8.js?v=2"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
-  <script src="mugen-menu-music.js?v=4"></script>
+  <script src="mugen-menu-music.js?v=5"></script>
   <script>
     (() => {
       "use strict";
@@ -1847,8 +1848,8 @@
       let premiumArt = null;
       let premiumReady = false;
       let directionalAtlas = null;
-      let cleanedPremiumCombat = null;
-      let cleanedPremiumMovement = null;
+      let cleanPremiumCombatSheet = null;
+      let cleanPremiumMotionSheet = null;
       const yusukeKickSheet = new Image();
       yusukeKickSheet.decoding = "async";
       const yusukeSpiritGunSheet = new Image();
@@ -2211,9 +2212,6 @@
         kickAtlasReady = false;
         premiumReady = false;
         premiumArt = null;
-        directionalAtlas = null;
-        cleanedPremiumCombat = null;
-        cleanedPremiumMovement = null;
         yusukeMotionAtlas = null;
         chooseCharacter.disabled = true;
         startBattleButton.disabled = true;
@@ -2273,22 +2271,26 @@
               loadSpriteAsset(premiumCombatSheet,metadata.combat,"Yusuke premium combat"),
               loadSpriteAsset(premiumMotionSheet,metadata.movement,"Yusuke premium movement")
             ]);
-            // Use the same repaired V8 source for authored and derivative
-            // poses, preventing white matte and silhouette edge discontinuities.
-            cleanedPremiumCombat = window.MugenArtCleanup?.prepare(
-              premiumCombatSheet, metadata.combat) || premiumCombatSheet;
-            cleanedPremiumMovement = window.MugenArtCleanup?.prepare(
-              premiumMotionSheet, metadata.movement) || premiumMotionSheet;
             premiumArt = metadata;
-            premiumReady = true;
+            cleanPremiumCombatSheet = window.MugenAlphaMatte?.prepare(
+              premiumCombatSheet, metadata.combat.frames) || premiumCombatSheet;
+            cleanPremiumMotionSheet = window.MugenAlphaMatte?.prepare(
+              premiumMotionSheet, metadata.movement.frames) || premiumMotionSheet;
+            // Protect both kinds of gaps: keep the V9 large white-patch and
+            // magenta repair, then clean only residual edge/1-pixel pinholes.
+            cleanPremiumCombatSheet = window.MugenArtCleanup?.prepare(
+              cleanPremiumCombatSheet, metadata.combat) || cleanPremiumCombatSheet;
+            cleanPremiumMotionSheet = window.MugenArtCleanup?.prepare(
+              cleanPremiumMotionSheet, metadata.movement) || cleanPremiumMotionSheet;
             directionalAtlas = window.MugenDirectional?.build(metadata,
-              {combat:cleanedPremiumCombat,movement:cleanedPremiumMovement}) || null;
+              {combat:cleanPremiumCombatSheet,movement:cleanPremiumMotionSheet}) || null;
+            premiumReady = true;
           } catch (error) {
             premiumReady = false;
             premiumArt = null;
             directionalAtlas = null;
-            cleanedPremiumCombat = null;
-            cleanedPremiumMovement = null;
+            cleanPremiumCombatSheet = null;
+            cleanPremiumMotionSheet = null;
             console.warn("Premium character art unavailable; using all original sprites.",error);
           }
 
@@ -2307,8 +2309,8 @@
           // Avoid a GPU filter/upload hitch when the first enemy attack begins.
           if (window.MugenFluid?.tintForCpu) {
             [yusukeSpriteSheet, yusukeCombatSheet, yusukeSpiritGunSheet, yusukeKickSheet,
-              cleanedPremiumCombat || premiumCombatSheet,
-              cleanedPremiumMovement || premiumMotionSheet,
+              cleanPremiumCombatSheet || premiumCombatSheet,
+              cleanPremiumMotionSheet || premiumMotionSheet,
               directionalAtlas?.combat?.image, directionalAtlas?.movement?.image,
               yusukeMotionAtlas?.derivedImage]
               .filter(image => image && (image.naturalWidth || image.width) > 0)
@@ -2924,8 +2926,8 @@
             ? (window.MugenDirectional?.choosePose(this, attackType,
                 directionalAtlas, attackProgress)
               || window.MugenPremium?.choosePose(this, attackType, premiumArt,
-                {combat:cleanedPremiumCombat || premiumCombatSheet,
-                 movement:cleanedPremiumMovement || premiumMotionSheet},
+                {combat:cleanPremiumCombatSheet || premiumCombatSheet,
+                 movement:cleanPremiumMotionSheet || premiumMotionSheet},
                 attackProgress))
             : null;
           const combatPose = premiumPose ||
@@ -2984,9 +2986,8 @@
           context.scale(pose.stretchX, pose.stretchY);
           context.imageSmoothingEnabled = false;
 
-          // Whole-body translucent speed copies caused pale/white duplicate
-          // outlines during dashes. Directional streak VFX now handles speed
-          // behind the fighter without re-painting a second silhouette.
+          // Draw one complete figure at speed. Directional streaks replace
+          // translucent duplicate body silhouettes and their white edging.
 
           if (!ghost && this.state === "block") {
             context.strokeStyle = this.cpu ? "rgba(255,80,120,.78)" : "rgba(90,231,255,.76)";
@@ -2999,7 +3000,8 @@
             context.shadowBlur = 0;
           }
 
-          if (!ghost && attackData[attackType]?.projectile) {
+          if (!ghost && attackData[attackType]?.projectile &&
+              !window.MugenVfxV8?.ready()) {
             const specialAttack = attackData[attackType];
             const vfx = yusukeCombat.projectileVfx;
             const charge = Math.min(1, this.stateTime / specialAttack.spawnTime);
@@ -3093,8 +3095,7 @@
                 ox, oy, sprite.w * scale, sprite.h * scale);
             }
           };
-          // Crossfading two unrelated high-detail silhouettes created pale
-          // double outlines. Draw one solid premium cel at every state edge.
+          // Premium pose crossfades add pale double-body outlines.
           const handoff = premiumPose ? null : motionPose;
           if (handoff?.transitionFrame && handoff.transitionMix < .96) {
             // Crossfade on animation *state* boundaries, preserving the right
@@ -3610,7 +3611,7 @@
                 energyGain: projectile.energyGain,
                 heavyImpact: projectile.heavyImpact,
                 color,
-                phase: 0,
+                phase: Math.random() * Math.PI * 2,
                 age: 0,
                 kind: "spiritShotgun",
                 volleyId
@@ -3644,7 +3645,7 @@
             energyGain: projectile.energyGain,
                 heavyImpact: projectile.heavyImpact,
             color,
-            phase: 0,
+            phase: Math.random() * Math.PI * 2,
             age: 0,
             kind: "spiritGun"
           });
@@ -3753,17 +3754,14 @@
           if (visualEffectsAllowed && !blocked && heavyHit && !attack.projectile)
             this.cinematicImpact = { x: impactX, y: impactY, life: .12, maxLife: .12 };
           if (visualEffectsAllowed) {
-            // Exactly one impact vocabulary: sprite-authored effect when the
-            // transparent V8 atlas is loaded, restrained fallback otherwise.
-            // Do not overlay random dust, rings and legacy impact bursts.
+            // One consistent impact source for each confirmed hit.
             if (window.MugenVfxV8?.ready())
               window.MugenVfxV8.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
             else if (window.MugenCinematicFX?.onHit)
               window.MugenCinematicFX.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
-            else
-              this.addImpact(impactX, impactY,
-                blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff",
-                blocked ? 4 : heavyHit ? 9 : 6, attacker.facing);
+            else this.addImpact(impactX, impactY,
+              blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff",
+              blocked ? 4 : heavyHit ? 9 : 6, attacker.facing);
           }
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
@@ -3774,21 +3772,30 @@
         }
 
         addImpact(x, y, color, count, direction = 1) {
-          // Safe legacy fallback: short, bounded fan aligned to punch direction.
-          const total = Math.max(0, Math.min(12, count));
-          for (let i = 0; i < total; i++) {
-            const angle = (total > 1 ? (i/(total-1)*2-1) : 0)*.62;
-            const speed = 130 + (i%3)*23;
-            const life = .18 + (i%3)*.018;
+          // Fallback on older browsers: short, symmetrical, forward-facing
+          // sparks. No Math.random, no random colors or screenwide debris.
+          const total = Math.min(9, Math.max(0, Math.floor(count || 0)));
+          for (let index = 0; index < total; index += 1) {
+            const rank = index - (total - 1) / 2;
+            const angle = rank * .24;
+            const speed = 125 + (index % 3) * 25;
+            const duration = .16 + (index % 3) * .016;
             this.impacts.push({
-              x, y, vx: Math.cos(angle)*speed*Math.sign(direction||1),
-              vy: Math.sin(angle)*speed, life, maxLife:life,
-              size:2.5+(i%2), color
+              x, y,
+              vx: (direction < 0 ? -1 : 1) * Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed * .65,
+              life: duration,
+              maxLife: duration,
+              size: 2 + index % 2, color
             });
           }
+          if (this.impacts.length > 42) this.impacts.splice(0, this.impacts.length - 42);
         }
 
         addSpiritBurst(x, y, color, direction, scale = 1, kind = "impact") {
+          // The V8 effect atlas already supplies the authored muzzle and hit;
+          // don't lay a second random-phase glow on top of it.
+          if (window.MugenVfxV8?.ready()) return;
           const duration = kind === "muzzle" ? .14 : .28;
           this.energyBursts.push({
             x,
@@ -3799,7 +3806,7 @@
             kind,
             life: duration,
             maxLife: duration,
-            phase: 0
+            phase: (Math.round(x / 23) + Math.round(y / 29)) * .37
           });
         }
 
@@ -4097,17 +4104,17 @@
           else if (window.MugenVisuals?.drawArena) window.MugenVisuals.drawArena(context, time, arena);
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
-          window.MugenFluid?.drawBehind(this, context, time);
+          if (!window.MugenVfxV8?.ready())
+            window.MugenFluid?.drawBehind(this, context, time);
           window.MugenVfxV8?.drawBehind(this, context, time);
           window.MugenDirectional?.drawBehind(this, context, time);
           if (!window.MugenVfxV8?.ready())
             window.MugenCinematicFX?.drawBehind(this, context, time);
-          window.MugenShotgun?.drawFan(this, context, time);
+          if (!window.MugenVfxV8?.ready())
+            window.MugenShotgun?.drawFan(this, context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
-          // Modern directional streaks replace translucent fighter-shaped
-          // ghosts. Old afterimages read as white/pale duplicate outlines.
-          if (!window.MugenVfxV8?.ready())
+          if (!premiumReady && !window.MugenVfxV8?.ready())
             window.MugenVisuals?.drawEchoes(this, context, time);
           this.player.draw(context, time, this.renderAlpha ?? 1);
           this.cpu.draw(context, time, this.renderAlpha ?? 1);
