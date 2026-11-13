@@ -34,7 +34,7 @@ const assert=require('node:assert/strict');
   }));
   assert.equal(data.id,'thorfinn_karlsefni');
   assert.equal(data.width,2048);
-  assert.equal(data.height,1400);
+  assert.equal(data.height,1960);
   await page.locator('#choose-character').click();
   await page.waitForFunction(()=>window.thorfinnSmoke.game?.state==='play',{timeout:10000});
   const result=await page.evaluate(()=>{
@@ -52,7 +52,23 @@ const assert=require('node:assert/strict');
      throw Error('Whirlwind Blades mapping missing');
    game.player.stateTime=.26;
    if(!game.player.activeHitbox()) throw Error('Whirlwind Blades missing melee hitbox');
+   // The two newly uploaded sprite families are functional game states.
+   game.player.y=600;
+   game.player.vy=0;
+   game.player.setState('idle');
+   const crouchX=game.player.x;
+   game.player.update(1/60,{left:false,right:true,block:true},game.cpu,game);
+   if(game.player.state!=='crouchWalk' || game.player.x<=crouchX)
+     throw Error('Down+right did not crouch-walk with the new sprites');
    game.player.draw(game.context,performance.now());
+   game.player.update(1/60,{left:false,right:false,block:false},game.cpu,game);
+   if(game.player.state==='crouchWalk')
+     throw Error('Crouch-walk state lingered after releasing Down');
+   const c=document.createElement('canvas');c.width=c.height=1;
+   const ctx=c.getContext('2d');
+   ctx.drawImage(window.thorfinnSmoke.atlas,0,0,1,1,0,0,1,1);
+   if(ctx.getImageData(0,0,1,1).data[3]!==0)
+     throw Error('Atlas corner is opaque; transparency regression');
    game.render(performance.now());
    return {health:game.player.health,energy:game.player.energy,fighter:game.player.name};
   });
