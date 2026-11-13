@@ -14,7 +14,7 @@ const path = require("node:path");
   await page.route("**/game-build-0009.html",route=>route.fulfill({
     contentType:"text/html",
     body:html.replace("      function beginFight() {",
-      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get directionalAtlas() { return directionalAtlas; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, get premiumArt() { return premiumArt; }, get premiumImages() { return {combat:premiumCombatSheet,movement:premiumMotionSheet}; }, arena }; \n      function beginFight() {")
+      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get directionalAtlas() { return directionalAtlas; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, get premiumArt() { return premiumArt; }, get premiumImages() { return {combat:premiumCombatSheet,movement:premiumMotionSheet}; }, get cleanedPremiumImages() { return {combat:cleanedPremiumCombat,movement:cleanedPremiumMovement}; }, arena }; \n      function beginFight() {")
   }));
   await page.goto("http://127.0.0.1:8000/");
   await page.locator('button.menu-item[data-mode="arcade"]').click();
@@ -85,6 +85,11 @@ const path = require("node:path");
     const shotgunImpacts=window.MugenShotgun?.stats(g).impactsCreated;
     const shotgunDamage=g.cpu.maxHealth-g.cpu.health;
     g.render(1990); // The collision splash must render without browser errors.
+    const cleaned=window.testEngine.cleanedPremiumImages;
+    const repairedDimensions=["combat","movement"].map(k=>[
+      cleaned?.[k]?.width||0,cleaned?.[k]?.height||0
+    ]);
+    const repairStats=["combat","movement"].map(k=>cleaned?.[k]?._mugenAlphaRepair);
     const premiumMeta=window.testEngine.premiumArt;
     const premiumSources=[premiumMeta?.combat?.src,premiumMeta?.movement?.src];
     const names=["light","cross","body","upper","gun","shotgun","powerKick"];
@@ -97,6 +102,7 @@ const path = require("node:path");
       shotgunImpacts,shotgunDamage,retreatMoved,backdashMoved,backdashMirrored,atlasFrameCount:window.MugenMotion.clips.run.count,
       motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
       kickReady:window.testEngine.kickReady,
+      repairedDimensions,repairStats,
       premiumReady:window.testEngine.premiumReady,
       premiumWidths:window.testEngine.premiumWidths,
       arenaWidth:window.testEngine.arena.width,lowAction,highAction,
@@ -119,6 +125,10 @@ const path = require("node:path");
   assert.equal(result.playerHealth,5000);
   assert.equal(result.kickReady,true,"the eight-frame kick PNG must load into the browser");
   assert.equal(result.premiumReady,true,"both high-detail Yusuke sprite families must load");
+  assert.deepEqual(result.repairedDimensions,[[2048,1024],[2048,1024]],
+    "combat and movement must use their dehaloed textures in the actual browser");
+  assert.ok(result.repairStats.every(stats=>stats && stats.fringe>=0 && stats.pinholes>=0),
+    "runtime alpha repair must complete before the game renders either sprite family");
   assert.ok(result.premiumSources.every(path=>path?.endsWith("-v8.png")),
     "live fighter must load sanitized V8 sprites without white matte gaps");
   assert.ok(result.premiumAttackPoses.every(Boolean),
