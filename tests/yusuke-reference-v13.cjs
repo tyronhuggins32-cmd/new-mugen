@@ -94,7 +94,7 @@ assert.equal(combat.trigger(game,"spiritVoid"),true,"cinematic is callable, not 
 assert.equal(combat.stats(game).move,"spiritVoid");
 combat.reset(game);
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/mugen-yusuke-reference-v13\.js\?v=1/);
+assert.match(html,/mugen-yusuke-reference-v13\.js\?v=2/);
 assert.match(html,/MugenReferenceV13\?\.tick\(this,dt\)/);
 assert.match(html,/MugenReferenceV13\?\.choosePose/);
 assert.match(html,/YusukeAttackLab/);
