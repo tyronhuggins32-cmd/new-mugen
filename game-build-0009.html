@@ -1503,6 +1503,7 @@
   </style>
   <link rel="stylesheet" href="arcade-layout.css?v=15">
   <link rel="stylesheet" href="mugen-rebirth-ui.css?v=3">
+  <link rel="stylesheet" href="mugen-street-menu.css?v=1">
   <link rel="stylesheet" href="yusuke-combat-v4.css?v=1">
 </head>
 <body>
@@ -1518,80 +1519,64 @@
       <div class="controller-status-row"><span id="controller-status" aria-live="polite">PS5 CONTROLLER: PRESS A BUTTON</span><span class="online-dot"></span><span id="screen-status">Menu Online</span></div>
     </header>
 
-        <main class="screen neon-home rebirth-home" id="main-menu-screen" data-mode="arcade">
-      <div class="rb-atmosphere" aria-hidden="true">
-        <div class="rb-sun"></div><div class="rb-target"></div>
-        <div class="rb-horizon"></div><div class="rb-noise"></div>
-      </div>
+        <main class="screen neon-home rebirth-home sf-menu" id="main-menu-screen" data-mode="arcade" aria-label="New Mugen main menu">
+      <div class="sf-paint" aria-hidden="true"></div>
+      <div class="sf-brush sf-brush-one" aria-hidden="true"></div>
+      <div class="sf-brush sf-brush-two" aria-hidden="true"></div>
+      <figure class="sf-fighter" aria-hidden="true">
+        <img src="characters/yusuke/portrait.webp" alt="" fetchpriority="high" decoding="async">
+      </figure>
+      <div class="sf-grain" aria-hidden="true"></div>
 
-      <div class="rb-broadcast">
-        <span><i class="rb-live-dot"></i> FIGHTER SYSTEM ONLINE</span>
-        <span>ARCADE SYSTEM <strong>001 / ORIGINAL</strong></span>
+      <div class="sf-topline" aria-hidden="true">
+        <strong>NEW MUGEN <span>RISING</span></strong>
+        <small>FIGHTER SYSTEM / 2026</small>
       </div>
+      <header class="sf-menu-title">
+        <h1 id="game-title">MAIN <span>MENU</span></h1>
+        <span class="sf-title-mini">THE BATTLE BEGINS HERE</span>
+      </header>
 
-      <button class="rb-audio-start" id="menu-music-activation" type="button" hidden aria-label="Play main menu music">♫ PLAY MENU MUSIC <small>Tap to enable audio</small></button>
-      <section class="rb-hero" aria-labelledby="game-title">
-        <div class="rb-hero-title">
-          <div class="rb-kicker"><span>THE NEXT GENERATION OF 2D FIGHTING</span><b>EST. 2026</b></div>
-          <h1 id="game-title" class="rb-wordmark">
-            <span class="rb-wordmark-top">NEW <small>✦</small></span>
-            <span class="rb-wordmark-main">MUGEN</span>
-            <span class="rb-wordmark-bottom">RISING<span class="rb-wordmark-v" aria-hidden="true">V</span></span>
-          </h1>
-          <p class="rb-promise">EVERY FIGHT HAS A LEGEND.</p>
-          <div class="rb-hero-features">
-            <span><b>01</b> PLAYABLE FIGHTER</span><span><b>60</b> HZ COMBAT</span><span><b>PS5</b> CONTROLLER READY</span>
-          </div>
-        </div>
-        <div class="rb-hero-art">
-          <div class="rb-art-frame"><span class="rb-hero-art-index">FIGHTER / 001</span></div>
-          <img src="characters/yusuke/portrait.webp" alt="" aria-hidden="true" decoding="async" fetchpriority="high">
-          <div class="rb-energy-mark" aria-hidden="true"></div>
-          <div class="rb-art-caption"><span>SPIRIT DETECTIVE</span><strong>YUSUKE URAMESHI</strong></div>
-        </div>
-        <div class="rb-hero-corner" aria-hidden="true">伝説の戦い // 01</div>
+      <button class="rb-audio-start" id="menu-music-activation" type="button" hidden aria-label="Play main menu music">♫ PLAY MENU MUSIC <small>Enable audio</small></button>
+
+      <section class="sf-left" aria-label="Select a mode">
+        <p class="sf-list-heading">SELECT YOUR FIGHT</p>
+        <nav class="menu neon-mode-list rb-choices sf-nav" aria-label="Main menu">
+          <button class="menu-item active" type="button" data-mode="arcade" aria-current="true">
+            <span class="sf-num" aria-hidden="true">01</span><span class="label">ARCADE</span><span class="sf-status">PLAY</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="versus">
+            <span class="sf-num" aria-hidden="true">02</span><span class="label">VERSUS</span><span class="sf-status">SOON</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="training">
+            <span class="sf-num" aria-hidden="true">03</span><span class="label">TRAINING</span><span class="sf-status">SOON</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="watch">
+            <span class="sf-num" aria-hidden="true">04</span><span class="label">SPECTATOR</span><span class="sf-status">SOON</span>
+          </button>
+          <button class="menu-item" type="button" data-mode="options">
+            <span class="sf-num" aria-hidden="true">05</span><span class="label">OPTIONS</span><span class="sf-status">OPEN</span>
+          </button>
+        </nav>
       </section>
 
-      <div class="rb-command-deck">
-        <section class="rb-menu-panel" aria-label="Mode selection">
-          <div class="rb-menu-title">
-            <span class="rb-section-number">01 / SELECT MODE</span>
-            <h2>MAIN <em>MENU</em></h2>
-            <span class="rb-title-ornament">▲</span>
-          </div>
-          <nav class="menu neon-mode-list rb-choices" aria-label="Main menu">
-            <button class="menu-item active" type="button" data-mode="arcade" aria-current="true">
-              <span class="num">01</span><span class="label">ARCADE</span><span class="rb-choice-caption">ONE PLAYER</span><span class="mode-availability">READY</span><span class="arrow">↗</span>
-            </button>
-            <button class="menu-item" type="button" data-mode="versus">
-              <span class="num">02</span><span class="label">VERSUS</span><span class="rb-choice-caption">HEAD TO HEAD</span><span class="mode-availability">SOON</span><span class="arrow">↗</span>
-            </button>
-            <button class="menu-item" type="button" data-mode="training">
-              <span class="num">03</span><span class="label">TRAINING</span><span class="rb-choice-caption">PRACTICE LAB</span><span class="mode-availability">SOON</span><span class="arrow">↗</span>
-            </button>
-            <button class="menu-item" type="button" data-mode="watch">
-              <span class="num">04</span><span class="label">SPECTATOR</span><span class="rb-choice-caption">CPU VS CPU</span><span class="mode-availability">SOON</span><span class="arrow">↗</span>
-            </button>
-            <button class="menu-item" type="button" data-mode="options">
-              <span class="num">05</span><span class="label">OPTIONS</span><span class="rb-choice-caption">SETTINGS</span><span class="mode-availability">OPEN</span><span class="arrow">↗</span>
-            </button>
-          </nav>
-        </section>
+      <aside class="sf-description" aria-live="polite" aria-atomic="true">
+        <div class="rb-briefing-badge">MATCH <b>01</b></div>
+        <h2 id="mode-title">Arcade Mode</h2>
+        <span id="mode-code">A-01 · AVAILABLE</span>
+        <p id="mode-description">Enter the Spirit Skyline. Battle the Demon Scout as Yusuke in a full arcade match.</p>
+      </aside>
 
-        <aside class="showcase neon-mode-details rb-briefing" aria-live="polite">
-          <div class="mode-card">
-            <div class="rb-briefing-eyebrow"><span>MISSION BRIEFING</span><span id="mode-code">A-01 · AVAILABLE</span></div>
-            <div class="rb-briefing-badge">NEXT UP <b>01</b></div>
-            <h3 id="mode-title">Arcade Mode</h3>
-            <p id="mode-description">Enter the Spirit Skyline. Battle the Demon Scout as Yusuke in a full arcade match.</p>
-            <div class="rb-briefing-match">
-              <div><small>PLAY AS</small><strong>YUSUKE</strong></div><span class="rb-briefing-vs">VS</span><div><small>CHALLENGER</small><strong>DEMON SCOUT</strong></div>
-            </div>
-            <div class="rb-controls"><span><b>✕</b> CONFIRM</span><span><b>↑↓</b> SELECT</span><span><b>○</b> BACK</span></div>
-          </div>
-        </aside>
+      <div class="sf-fighter-id" aria-hidden="true">
+        <small>SPIRIT DETECTIVE / FIGHTER 001</small>
+        <strong>YUSUKE URAMESHI</strong>
       </div>
-      <div class="rb-bottom-marquee" aria-hidden="true"><span>NEW MUGEN RISING</span><span>SPIRIT ENERGY SYSTEM</span><span>ENTER THE ARENA</span><span>NEW MUGEN RISING</span></div>
+      <div class="sf-bottom" aria-label="Menu controls">
+        <span class="sf-hint"><span class="sf-key">✕</span> CONFIRM</span>
+        <span class="sf-hint"><span class="sf-key">↑↓</span> SELECT</span>
+        <span class="sf-hint"><span class="sf-key">○</span> BACK</span>
+        <span class="sf-version">NEW MUGEN RISING // ARCADE</span>
+      </div>
     </main>
 
     <main class="arcade-screen neon-select rebirth-select" id="arcade-screen" hidden>
