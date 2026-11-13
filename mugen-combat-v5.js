@@ -3,7 +3,7 @@
 (function (root) {
   "use strict";
 
-  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  const clamp = (n, a = 0, b = 1) => Math.max(a, Math.min(b, n));
   const MIN_SPACING = 142;
   const CONTACT_ASSIST = 25;
   const PUNCHES = new Set(["light", "cross", "body", "upper", "heavy"]);
