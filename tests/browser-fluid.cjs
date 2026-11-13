@@ -59,7 +59,7 @@ const path = require("node:path");
     const beforeRetreat=g.player.x;
     g.player.update(1/60,{...neutral,left:true},g.cpu,g);
     const retreatMoved=g.player.x<beforeRetreat && g.player.state==="walk" &&
-      g.player.facing===1 && g.player.vx<0;
+      g.player.facing===-1 && g.player.vx<0;
     g.reset();g.state="play";g.player.x=550;g.cpu.x=800;
     const beforeBackdash=g.player.x;
     g.player.update(1/60,{...neutral,left:true,dashPressed:true},g.cpu,g);
@@ -83,7 +83,7 @@ const path = require("node:path");
     g.render(1950); // Render fist charge, actual pellets and decorative fan together.
     for(let i=0;i<24;i++)g.updateProjectiles(1/60);
     const shotgunImpacts=window.MugenShotgun?.stats(g).impactsCreated;
-    const shotgunDamage=1000-g.cpu.health;
+    const shotgunDamage=g.cpu.maxHealth-g.cpu.health;
     g.render(1990); // The collision splash must render without browser errors.
     const premiumMeta=window.testEngine.premiumArt;
     const premiumSources=[premiumMeta?.combat?.src,premiumMeta?.movement?.src];
@@ -122,7 +122,7 @@ const path = require("node:path");
   assert.equal(result.atlasFrameCount,24,"running uses 24 samples on a 40 FPS animation timeline");
   assert.equal(result.motionFPS,40,"Yusuke's movement animation runs at 40 FPS");
   assert.equal(result.derivedSpriteCount,28,"twelve new stagger/recoil/recovery sprites join the original 16");
-  assert.equal(result.playerHealth,1000);
+  assert.equal(result.playerHealth,5000);
   assert.equal(result.kickReady,true,"the eight-frame kick PNG must load into the browser");
   assert.equal(result.premiumReady,true,"both high-detail Yusuke sprite families must load");
   assert.equal(result.matteActive,true,"white-fringe cleanup must load before fighter initialization");
