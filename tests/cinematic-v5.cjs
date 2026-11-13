@@ -20,6 +20,24 @@ const fighter=(x,y=600,width=84,height=194)=>({
     width:this.width,height:this.height};}
 });
 assert.equal(g.MIN_SPACING,cfg.combat.spacing);
+// Precision geometry must exist and match the high-detail sprite silhouette.
+const standing=g.hurtbox({x:500,y:600,width:84,height:194,state:"idle"});
+const crouching=g.hurtbox({x:500,y:600,width:84,height:194,state:"block"});
+const flying=g.hurtbox({x:500,y:350,width:84,height:194,state:"jump"});
+assert.ok(standing.width<84 && standing.height<194,"hurtbox hugs the sprite");
+assert.ok(crouching.height<standing.height && crouching.width<standing.width,
+  "a guarded crouch presents a smaller physical silhouette");
+assert.ok(flying.y+flying.height < standing.y,
+  "a high jump clears the grounded opponent instead of catching an invisible wall");
+const jab=g.attackHitbox({x:500,y:600,facing:1},cfg.combat.attacks.light,"light");
+const body=g.attackHitbox({x:500,y:600,facing:1},cfg.combat.attacks.body,"body");
+const upper=g.attackHitbox({x:500,y:600,facing:-1},cfg.combat.attacks.upper,"upper");
+assert.ok(jab.x>500 && jab.width>80,"jab extends from the attacking hand");
+assert.ok(body.y>jab.y,"body blow targets lower than a face jab");
+assert.ok(upper.x<500 && upper.x+upper.width<500,"left-facing hitbox tracks mirrored arm");
+assert.equal(g.attackHitbox({x:500,y:600},cfg.combat.attacks.gun,"gun"),null,
+  "projectile moves never gain additional phantom melee hitboxes");
+
 assert.equal(g.CONTACT_ASSIST,cfg.combat.punchAssist);
 let a=fighter(500),b=fighter(510,600,76,178);
 assert.equal(g.separate(a,b,arena),true);
