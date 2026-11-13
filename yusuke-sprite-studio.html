@@ -21,6 +21,7 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
 <section class="art"><h2>02 / Combo and combat (16 cels)</h2><p>Jab, cross, body blow, rising uppercut, jumping strike, finishing kick and hit-stagger variations.</p>
 <div class="preview" id="combat-preview"></div><button type="button" id="combat-download" disabled>Download transparent combat PNG</button></section>
 <section class="art"><h2>Frame metadata</h2><p>Export frame coordinates, 512-pixel tile geometry, rendering scale, crop/foot-pivot alignment and 40 FPS playback rate for integration into a sprite editor.</p><button type="button" id="metadata-download" disabled>Download atlas frame JSON</button></section></main>
+<script src="./yusuke-alpha-cleanup-v9.js?v=1"></script>
 <script src="./yusuke-premium-v6.js?v=1"></script>
 <script src="./yusuke-directional-v8.js?v=1"></script>
 <script>
@@ -36,7 +37,9 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
    img.src="./"+meta[part].src;
   });
   const [movement,combat]=await Promise.all([load("movement"),load("combat")]);
-  const atlas=window.MugenDirectional.build(meta,{movement,combat});
+  const cleanMovement=window.MugenArtCleanup?.prepare(movement,meta.movement)||movement;
+  const cleanCombat=window.MugenArtCleanup?.prepare(combat,meta.combat)||combat;
+  const atlas=window.MugenDirectional.build(meta,{movement:cleanMovement,combat:cleanCombat});
   if(!atlas)throw Error("Canvas generation unavailable; the playable game still uses original sprites");
   const snapshots={fps:40,pixelScale:.5,cellSize:[512,512],columns:4,rows:4,
    source:{movement:meta.movement.src,combat:meta.combat.src},
