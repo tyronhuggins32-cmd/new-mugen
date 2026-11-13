@@ -1750,6 +1750,10 @@
     <div class="modal">
       <h2 id="options-title">Options</h2>
       <div class="setting"><span>Menu sound</span><button class="toggle" id="sound-toggle" type="button" aria-pressed="true">On</button></div>
+      <div class="setting"><span>Main menu music</span><button class="toggle" id="menu-music-toggle" type="button" aria-pressed="true">On</button></div>
+      <div class="setting"><span>Import theme (OGG/MP3)</span><button class="toggle" id="menu-music-import" type="button">Choose file</button></div>
+      <input type="file" id="menu-theme-upload" accept=".ogg,.mp3,.wav,.m4a,audio/*" hidden>
+      <p id="menu-music-status" role="status" aria-live="polite" style="margin:0 0 16px;color:#bfe9e6;font-size:.82rem">Main menu theme</p>
       <div class="setting"><span>Particles</span><button class="toggle" id="particles-toggle" type="button" aria-pressed="true">On</button></div>
       <div class="setting"><span>Fullscreen</span><button class="toggle" id="fullscreen-toggle" type="button" aria-pressed="false">Enter</button></div>
       <button class="close-button" id="close-options" type="button">Back to menu</button>
@@ -1789,6 +1793,7 @@
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
+  <script src="mugen-menu-music.js?v=1"></script>
   <script>
     (() => {
       "use strict";
@@ -1873,6 +1878,8 @@
       const startBattleButton = document.querySelector("#start-battle");
       const closeOptions = document.querySelector("#close-options");
       const soundToggle = document.querySelector("#sound-toggle");
+      const menuMusicToggle = document.querySelector("#menu-music-toggle");
+      const menuMusicImport = document.querySelector("#menu-music-import");
       const particlesToggle = document.querySelector("#particles-toggle");
       const fullscreenToggle = document.querySelector("#fullscreen-toggle");
       const characterArt = document.querySelector("#character-art");
@@ -4301,8 +4308,9 @@
           }
         },
         navigate: direction => {
+          window.MugenMenuMusic?.unlock();
           const targets = modal.classList.contains("open")
-            ? [soundToggle, particlesToggle, fullscreenToggle, closeOptions]
+            ? [soundToggle, menuMusicToggle, menuMusicImport, particlesToggle, fullscreenToggle, closeOptions]
             : fighterConfirmModal.classList.contains("open")
               ? [returnRoster, startBattleButton]
               : battleResult.classList.contains("open")
@@ -4319,8 +4327,9 @@
           }
         },
         confirm: () => {
+          window.MugenMenuMusic?.unlock();
           if (modal.classList.contains("open")) {
-            const targets = [soundToggle, particlesToggle, fullscreenToggle, closeOptions];
+            const targets = [soundToggle, menuMusicToggle, menuMusicImport, particlesToggle, fullscreenToggle, closeOptions];
             (targets.includes(document.activeElement) ? document.activeElement : closeOptions).click();
           } else if (fighterConfirmModal.classList.contains("open")) {
             const targets = [returnRoster, startBattleButton];
