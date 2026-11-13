@@ -25,6 +25,9 @@ A browser fighting-game prototype featuring Yusuke versus the CPU Demon Scout. R
 | Light / heavy | J / K |
 | Spirit Gun | L |
 | Spirit Shotgun | J, J, J, then L |
+| Spirit Dash | E (or Dash touch button) |
+| Charge spirit energy | Hold I (or + touch button) |
+| MAX Spirit Gun | U at 100 energy (or glowing MAX touch button) |
 | Pause / resume | P or Pause button |
 | Character select | Esc or B |
 
@@ -55,3 +58,12 @@ The dedicated transparent `characters/yusuke/spirit-specials-v2.png` atlas conta
 Each unblocked landed hit adds one to the combo and contributes that count as flat bonus damage to that hit: hit 10 adds 10 damage. The meter fills visually at ten hits; the number and bonus continue increasing beyond ten. A two-second gap without a landed hit, taking damage, or a new round resets the combo. Blocked hits do not increase or refresh it. Shotgun pellets count as one volley hit.
 
 Artwork was created with the built-in image generator using the original fighter sheet as reference: eight right-facing full-body poses, yellow shirt/navy pants, four finger-gun phases and four fist-shotgun phases, transparent 4-by-2 atlas.
+
+
+## Cinematic combat pass (November 2026)
+
+The original Yusuke fighter is still the first selectable character, with the Demon Scout as a CPU sparring opponent. The new mugen-cinematics.js layer adds a hand-rendered nighttime rooftop stage, energy-charge aura, fast forward dash, and a MAX Spirit Gun finisher inspired by the presentation style of the user-provided MUGEN reference clip, not a copied animation. MAX Spirit Gun costs all 100 spirit energy, briefly locks both combatants in a cinematic, and delivers up to eight mechanically counted hits if the opponent is in front and in range. Blocking still reduces damage; missing the attack wastes the meter. No external artwork or assets are required for these effects.
+
+Touch actions are arranged in a 3-column grid so the six attack/utility buttons fit on phones. Normal Spirit Gun and the punch-to-Shotgun combo still work. Keyboard directions, blocking, pausing, and existing round rules remain unchanged.
+
+This pass does not yet include literal MUGEN character imports, transformation sprites, character-versus-character roster selection, destructible environments, or a 100-hit cinematic. Those are further development areas, not implemented features. PS5/gamepad mappings are also not added in this pass.
