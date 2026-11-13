@@ -48,8 +48,8 @@ assert.ok(drawings.every(args=>args[0]===image),"all derived pixels must be samp
 for (const args of drawings) {
   assert.equal(args.length,9);
   assert.ok(args[3]>0&&args[4]>0);
+  assert.ok(args[5]>=0&&args[5]+args[7]<=1025);
   assert.ok(args[6]>=0&&args[6]+args[8]<=1025);
-  assert.ok(args[7]>=0&&args[7]+args[8]<=1025);
 }
 for(const [i,pose] of atlas.frames.slice(24).entries()) {
   assert.equal(pose.x,(i%4)*256);
@@ -124,14 +124,14 @@ const basic={state:"idle",stateTime:0,grounded:true,vy:0};
 assert.equal(fallback.selectPose(basic,original).image,image);
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/<script src="yusuke-motion\\.js\\?v=4"><\\/script>/);
-assert.match(html,/MugenMotion\\?\\.createAtlas/);
-assert.match(html,/MugenMotion\\?\\.selectPose/);
-assert.match(html,/MugenMotion\\?\\.rememberPose/);
-assert.match(html,/motionPose\\.transitionImage/);
+assert.match(html,/<script src="yusuke-motion\.js\?v=4"><\/script>/);
+assert.match(html,/MugenMotion\?\.createAtlas/);
+assert.match(html,/MugenMotion\?\.selectPose/);
+assert.match(html,/MugenMotion\?\.rememberPose/);
+assert.match(html,/motionPose\.transitionImage/);
 assert.match(html,/previousSheet/);
-assert.match(html,/window\\.MugenFluid\\?\\.drawCel/);
-const inline=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/g)]
+assert.match(html,/window\.MugenFluid\?\.drawCel/);
+const inline=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
   .map(m=>m[1]).find(s=>s.includes("function selectYusukeCombatPose"));
 assert.ok(inline);
 new vm.Script(inline,{filename:"game-build-0009-inline.js"});
