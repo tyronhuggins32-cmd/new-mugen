@@ -8,7 +8,10 @@
   const TYPES=Object.freeze({
     charge:0,shot:1,blast:2,shotgun:3,punch:4,slash:5,dust:6,ring:7
   });
-  const FX_TIME=Object.freeze({punch:.21,heavy:.29,blast:.39,shotgun:.28,dust:.39});
+  const FX_TIME=Object.freeze({
+    punch:.16,heavy:.25,blast:.24,shotgun:.26,charge:.20,
+    slash:.18,ring:.18,dust:.26
+  });
   const instances=new WeakMap();
   const image=(typeof Image==="function"?new Image():null);
   let ready=false;
@@ -29,15 +32,22 @@
     const s=holder(game),length=FX_TIME[kind]||.27;
     s.fx.push({kind,x,y,direction:opts.direction||1,cpu:!!opts.cpu,
       age:0,length,scale:opts.scale||1});
-    if(s.fx.length>25)s.fx.splice(0,s.fx.length-25);
+    if(s.fx.length>16)s.fx.splice(0,s.fx.length-16);
   }
   function onHit(game,attacker,defender,attack,blocked,x,y){
     if(!game||!attacker)return;
-    const heavy=!!attack?.heavyImpact;
-    const kind=heavy?"blast":blocked?"ring":"punch";
-    append(game,kind,x,y,{direction:attacker.facing,cpu:attacker.cpu,scale:heavy?1.25:1});
-    if(heavy)append(game,"slash",x-attacker.facing*24,y+8,
-      {direction:attacker.facing,cpu:attacker.cpu,scale:.95});
+    const heavy=!!attack?.heavyImpact && !blocked;
+    // Three readable categories, centered at the collision coordinate.
+    // Guard overrides attack strength; one primary effect per connected hit.
+    const kind=blocked?"ring":heavy?"blast":"punch";
+    append(game,kind,x,y,{
+      direction:attacker.facing,cpu:attacker.cpu,
+      scale:blocked?.72:heavy?1.06:.84
+    });
+    // A restrained one-time directional accent for heavy contact only.
+    if(heavy)append(game,"slash",x-(attacker.facing||1)*9,y+2,{
+      direction:attacker.facing,cpu:attacker.cpu,scale:.64
+    });
   }
   function onShot(game,owner,x,y,shotgun=false){
     append(game,shotgun?"shotgun":"charge",x,y,
@@ -46,7 +56,7 @@
   }
   function onImpact(game,owner,x,y,blocked=false){
     append(game,blocked?"ring":"blast",x,y,
-      {direction:owner?.facing,cpu:owner?.cpu,scale:blocked?.73:1.22});
+      {direction:owner?.facing,cpu:owner?.cpu,scale:blocked?.7:1.06});
   }
   function tick(game,dt){
     if(!game||game.paused)return;
@@ -96,8 +106,8 @@
         case "ring":w=190;h=180;break;
         default:w=150;h=100;break;
       }
-      const growth=1+(e.kind==="blast"?.4:.16)*t;
-      const fade=(1-t)**(isDust?1.4:1.1);
+      const growth=1+(e.kind==="blast"?.19:.1)*t;
+      const fade=(1-t)**(isDust?1.9:1.55);
       const y=e.y+(isDust?5:0);
       paint(ctx,TYPES[e.kind],e.x,y,e.direction,
         w*e.scale*growth,h*e.scale*growth,fade);
