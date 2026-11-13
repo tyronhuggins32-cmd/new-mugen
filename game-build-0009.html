@@ -3751,10 +3751,16 @@
           // without an over-tight zoom that would hide either fighter.
           if (!blocked && heavyHit && !attack.projectile)
             this.cinematicImpact = { x: impactX, y: impactY, life: .12, maxLife: .12 };
-          const impactCount = blocked ? 8 : heavyHit ? 27 : 17;
-          this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", impactCount);
+          const authoredImpact = Boolean(window.MugenVfxV8?.ready());
+          // One authored contact effect is the visual source of truth. Remove
+          // old random square bursts and stacked procedural impact rings.
+          if (!authoredImpact) {
+            this.addImpact(impactX, impactY,
+              blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff",
+              blocked ? 3 : heavyHit ? 8 : 5, attacker.facing);
+            window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
+          }
           window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
-          window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
           if (!window.MugenVfxV8?.ready())
             window.MugenCinematicFX?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
           window.MugenVfxV8?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
@@ -3766,24 +3772,31 @@
             if (!window.MugenSFX) playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
         }
 
-        addImpact(x, y, color, count) {
-          for (let index = 0; index < count; index += 1) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 90 + Math.random() * 360;
+        addImpact(x, y, color, count, direction = 1) {
+          // Fallback on older browsers: short, symmetrical, forward-facing
+          // sparks. No Math.random, no random colors or screenwide debris.
+          const total = Math.min(9, Math.max(0, Math.floor(count || 0)));
+          for (let index = 0; index < total; index += 1) {
+            const rank = index - (total - 1) / 2;
+            const angle = rank * .24;
+            const speed = 125 + (index % 3) * 25;
+            const duration = .16 + (index % 3) * .016;
             this.impacts.push({
-              x,
-              y,
-              vx: Math.cos(angle) * speed,
-              vy: Math.sin(angle) * speed,
-              life: .24 + Math.random() * .35,
-              maxLife: .59,
-              size: 2 + Math.random() * 5,
-              color
+              x, y,
+              vx: (direction < 0 ? -1 : 1) * Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed * .65,
+              life: duration,
+              maxLife: duration,
+              size: 2 + index % 2, color
             });
           }
+          if (this.impacts.length > 42) this.impacts.splice(0, this.impacts.length - 42);
         }
 
         addSpiritBurst(x, y, color, direction, scale = 1, kind = "impact") {
+          // The V8 effect atlas already supplies the authored muzzle and hit;
+          // don't lay a second random-phase glow on top of it.
+          if (window.MugenVfxV8?.ready()) return;
           const duration = kind === "muzzle" ? .14 : .28;
           this.energyBursts.push({
             x,
@@ -3794,7 +3807,7 @@
             kind,
             life: duration,
             maxLife: duration,
-            phase: Math.random() * Math.PI * 2
+            phase: (Math.round(x / 23) + Math.round(y / 29)) * .37
           });
         }
 
