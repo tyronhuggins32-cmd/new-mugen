@@ -95,7 +95,7 @@ assert.ok(renderedWidths.every(w=>w<=1520),"only visible camera segment is blitt
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(html,/mugen-rooftop-v6\.js\?v=1/);
-assert.match(html,/yusuke-premium-v6\.js\?v=1/);
+assert.match(html,/yusuke-premium-v6\.js\?v=2/);
 assert.match(html,/width: 2600/);
 assert.match(html,/premiumArt = metadata/);
 assert.match(html,/premiumReady = true/);
