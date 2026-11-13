@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
  const errors=[]; page.on('pageerror',e=>errors.push(e.message));
  const source=fs.readFileSync(require('node:path').join(__dirname,'../game-build-0009.html'),'utf8');
  // Expose lexical engine state only in the test response, never in the shipped game.
- await page.route('**/game-build-0009.html',r=>r.fulfill({contentType:'text/html',body:source.replace('      function beginFight() {','      window.testEngine = { get game() { return arcadeGame; }, Fighter, pressFightControl, releaseFightControl, humanInput, clearFightInput, arena };\n      function beginFight() {')}));
+ await page.route('**/game-build-0009.html*',r=>r.fulfill({contentType:'text/html',body:source.replace('      function beginFight() {','      window.testEngine = { get game() { return arcadeGame; }, Fighter, pressFightControl, releaseFightControl, humanInput, clearFightInput, arena };\n      function beginFight() {')}));
  await page.goto('http://127.0.0.1:8000/');
  await page.locator('button.menu-item[data-mode="arcade"]').click();
  await page.locator('#choose-character').click();
