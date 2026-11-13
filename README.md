@@ -117,3 +117,11 @@ The original reference video targets detailed 2D anime fighting with full-size c
 Run `node tests/visuals.cjs` for canvas-stub regression checks and `node tests/engine.cjs`, `node tests/yusuke-sprites.cjs` and `node tests/gamepad.cjs` for gameplay/art/controller checks. GitHub Actions runs all four automatically. These tests validate code behavior; screenshot comparisons and physical iPhone/PS5 controller performance still require browser/device QA.
 
 The limited number of actual drawings in the sprite atlases remains the largest animation-quality ceiling. This work creates smoother in-betweens and transitions but does not claim to add hundreds of hand-drawn character frames or recreate the reference video frame-for-frame.
+
+## Yusuke: expanded 10 FPS movement animation
+
+Yusuke now builds **40 distinct cached movement cels** at character load from the original 24-pose PNG atlas. The generated 240 × 240 transparent foot-aligned tiles live in a temporary 2400 × 960 canvas atlas; the source image and its style are unchanged. New motion clips contain 10 idle, 10 run, 4 start, 4 stop, 4 jump-rise, 4 jump-fall, and 4 landing frames. These are **synthesized in-between sprites** (cross-dissolves, slight run lean and bounce), not newly hand-drawn poses or a new PNG download.
+
+Ground movement cels advance at exactly **10 FPS (one cel per 100 ms)**, while the existing fixed-step collision/combat simulation remains at 60 Hz. Position interpolation still runs on every display refresh. Movement starts, stops, jumps, and landings use short transition clips; compatible state changes blend the prior motion cel into the new pose across 160 ms. Attack, Spirit Gun, VFX, and DualSense rendering remain separate. If canvas atlas creation fails, the original sprite sheet is used.
+
+Run `node tests/yusuke-motion.cjs` for module, timing, atlas bounds, clip, and renderer wiring checks. The GitHub Actions workflow also runs this test on push and pull requests. The test uses a fake canvas and checks generated cel references, not pixel-by-pixel visual quality; review on a physical DualSense device/browser is still needed.
