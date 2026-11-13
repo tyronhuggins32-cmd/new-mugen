@@ -1781,6 +1781,7 @@
   <script src="yusuke-alpha-v9.js?v=1"></script>
   <script src="mugen-yusuke-palette-v11.js?v=1"></script>
   <script src="yusuke-directional-v8.js?v=5"></script>
+  <script src="mugen-yusuke-reference-v13.js?v=1"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
@@ -1835,6 +1836,7 @@
       let premiumArt = null;
       let premiumReady = false;
       let directionalAtlas = null;
+      let referenceAttackAtlas = null;
       let cleanPremiumCombatSheet = null;
       let cleanPremiumMotionSheet = null;
       let consistentBaseSheet = null;
@@ -1925,6 +1927,13 @@
       let toastTimer;
       let audioContext;
       let arcadeGame;
+      window.YusukeAttackLab = Object.freeze({
+        moves:()=>Object.keys(window.MugenReferenceV13?.moves||{}),
+        play:name=>Boolean(arcadeGame && !isThorfinnSelected() &&
+          window.MugenReferenceV13?.trigger(arcadeGame,name)),
+        status:()=>arcadeGame ? window.MugenReferenceV13?.stats(arcadeGame) : null,
+        controlAssignments:"Unassigned. Creator selects controls later."
+      });
 
       function playTone(frequency = 210, duration = 0.045) {
         if (!soundOn) return;
@@ -2308,11 +2317,16 @@
               movementNoWhite, metadata.movement.frames) || movementNoWhite;
             directionalAtlas = window.MugenDirectional?.build(metadata,
               {combat:cleanPremiumCombatSheet,movement:cleanPremiumMotionSheet}) || null;
+            // Optional 48-cel atlas from cleaned canonical art. If a GPU
+            // cannot allocate the additional texture, the fight still runs.
+            referenceAttackAtlas = window.MugenReferenceV13?.build(metadata,
+              {combat:cleanPremiumCombatSheet,movement:cleanPremiumMotionSheet}) || null;
             premiumReady = true;
           } catch (error) {
             premiumReady = false;
             premiumArt = null;
             directionalAtlas = null;
+            referenceAttackAtlas = null;
             cleanPremiumCombatSheet = null;
             cleanPremiumMotionSheet = null;
             console.warn("Premium character art unavailable; using all original sprites.",error);
@@ -2351,7 +2365,9 @@
           yusukeAnimations = character.spriteSheet.animations;
           yusukeEffectSheets = character.effectSheets;
           yusukeCombat = character.combat;
-          attackData = Object.freeze(character.combat.attacks);
+          attackData = character.id === "yusuke_urameshi"
+            ? window.MugenReferenceV13?.extendAttacks(character.combat.attacks) || Object.freeze(character.combat.attacks)
+            : Object.freeze(character.combat.attacks);
           renderCharacter(character);
           characterReady = true;
           chooseCharacter.disabled = false;
@@ -2422,7 +2438,9 @@
         }
         selectedFighterDefinition = character;
         yusukeCombat = character.combat;
-        attackData = Object.freeze(character.combat.attacks);
+        attackData = character.id === "yusuke_urameshi"
+            ? window.MugenReferenceV13?.extendAttacks(character.combat.attacks) || Object.freeze(character.combat.attacks)
+            : Object.freeze(character.combat.attacks);
         rosterCards.forEach(card => {
           const selected = card.dataset.character === character.id;
           card.classList.toggle("selected", selected);
@@ -3048,7 +3066,9 @@
             : -1;
           // New hit sprites take priority when the derived atlas is loaded.
           const premiumPose = premiumReady
-            ? (window.MugenDirectional?.choosePose(this, attackType,
+            ? (window.MugenReferenceV13?.choosePose(this, attackType,
+                referenceAttackAtlas, attackProgress)
+              || window.MugenDirectional?.choosePose(this, attackType,
                 directionalAtlas, renderAttackProgress)
               || window.MugenPremium?.choosePose(this, attackType, premiumArt,
                 {combat:cleanPremiumCombatSheet || premiumCombatSheet,
@@ -3081,6 +3101,8 @@
           // Yusuke through opponents or altering the active hitbox.
           const squarePose = premiumPose?.part === "square";
           const squareMotion = squarePose ? premiumPose?.motion : null;
+          const cinematicMotion = premiumPose?.part === "reference"
+            ? premiumPose.motion : null;
           const lunge = ["light", "cross", "body", "upper", "powerKick"].includes(attackType)
             ? Math.sin(renderAttackProgress * Math.PI)
               * (squarePose
@@ -3128,10 +3150,14 @@
             ? (attackType==="upper" ? -.017 : .013)*strikeEnergy +
               (squareMotion?.tilt || 0)
             : 0;
-          if (squareMotion) context.translate(0,(squareMotion.lift || 0)*.5);
-          context.rotate(pose.tilt + squareTurn);
-          context.scale(pose.stretchX*(1+strikeEnergy*.013)*(squareMotion?.stretchX||1),
-            pose.stretchY*(1-strikeEnergy*.008)*(squareMotion?.stretchY||1));
+          if (squareMotion || cinematicMotion)
+            context.translate(0,((squareMotion||cinematicMotion)?.lift || 0)*.5);
+          context.rotate(pose.tilt + squareTurn + (cinematicMotion?.tilt||0));
+          context.scale(
+            pose.stretchX*(1+strikeEnergy*.013)*(squareMotion?.stretchX||1)*
+              (cinematicMotion?.stretchX||1),
+            pose.stretchY*(1-strikeEnergy*.008)*(squareMotion?.stretchY||1)*
+              (cinematicMotion?.stretchY||1));
           context.imageSmoothingEnabled = false;
 
           if (!ghost && !this._usingPremiumCel &&
@@ -3256,7 +3282,7 @@
           };
           // Draw one complete clean silhouette for each Square phase.
           // Extra transition crossfades reintroduce pale double arms.
-          const handoff = premiumPose?.part === "square" ? null
+          const handoff = ["square","reference"].includes(premiumPose?.part) ? null
             : premiumPose?.transitionFrame ? premiumPose
             : premiumPose ? null : motionPose;
           // Never draw a leftover legacy sprite over a differently sized or
@@ -3640,6 +3666,7 @@
           this._lastHudAt = 0;
           window.MugenFluid?.reset(this);
           window.MugenVfxV8?.reset(this);
+          window.MugenReferenceV13?.reset(this);
           window.MugenCinematicFX?.reset(this);
           window.MugenShotgun?.reset(this);
           window.MugenSpiritGun?.reset(this);
@@ -3759,6 +3786,9 @@
           this.player.update(dt, playerInput, this.cpu, this);
           this.cpu.update(dt, cpuInput, this.player, this);
           this.separateFighters();
+          // New cinematic moves use authored per-hit events, never a generic
+          // melee box that damages a second time. Existing controls unchanged.
+          if (!isThorfinnSelected()) window.MugenReferenceV13?.tick(this,dt);
           // Snapshot both contacts before damage changes either fighter's state.
           const contacts = [this.prepareMelee(this.player, this.cpu), this.prepareMelee(this.cpu, this.player)];
           for (const contact of contacts) if (contact) contact();
@@ -3799,6 +3829,7 @@
         prepareMelee(attacker, defender) {
           const type = attacker.currentAttack();
           const attack = attackData[type];
+          if (window.MugenReferenceV13?.isMove(type)) return;
           if (!attack || attacker.attackConnected || defender.invulnerability > 0) return;
           const earlyHitbox = attacker.activeHitbox();
           if (!earlyHitbox) return;
@@ -3979,7 +4010,8 @@
           if (!blocked) defender.resetCombo();
           attacker.energy = Math.min(100, attacker.energy + (attack.energyGain ?? 5));
           const heavyHit = Boolean(attack.heavyImpact);
-          const visualEffectsAllowed = window.MugenComboFX?.allows(attacker) ?? true;
+          const visualEffectsAllowed = attack.referenceHit ||
+            (window.MugenComboFX?.allows(attacker) ?? true);
           // Uppercuts and Power Kicks briefly hold the camera on contact,
           // without an over-tight zoom that would hide either fighter.
           if (visualEffectsAllowed && !blocked && heavyHit && !attack.projectile)
@@ -4356,6 +4388,7 @@
           if (!window.MugenVfxV8?.ready())
             window.MugenFluid?.drawBehind(this, context, time);
           window.MugenVfxV8?.drawBehind(this, context, time);
+          window.MugenReferenceV13?.drawBehind(this, context, time);
           window.MugenDirectional?.drawBehind(this, context, time);
           window.MugenCinematicFX?.drawBehind(this, context, time);
           if (!window.MugenVfxV8?.ready())
@@ -4388,6 +4421,7 @@
           }
           window.MugenDirectional?.drawFront(this, context, time);
           window.MugenVfxV8?.drawFront(this, context, time);
+          window.MugenReferenceV13?.drawFront(this, context, time);
           context.restore();
           window.MugenSpiritGun?.drawOverlay(this, context, arena);
           window.MugenCinematics?.render(this, context, time);
