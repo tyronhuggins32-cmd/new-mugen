@@ -242,3 +242,21 @@ The fighting stage is now a scrollable **2,600 × 720 world**, compared with the
 `mugen-cinematic-fx-v6.js` adds crisp, short-lived impact crescents, white-hot punch sparks and blue directional streaks without altering hitboxes. Spirit Gun and Shotgun continue using their separate nonpiercing collision and energy-VFX systems. The existing three-Square combo, Triangle Spirit Shotgun threshold, Power Kick, PS5 controller mappings and combat damage rules are retained.
 
 Run `node tests/premium-v6.cjs`, `node tests/cinematic-fx-v6.cjs`, plus the normal engine and browser smoke tests to verify frame bounds, transparent PNG hashes, uniform sprite scale, stage caching, motion and impact effect lifetimes. Visual improvements are sourced from newly authored 2D artwork; this is **not** a claim that every action has 60 newly hand-drawn frames.
+
+## Yusuke high-detail V7 sprite polish (November 2026)
+
+The playable Yusuke now loads the paired color-matched sprites
+`characters/yusuke/yusuke-premium-combat-v7.png` and
+`characters/yusuke/yusuke-premium-movement-v7.png` (16 transparent,
+2048×1024 atlas cels in total).
+
+- **Consistent appearance:** yellow vest, skin, green cuffs, navy pants and dark outlines have a shared target palette. Stray red/magenta fringe pixels have been corrected without shrinking the transparent silhouettes.
+- **Matching anatomy:** all 16 frames use the same draw scale (0.5) and foot-relative pivots. The two families load atomically: if either fails, the original Yusuke set remains the fallback.
+- **No coordinate crossover:** the premium renderer never interpolates old sprite-frame coordinates on the high-detail images, preventing strange body-part flashes during attacks.
+- **No segmented limbs:** authored premium poses render as a single full-body cel with restrained, pivot-based idle and running motion. The legacy low-res renderer retains its other deformation behavior.
+- **Wider stage and camera:** the 2600-pixel-wide rooftop arena and responsive tracking camera remain available; combat spacing and hit-stop remain unchanged.
+- **QA:** `node tests/premium-v6.cjs` validates the artwork and source selection; `node tests/fluid-v3.cjs` verifies that premium artwork is drawn without eight-strip slicing; Playwright's `tests/browser-fluid.cjs` checks that all key punch, kick and Spirit moves use the correct V7 PNGs during real browser gameplay.
+- **Reproducibility:** `tools/polish-yusuke-v7.py` rebuilds the V7 PNGs from the original two art sheets without resizing their silhouette bounds.
+
+These are **16 hand-authored pose sprites**, not 16 full independent animation sequences. Smoother high-frame-rate combat still benefits from adding genuine in-between drawings for every attack.
+
