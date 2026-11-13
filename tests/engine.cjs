@@ -16,6 +16,7 @@ const context=vm.createContext({console,config,assert,performance:{now:()=>0},
  roundBanner:element(),roundBannerText:element(),battleResult:element(),battleResultKicker:element(),battleResultTitle:element(),battleResultMessage:element(),rematchButton:element(),playerHealth:element(),cpuHealth:element(),playerEnergy:element(),cpuEnergy:element(),roundTimer:element(),playTone(){},pending:()=>callbacks.size});
 const engine=html.slice(html.indexOf('      const arena ='),html.indexOf('      function beginFight()'));
 vm.runInContext(`const yusukeCombat=config.combat; const activeCharacterDefinition=config; const yusukeAnimations=config.spriteSheet.animations;\n${engine}\nattackData=config.combat.attacks;`,context);
+vm.runInContext(fs.readFileSync(path.join(root,'mugen-cinematics.js'),'utf8'),context);
 vm.runInContext(`
  const g=new ArcadeFight(null); const neutral={left:false,right:false,block:false};
  g.player.x=400;g.cpu.x=900;g.player.update(1/60,{...neutral,left:true},g.cpu,g);
@@ -43,5 +44,10 @@ vm.runInContext(`
  g.reset();g.cpu.setState('block');g.cpu.facing=-1;g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);assert.equal(g.cpu.health,997.5);
  g.reset();g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);g.damageFighter(g.cpu,g.player,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);
  g.reset();for(let n=0;n<3;n++){g.player.beginAttack('light');for(let t=0;t<25;t++)g.player.update(1/60,neutral,g.cpu,g);}g.player.beginAttack('gun');assert.equal(g.player.currentAttack(),'shotgun');for(let t=0;t<20;t++)g.player.update(1/60,neutral,g.cpu,g);assert.equal(g.projectiles.length,5);assert.ok(g.projectiles.every(p=>p.kind==='spiritShotgun'));
- console.log('PASS: syntax, retreat facing, input aliases, corner separation, jump-over, first-to-two, rematch, draw, directional guard, projectile, RAF lifecycle, pause, and 30/60/120/144 Hz timing.');
+ g.reset();g.state='play';g.player.energy=100;assert.ok(window.MugenCinematics.begin(g),'MAX Spirit Gun can activate at full meter');assert.equal(g.player.energy,0);
+ for(let tick=0;tick<360&&g.superSequence;tick++)g.update(1/60);
+ assert.equal(g.superSequence,null,'cinematic completes');assert.equal(g.player.energy,0,'MAX drains energy');assert.equal(g.player.comboHits,8,'beam applies eight real hits');assert.ok(g.cpu.health<680,'beam damages opponent');
+ g.reset();g.state='play';g.player.energy=0;g.player.update(1/60,{charge:true},g.cpu,g);assert.ok(g.player.energy>0,'hold-to-charge refills energy');
+ g.reset();g.state='play';const dashX=g.player.x;g.player.update(1/60,{dashPressed:true},g.cpu,g);assert.ok(g.player.x>dashX+10,'dash crosses space');
+ console.log('PASS: fighter engine, hit timing, MAX Spirit Gun (8 hits), spirit charge, spirit dash, and fixed-step cadence.');
 `,context);
