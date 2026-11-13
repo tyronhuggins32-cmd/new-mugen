@@ -1,11 +1,12 @@
-/* Rebirth arcade frontend regression: structural, control, asset, and responsive checks. */
+/* Street-menu frontend regression: structural, control, asset, and responsive checks. */
 const fs = require("node:fs");
 const path = require("node:path");
 const assert = require("node:assert/strict");
 const root = path.resolve(__dirname,"..");
 const html = fs.readFileSync(path.join(root,"game-build-0009.html"),"utf8");
 const css = fs.readFileSync(path.join(root,"mugen-rebirth-ui.css"),"utf8");
-const index = html.indexOf('<main class="screen neon-home rebirth-home"');
+const menuCss = fs.readFileSync(path.join(root,"mugen-street-menu.css"),"utf8");
+const index = html.indexOf('<main class="screen neon-home rebirth-home sf-menu"');
 const selectIndex = html.indexOf('<main class="arcade-screen neon-select rebirth-select"');
 const fightIndex = html.indexOf('<main class="fight-screen"');
 assert.ok(index>0&&selectIndex>index&&fightIndex>selectIndex,"both redesigned screens precede fight");
@@ -17,12 +18,14 @@ for(const [,script] of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
 function count(source,pat){return (source.match(pat)||[]).length;}
 assert.equal(count(home,/class="menu-item(?: active)?"/g),5,"five modes still listed");
 assert.equal(count(select,/class="roster-card(?: selected| locked)?"/g),8,"one active + seven reserved roster cells");
-assert.ok(home.includes("MAIN <em>MENU</em>"),"new command-deck menu");
-assert.ok(home.includes('class="rb-hero"')&&home.includes('class="rb-command-deck"'),"cinematic hero and command deck");
-assert.ok(home.includes("rb-wordmark-main")&&home.includes("RISING"),"original branding");
-assert.ok(home.includes('class="rb-briefing-match"'),"dynamic mode briefing");
+assert.ok(home.includes('MAIN <span>MENU</span>'),"large hand-painted menu masthead");
+assert.ok(home.includes('class="sf-paint"')&&home.includes('class="menu neon-mode-list rb-choices sf-nav"'),"painted fighting-game menu and navigation");
+assert.ok(home.includes('NEW MUGEN <span>RISING</span>'),"original branding");
+assert.ok(home.includes('class="sf-description"')&&home.includes('class="rb-briefing-badge"'),"dynamic mode briefing preserved");
+assert.ok(home.includes('id="menu-music-activation"'),"autoplay fallback is reachable");
+assert.ok(home.includes('characters/yusuke/portrait.webp'),"current Yusuke portrait reused");
 assert.ok(home.includes('data-mode="arcade"')&&home.includes('data-mode="options"'));
-assert.equal(count(home,/class="mode-availability">SOON/g),3,"unavailable modes labeled SOON");
+assert.equal(count(home,/class="sf-status">SOON/g),3,"unavailable modes labeled SOON");
 assert.ok(select.includes('class="select-layout rb-select-layout"'),"poster, data, roster rebuilt as one grid");
 assert.ok(select.includes('character-stage rb-poster')&&select.includes('character-details rb-fighter-card'));
 assert.ok(select.includes('roster-panel rb-roster'),"wide roster strip");
@@ -38,7 +41,11 @@ const requiredIds=["main-menu-screen","arcade-screen","fight-screen","game-canva
 for(const id of requiredIds) {
  assert.equal(count(html,new RegExp('id="'+id+'"',"g")),1,"required id "+id+" must be unique");
 }
-assert.match(html,/href="mugen-rebirth-ui\.css\?v=\d+"/,"versioned Rebirth CSS linked");
+assert.match(html,/href="mugen-rebirth-ui\.css\?v=\d+"/,"character selection CSS preserved");
+assert.match(html,/href="mugen-street-menu\.css\?v=\d+"/,"new menu CSS linked");
+assert.ok(menuCss.includes('#main-menu-screen.sf-menu')&&menuCss.includes('prefers-reduced-motion:reduce'),"menu responsive/motion rules present");
+assert.ok(menuCss.includes('body:not([data-screen="fight"])'),"menu styling excluded from gameplay");
+assert.ok(html.includes('src="mugen-menu-music.js?v=5"'),"existing menu music controller untouched");
 assert.ok(!html.includes('href="neon-arcade-ui.css?v=1"'),"previous skin not stacked");
 assert.ok(css.includes(".screen.neon-home.rebirth-home")&&css.includes(".arcade-screen.neon-select.rebirth-select"));
 assert.ok(css.includes("@media(max-width:760px)")&&css.includes("@media(max-height:560px)"));
@@ -50,4 +57,4 @@ assert.ok(html.includes('rosterChoice.addEventListener("click"'),"fighter handle
 assert.ok(html.includes('chooseCharacter.addEventListener("click", beginFight)'),"fight flow untouched");
 assert.ok(html.includes('fighterConfirmModal.classList.add("open")'),"confirmation flow retained");
 assert.ok(!select.includes('data-control="light"'),"no touchscreen controls reintroduced");
-console.log("PASS: Rebirth attract screen, command deck, character poster, roster strip, 5 modes, 8 slots, responsive CSS, fight DOM and DualSense flow.");
+console.log("PASS: painted main menu, looping music integration, 5 modes, original fighter selection, 8 slots, responsive CSS, fight DOM and DualSense flow.");
