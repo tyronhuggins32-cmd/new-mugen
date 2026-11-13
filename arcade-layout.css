@@ -81,3 +81,14 @@ body[data-screen="arcade"] .select-playbar .choose-button { position: static; wi
 .combo-time { height:2px; }.combo-time span { background:#74e7ff; }
 .combo-panel small { display:block; margin-top:5px; color:#d7efff; font-size:9px; }
 @media(max-width:840px) { .combo-panel { top:106px; left:9px; width:190px; font-size:11px; padding:5px; } .combo-panel small { font-size:8px; } }
+
+/* Three action columns keep six combat buttons reachable on narrow phones. */
+.touch-group.actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.touch-button[data-control="ultimate"] { border: 2px solid #f8d873; color: #ffe69a; background: #3b2e26d9; font-size: clamp(10px, 2vw, 13px); }
+.touch-button[data-control="charge"] { border-color: #63e5ff; color: #63e5ff; }
+.touch-button[data-control="dash"] { border-color: #a29cff; }
+@media (max-width: 600px) {
+ .touch-controls { gap: 6px; }
+ .touch-group.actions { gap: 4px; }
+ .touch-button[data-control="ultimate"] { font-size: 10px; }
+}
