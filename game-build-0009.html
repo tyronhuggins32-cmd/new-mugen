@@ -2544,6 +2544,8 @@
           this.knockbackDrag = 5.2;
           this.dashTimer = 0;
           this.dashCooldown = 0;
+          this.jumpBuffer = 0;
+          this._crossOverActive = false;
         }
 
         get grounded() {
@@ -2664,6 +2666,9 @@
           this.energy = Math.min(100, this.energy + dt * regenRate);
           this.stateTime += dt;
           this.turnTimer = Math.max(0, this.turnTimer - dt);
+          // Keep a very brief jump tap through strike recovery.
+          if (input.jumpPressed) this.jumpBuffer = .16;
+          else this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);
 
           if (this.hitstun > 0) {
             this.resetCombo();
@@ -2706,6 +2711,20 @@
               if (bufferedAttack && (!attackData[bufferedAttack]?.projectile || this.grounded))
                 this.beginAttack(bufferedAttack, bufferedEnergy ?? this.energy);
             }
+            this.applyPhysics(dt);
+            return;
+          }
+
+          // Resolve jumping before passive back-blocking, charging or dashing.
+          // Retreat+Up must jump away even when an enemy attack is threatening.
+          if (this.jumpBuffer > 0 && this.grounded) {
+            this.jumpBuffer = 0;
+            this._crossOverActive = false;
+            this.vy = movement.jumpVelocity;
+            const jumpDirection = Number(input.right) - Number(input.left);
+            if (jumpDirection) this.vx = jumpDirection * movement.airSpeed;
+            this.setState("jump");
+            playTone(285, .04);
             this.applyPhysics(dt);
             return;
           }
@@ -2771,12 +2790,6 @@
             if (this.grounded) this.setState("idle");
           }
 
-          if (input.jumpPressed && this.grounded) {
-            this.vy = movement.jumpVelocity;
-            this.setState("jump");
-            playTone(285, .04);
-          }
-
           this.applyPhysics(dt);
         }
 
@@ -2788,6 +2801,7 @@
           if (this.y >= arena.floor) {
             this.y = arena.floor;
             this.vy = 0;
+            this._crossOverActive = false;
             if (this.state === "jump") this.setState("idle");
           }
         }
