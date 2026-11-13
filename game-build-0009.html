@@ -3756,7 +3756,6 @@
             this.cinematicImpact = { x: impactX, y: impactY, life: .12, maxLife: .12 };
           if (visualEffectsAllowed) {
             const authoredImpact = Boolean(window.MugenVfxV8?.ready());
-            // Authored contact art is the single impact visual source.
             if (!authoredImpact) {
               this.addImpact(impactX, impactY,
                 blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff",
