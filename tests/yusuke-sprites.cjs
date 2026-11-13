@@ -15,6 +15,12 @@ assert.equal(sheet.scale, config.spriteSheet.scale, "the base and expansion must
 assert.equal(sheet.consistency?.poseScale, 0.72, "all expansion cels must use one source scale");
 assert.equal(config.effectSheets.spiritGun.fighterScale, config.spriteSheet.scale,
   "special firing poses must match the base fighter size");
+assert.equal(config.specialSpriteSheet.src, config.effectSheets.spiritGun.src,
+  "the configured special moves must share canonical Spirit Gun artwork");
+assert.equal(config.specialSpriteSheet.scale, config.spriteSheet.scale,
+  "special move scale must match the main fighter");
+assert.equal(config.specialSpriteSheet.frames.length, 17,
+  "all 17 matching firing frames must remain available");
 
 const bytes = fs.readFileSync(sheet.src);
 assert.equal(bytes.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
