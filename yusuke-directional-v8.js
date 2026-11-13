@@ -1,12 +1,12 @@
-/* Yusuke Directional V8.1: 32 supplementary, 1:1-source pixel-anime cels.
+/* Yusuke Directional V10: 48 source-matched cels, 16 additional Square poses.
  * Reference goals: backward footwork, forward rush, aerial direction changes,
  * individual punch windup/contact/recovery and readable aerial strikes.
- * These are ORIGINAL-source-derived cels, not copied video images or thirty-two
- * independent hand drawings. The two static 8-frame premium PNGs stay primary.
+ * These are original-source-derived full-body cels rather than newly hand-drawn
+ * anatomical frames. Both cleaned high-resolution premium source PNGs remain primary.
  */
 (function(root){
  "use strict";
- const FPS=40,CELL=512,COLS=4,ROWS=4;
+ const FPS=40,CELL=512,COLS=4,MOVEMENT_ROWS=4,COMBAT_ROWS=8;
  const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
  // movement atlas: 3 advance, 3 retreat, 2 rush, 2 directional air, 2 low/reset,
  // plus 2 fast backsteps, 1 pivot and 1 planted landing pose.
@@ -30,15 +30,66 @@
   {src:7,lean:23,twist:10,lift:-9},{src:4,lean:20,twist:8,lift:0},
   {src:7,lean:25,twist:-8,lift:-10},{src:5,lean:-15,twist:-9,lift:2},
   {src:0,lean:-20,twist:-11,lift:0},{src:4,lean:27,twist:13,lift:-2},
-  {src:0,lean:-8,twist:-6,lift:0},{src:5,lean:-5,twist:-4,lift:2}
+  {src:0,lean:-8,twist:-6,lift:0},{src:5,lean:-5,twist:-4,lift:2},
+  // Four new connected whole-body cels per Square move, 16 additions.
+  // Matching src:0 windup/recovery silhouettes eliminate the visual reset
+  // between consecutive Square attacks; each strike has its own contact art.
+  // Jab: planted shoulder, coiled fist, punch extension, tight recovery.
+  {src:0,lean:-4,twist:-3,lift:0},
+  {src:0,lean:-13,twist:-7,lift:-1},
+  {src:1,lean:21,twist:9,lift:-2},
+  {src:0,lean:3,twist:1,lift:0},
+  // Cross: shoulder rotation, hip load, arm extension, return to stance.
+  {src:0,lean:-5,twist:-4,lift:0},
+  {src:1,lean:-14,twist:-9,lift:-1},
+  {src:2,lean:26,twist:11,lift:-2},
+  {src:0,lean:3,twist:1,lift:0},
+  // Body blow: dip and chamber at waist height, contact, recovery.
+  {src:0,lean:-6,twist:-3,lift:0},
+  {src:2,lean:-12,twist:-8,lift:2},
+  {src:3,lean:21,twist:11,lift:1},
+  {src:0,lean:3,twist:1,lift:0},
+  // Uppercut: rooted low stance, rising charge, upper contact, reset.
+  {src:0,lean:-6,twist:-3,lift:0},
+  {src:3,lean:-12,twist:-8,lift:2},
+  {src:4,lean:22,twist:-9,lift:-5},
+  {src:0,lean:3,twist:1,lift:0}
  ]);
  const layouts=Object.freeze({movement,combat});
+ // Four phases: anticipation, loading, actual contact, recovery.
+ // The active attack durations are still defined in yusuke.json; only artwork
+ // timing is changed. A shared nearly-neutral exit connects to the next move.
+ const square=Object.freeze({
+  light:Object.freeze({frames:[16,17,18,19],cuts:[.17,.32,.70],lead:8,rise:-2,roll:.014}),
+  cross:Object.freeze({frames:[20,21,22,23],cuts:[.18,.35,.69],lead:11,rise:-2,roll:.018}),
+  body:Object.freeze({frames:[24,25,26,27],cuts:[.20,.36,.71],lead:7,rise:2,roll:.016}),
+  upper:Object.freeze({frames:[28,29,30,31],cuts:[.20,.38,.70],lead:8,rise:-7,roll:.021})
+ });
+ const smoothstep=t=>{const a=clamp(t);return a*a*(3-2*a);};
+ function squareFrame(type,progress){
+  const data=square[type];
+  if(!data)return null;
+  const p=clamp(progress),c=data.cuts;
+  const slot=p<c[0]?0:p<c[1]?1:p<c[2]?2:3;
+  const from=slot===0?0:c[slot-1],to=slot===3?1:c[slot];
+  const local=smoothstep((p-from)/Math.max(.001,to-from));
+  // Local body motion eases continuously (no reset on image-boundary ticks).
+  const drive=Math.sin(Math.PI*p);
+  const carry=drive*drive;
+  return {index:data.frames[slot],slot,motion:{
+    forward:data.lead*carry,
+    lift:data.rise*drive,
+    tilt:data.roll*Math.sin(Math.PI*2*p),
+    phase:slot,progress:p,blend:local
+  }};
+ }
  function compose(part,image,meta) {
   if(!image || !(image.naturalWidth || image.width) || !meta?.frames?.length ||
     !meta.frames.every(f=>f.w>0&&f.h>0&&f.w<=470&&f.h<=458))return null;
   const source=layouts[part];
   const canvas=document.createElement("canvas");
-  canvas.width=CELL*COLS;canvas.height=CELL*ROWS;
+  canvas.width=CELL*COLS;
+  canvas.height=CELL*(part==="combat"?COMBAT_ROWS:MOVEMENT_ROWS);
   const ctx=canvas.getContext("2d",{alpha:true});
   if(!ctx)return null;
   ctx.imageSmoothingEnabled=false;
@@ -74,7 +125,10 @@
   try{
    const moved=compose("movement",images.movement,meta.movement);
    const striking=compose("combat",images.combat,meta.combat);
-   return moved&&striking?{movement:moved,combat:striking,frameCount:32,fps:FPS}:null;
+   return moved&&striking?{
+    movement:moved,combat:striking,frameCount:movement.length+combat.length,fps:FPS,
+    squareClips:Object.freeze(Object.fromEntries(Object.entries(square).map(([k,v])=>[k,v.frames])))
+   }:null;
   }catch(e){return null;}
  }
  const frameAt=(keys,time,rate=FPS)=>keys[Math.floor(Math.max(0,time)*rate)%keys.length];
@@ -85,17 +139,18 @@
   const t=Math.max(0,fighter.stateTime||0);
   const relative=(fighter.vx||0)*(fighter.facing||1);
   const p=clamp(progress);
-  let part="movement",clip,index;
+  let part="movement",clip,index,motion=null,squarePose=null;
   if(attack){
    part="combat";
    if(!grounded && ["light","cross","body","upper","heavy","powerKick"].includes(attack)){
     clip="airStrike";index=phase(p,.19,.83,7,8);
    }else{
-    switch(attack){
-     case "light":clip="jab";index=phase(p,.2,.83,0,1);break;
-     case "cross":clip="cross";index=phase(p,.19,.84,2,3);break;
-     case "body":clip="body";index=phase(p,.16,.82,4,4);break;
-     case "upper":clip="upper";index=phase(p,.18,.83,5,6);break;
+    if(square[attack]){
+      squarePose=squareFrame(attack,p);
+      index=squarePose.index;
+      motion=squarePose.motion;
+      clip=attack==="light"?"jab":attack;
+    }else switch(attack){
      case "heavy":clip="heavy";index=phase(p,.2,.84,12,13);break;
      case "powerKick":clip="finisher";index=phase(p,.2,.85,9,10);break;
      // Spirit Gun, fist-fired Shotgun and their canonical VFX stay untouched.
@@ -135,11 +190,14 @@
    memo.clip=clip;memo.started=t;
   }
   const mix=clamp((t-memo.started)/.075);
-  const previous=mix<.95 ? memo.from : null;
+  // Never crossfade two whole-body Square silhouettes: the duplicate limbs
+  // read as white outlines/ghosts at the exact instant the chain connects.
+  // Matched first/last cels and smoothly eased body carry handle the handoff.
+  const previous=squarePose?null:mix<.95?memo.from:null;
   const previousImage=previous?memo.fromImage:null;
   memo.frame=frame;memo.image=atlasSheet.image;
   return {frame,image:atlasSheet.image,scale:atlasSheet.scale,source:"directional",
-   part,index,clip,frames:atlasSheet.frames,
+   part,index,clip,frames:atlasSheet.frames,motion,squareFrame:squarePose?.slot??null,
    transitionFrame:previous,transitionImage:previousImage,transitionMix:mix};
  }
  // Lightweight world-space speed streaks and wind-up accents influenced by
@@ -213,5 +271,5 @@
   }
   ctx.restore();
  }
- root.MugenDirectional=Object.freeze({fps:FPS,layouts,build,choosePose,drawBehind,drawFront});
+ root.MugenDirectional=Object.freeze({fps:FPS,layouts,square,squareFrame,build,choosePose,drawBehind,drawFront});
 })(typeof window==="undefined"?globalThis:window);
