@@ -111,7 +111,7 @@ assert.ok(studio.includes("columns:4,rows:4"),"sprite studio must export the 4x4
 assert.ok(studio.includes("yusuke-directional-v10-frames.json"),
  "studio exports frame crop metadata for external import");
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/yusuke-directional-v8\.js\?v=3/);
+assert.match(html,/yusuke-directional-v8\.js\?v=4/);
 assert.match(html,/MugenDirectional\?\.build/);
 assert.match(html,/MugenDirectional\?\.choosePose/);
 assert.match(html,/premiumPose\.frames \|\| premiumArt/);
