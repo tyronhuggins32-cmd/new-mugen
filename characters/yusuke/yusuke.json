@@ -688,8 +688,8 @@
         "animation": "spiritGun"
       },
       "shotgun": {
-        "duration": 0.64,
-        "spawnTime": 0.3,
+        "duration": 0.54,
+        "spawnTime": 0.24,
         "cost": 30,
         "projectile": "spiritShotgun",
         "animation": "spiritGun"
@@ -735,6 +735,23 @@
         "animation": "upper",
         "airAnimation": "airKick",
         "heavyImpact": true
+      },
+      "powerKick": {
+        "duration": 0.47,
+        "activeStart": 0.16,
+        "activeEnd": 0.292,
+        "damage": 42,
+        "range": 151,
+        "height": 111,
+        "knockback": 1150,
+        "launchVelocity": -515,
+        "knockbackDrag": 1.45,
+        "hitstun": 0.57,
+        "energyGain": 8,
+        "animation": "heavyKick",
+        "heavyImpact": true,
+        "spiritCoated": true,
+        "cost": 0
       }
     },
     "projectile": {
@@ -759,15 +776,15 @@
         "heavyImpact": true
       },
       "shotgun": {
-        "pellets": 5,
+        "pellets": 7,
         "speed": 820,
         "radius": 8,
         "damage": 39,
-        "knockback": 360,
+        "knockback": 420,
         "hitstun": 0.28,
         "life": 0.8,
         "energyGain": 4,
-        "spread": 0.16,
+        "spread": 0.27,
         "heavyImpact": true
       }
     },
@@ -799,7 +816,15 @@
         "heavy": 12
       }
     },
-    "roundTime": 180
+    "roundTime": 180,
+    "combo": {
+      "squarePressesRequired": 3,
+      "window": 1.05,
+      "displayTime": 2.2,
+      "firstMultiplier": 1.2,
+      "extraPerHit": 0.2,
+      "maxMultiplier": 2.6
+    }
   },
   "passives": {
     "fightingInstinct": {
@@ -819,8 +844,8 @@
     },
     {
       "id": "spirit_punch",
-      "name": "Spirit Punch",
-      "input": "△ / K",
+      "name": "Three-Square Combo (x1.2→x2.6)",
+      "input": "□ × 3 then continue □",
       "type": "normal",
       "description": "Alternates a spirit-coated uppercut and power kick for heavy knockback."
     },
@@ -833,8 +858,8 @@
     },
     {
       "id": "spirit_shotgun",
-      "name": "Spirit Shotgun",
-      "input": "□ ×3 → ○ / J ×3 → L",
+      "name": "Spirit Shotgun (Spirit >50%)",
+      "input": "△ / Triangle",
       "type": "special",
       "description": "Three punches prime a fist-fired Spirit Shotgun. Press Spirit Gun before the punch chain expires."
     },
@@ -1382,5 +1407,107 @@
       "landing": 10
     },
     "note": "133 virtual animation samples, not 133 newly drawn frames. Art is warped in render time at device refresh rate without expensive pre-rendering."
+  },
+  "powerKickSpriteSheet": {
+    "src": "characters/yusuke/yusuke-power-kick.png",
+    "width": 1536,
+    "height": 512,
+    "scale": 1.1,
+    "frames": [
+      {
+        "x": 120,
+        "y": 58,
+        "w": 144,
+        "h": 183,
+        "ax": 73
+      },
+      {
+        "x": 515,
+        "y": 51,
+        "w": 121,
+        "h": 190,
+        "ax": 42
+      },
+      {
+        "x": 899,
+        "y": 40,
+        "w": 122,
+        "h": 201,
+        "ax": 37
+      },
+      {
+        "x": 1252,
+        "y": 45,
+        "w": 183,
+        "h": 196,
+        "ax": 53
+      },
+      {
+        "x": 84,
+        "y": 298,
+        "w": 215,
+        "h": 199,
+        "ax": 54
+      },
+      {
+        "x": 477,
+        "y": 295,
+        "w": 197,
+        "h": 202,
+        "ax": 47
+      },
+      {
+        "x": 903,
+        "y": 295,
+        "w": 114,
+        "h": 202,
+        "ax": 36
+      },
+      {
+        "x": 1269,
+        "y": 305,
+        "w": 149,
+        "h": 192,
+        "ax": 77
+      }
+    ],
+    "animations": {
+      "powerKick": {
+        "keyframes": [
+          {
+            "frame": 0,
+            "at": 0
+          },
+          {
+            "frame": 1,
+            "at": 0.1
+          },
+          {
+            "frame": 2,
+            "at": 0.2
+          },
+          {
+            "frame": 3,
+            "at": 0.35
+          },
+          {
+            "frame": 4,
+            "at": 0.49
+          },
+          {
+            "frame": 5,
+            "at": 0.65
+          },
+          {
+            "frame": 6,
+            "at": 0.8
+          },
+          {
+            "frame": 7,
+            "at": 0.93
+          }
+        ]
+      }
+    }
   }
 }
