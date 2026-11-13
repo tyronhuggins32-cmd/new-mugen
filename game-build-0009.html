@@ -1795,7 +1795,7 @@
   <script src="yusuke-premium-v6.js?v=2"></script>
   <script src="yusuke-alpha-v9.js?v=1"></script>
   <script src="mugen-yusuke-palette-v11.js?v=1"></script>
-  <script src="yusuke-directional-v8.js?v=4"></script>
+  <script src="yusuke-directional-v8.js?v=5"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
@@ -3025,6 +3025,16 @@
         drawYusukeSprite(context, time, alpha = 1, ghost = false) {
           const attackType = this.currentAttack();
           const attackProgress = attackType ? Math.min(1, this.stateTime / attackData[attackType].duration) : 0;
+          // The render fraction interpolates VISUAL Square progress between
+          // fixed 60Hz simulation updates. Damage, collision windows, input
+          // buffering, hitstop and movement physics continue unchanged.
+          const isSquareAttack = this.grounded &&
+            ["light","cross","body","upper"].includes(attackType);
+          const renderAttackProgress = isSquareAttack
+            ? Math.max(0,Math.min(1,
+                (this.stateTime-(1-Math.max(0,Math.min(1,alpha)))/60)/
+                attackData[attackType].duration))
+            : attackProgress;
           // Draw gun and shotgun from the SAME canonical Yusuke artwork as idle
           // and movement. The old eight-frame special sheet was made at another
           // scale and palette, causing the fighter to visibly grow on firing.
@@ -3043,7 +3053,7 @@
           // New hit sprites take priority when the derived atlas is loaded.
           const premiumPose = premiumReady
             ? (window.MugenDirectional?.choosePose(this, attackType,
-                directionalAtlas, attackProgress)
+                directionalAtlas, renderAttackProgress)
               || window.MugenPremium?.choosePose(this, attackType, premiumArt,
                 {combat:cleanPremiumCombatSheet || premiumCombatSheet,
                  movement:cleanPremiumMotionSheet || premiumMotionSheet},
@@ -3070,11 +3080,13 @@
             : combatPose?.frame || motionPose?.frame || yusukeSpriteFrames[this.yusukeFrameIndex()] || yusukeSpriteFrames[0];
           if (!frame) return;
           this._usingPremiumCel = Boolean(premiumPose);
-          // Six Square key poses move the shoulders and arms, not the entire
-          // fighter sliding 12-18 pixels through the opponent's feet.
+          // Forty-eight Square cels now provide twelve poses for each
+          // chained punch, with a canonical start/end stance. Avoid sliding
+          // Yusuke through opponents or altering the active hitbox.
           const squarePose = premiumPose?.part === "square";
+          const squareMotion = squarePose ? premiumPose?.motion : null;
           const lunge = ["light", "cross", "body", "upper", "powerKick"].includes(attackType)
-            ? Math.sin(attackProgress * Math.PI)
+            ? Math.sin(renderAttackProgress * Math.PI)
               * (squarePose
                 ? ({ light: 3, cross: 5, body: 4, upper: 4 }[attackType])
                 : ({ light: 8, cross: 18, body: 15, upper: 12, powerKick: 26 }[attackType]))
@@ -3112,16 +3124,18 @@
           context.save();
           context.translate(posX + this.facing * lunge, posY + pose.bob);
           context.scale(this.facing * turnCompression, 1);
-          // Continuous sub-frame inertia between the six keyed Square cels.
-          // Small planted-foot rotation/extension fills the 60Hz render gaps
-          // without translucent onion-skin ghosts or additional hitboxes.
-          const strikeEnergy = squarePose ? Math.sin(Math.PI*attackProgress) : 0;
+          // Subframe interpolation is applied to a single anchored sprite.
+          // The cached next key's transform is approached progressively
+          // without drawing an overlapping second body or white fringe.
+          const strikeEnergy = squarePose ? Math.sin(Math.PI*renderAttackProgress) : 0;
           const squareTurn = squarePose
-            ? (attackType==="upper" ? -.017 : .013)*strikeEnergy
+            ? (attackType==="upper" ? -.017 : .013)*strikeEnergy +
+              (squareMotion?.tilt || 0)
             : 0;
+          if (squareMotion) context.translate(0,(squareMotion.lift || 0)*.5);
           context.rotate(pose.tilt + squareTurn);
-          context.scale(pose.stretchX*(1+strikeEnergy*.013),
-            pose.stretchY*(1-strikeEnergy*.008));
+          context.scale(pose.stretchX*(1+strikeEnergy*.013)*(squareMotion?.stretchX||1),
+            pose.stretchY*(1-strikeEnergy*.008)*(squareMotion?.stretchY||1));
           context.imageSmoothingEnabled = false;
 
           if (!ghost && !this._usingPremiumCel &&

@@ -29,16 +29,16 @@ assert.ok(atlas);
 assert.equal(allocated.length,3,"movement, combat and Square textures built once");
 for(const part of ["movement","combat","square"]){
  const sheet=atlas[part];
- assert.equal(sheet.image.width,2048);
+ assert.equal(sheet.image.width,part==="square"?4096:2048);
  assert.equal(sheet.image.height,part==="square"?3072:2048);
- assert.equal(sheet.frames.length,part==="square"?24:16);
+ assert.equal(sheet.frames.length,part==="square"?48:16);
  assert.equal(sheet.scale,.5);
  for(const f of sheet.frames){
   assert.ok(f.x>=0&&f.y>=0&&f.w>0&&f.h>0&&f.x+f.w<=sheet.image.width&&f.y+f.h<=sheet.image.height);
   assert.ok(f.ax>=0&&f.ax<=f.w);
  }
 }
-assert.equal(draws.length,56,"all 56 cels preserve each full source silhouette without strips");
+assert.equal(draws.length,80,"all 80 cels preserve each full source silhouette without strips");
 assert.ok(draws.every(args=>args.length===9),
   "no partial sprite-strip cropping is allowed: it creates white seams");
 assert.ok(draws.every(args=>images.movement===args[0]||images.combat===args[0]));
@@ -108,13 +108,13 @@ const studio=fs.readFileSync("yusuke-sprite-studio.html","utf8");
 assert.ok(studio.includes('"yusuke-directional-"+part+"-v8.png"'),
  "studio exports each transparent sheet with a stable file name");
 assert.ok(studio.includes("columns:4,rows:4"),"sprite studio must export the 4x4 atlas");
-assert.ok(studio.includes("yusuke-directional-v10-frames.json"),
+assert.ok(studio.includes("yusuke-directional-v12-frames.json"),
  "studio exports frame crop metadata for external import");
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/yusuke-directional-v8\.js\?v=4/);
+assert.match(html,/yusuke-directional-v8\.js\?v=5/);
 assert.match(html,/MugenDirectional\?\.build/);
 assert.match(html,/MugenDirectional\?\.choosePose/);
 assert.match(html,/premiumPose\.frames \|\| premiumArt/);
 new vm.Script([...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
   .map(x=>x[1]).find(x=>x.includes("function selectYusukeCombatPose")));
-console.log("PASS: 56 source-matched cels, 24 Square variants, clean backdash and 40 FPS timeline.");
+console.log("PASS: 80 source-matched cels, 48 Square variants, clean backdash and 40 FPS timeline.");

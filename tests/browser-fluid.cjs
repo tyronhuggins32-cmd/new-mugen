@@ -70,17 +70,17 @@ const path = require("node:path");
       cleanIdle?.image===window.testEngine.cleanedPremium.movement &&
       cleanGun?.image===window.testEngine.cleanedPremium.combat
     );
-    // Actual 40 FPS attack samples must visit distinct poses, rather than
+    // Real 60Hz Square render sampling should visit all twelve poses, rather than
     // holding two stills through the active damage window.
     const squareSequences=Object.entries({light:.19,cross:.25,body:.29,upper:.39})
       .map(([attack,duration])=>{
         const actor={state:"attack-"+attack,grounded:true,vx:0,vy:0,facing:1,
           stateTime:0,dashTimer:0};
         const keys=new Set();
-        for(let i=0;i<=Math.ceil(duration*40);i++){
-          actor.stateTime=i/40;
+        for(let i=0;i<=Math.ceil(duration*60);i++){
+          actor.stateTime=i/60;
           const pose=window.MugenDirectional?.choosePose(actor,attack,extra,
-            Math.min(1,i/(duration*40)));
+            Math.min(1,i/(duration*60)));
           if(pose?.part==="square")keys.add(pose.index);
         }
         return {attack,count:keys.size};
@@ -140,7 +140,7 @@ const path = require("node:path");
     screen.drawImage=function(...args){
       if(args.length===9){
         const image=args[0],width=image?.naturalWidth||image?.width;
-        if(width===2048||width===1536){
+        if(width===2048||width===1536||width===4096){
           const [sx,sy,sw,sh]=args.slice(1,5);
           const [dw,dh]=args.slice(7,9);
           if(sw>0&&sh>0&&Number.isFinite(dh)){
@@ -192,7 +192,7 @@ const path = require("node:path");
   });
   assert.notEqual(result.first,result.second,"movement should modify actual rendered pixels continuously");
   assert.deepEqual(result.atlasCounts,[16,16],"existing premium sheets remain aligned");
-  assert.equal(result.squareCount,24,"Square kit builds 24 new cels");
+  assert.equal(result.squareCount,48,"Square kit builds 48 cels (twelve per attack)");
   const idleHeight=result.characterSizes.idle?.maxHeight;
   assert.ok(idleHeight>=155&&idleHeight<=235,
     "real alpha-cleaned idle figure must stay within normal fighter proportions");
@@ -207,8 +207,8 @@ const path = require("node:path");
     "each Square attack and its walk exit must show one complete sprite without double outlines");
   assert.equal(result.specialFallbackClean,true,
     "idle and gun poses must keep original high-resolution alpha-cleaned artwork");
-  assert.deepEqual(result.squareSequences.map(s=>s.count),[6,6,6,6],
-    "all four punches must cycle through six readable poses at 40 FPS in Chromium");
+  assert.deepEqual(result.squareSequences.map(s=>s.count),[12,12,12,12],
+    "all four punches must display twelve poses on the 60Hz visual timeline");
   assert.equal(result.forwardClip,"advance","forward directional artwork is active in Chromium");
   assert.equal(result.backwardClip,"retreat","backward footwork has distinct art");
   assert.equal(result.retreatMoved,true,"real left input must backwalk even near enemy attacks");

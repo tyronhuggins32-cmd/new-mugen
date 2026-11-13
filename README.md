@@ -346,3 +346,40 @@ atlases rather than blocking the match.
 
 Validation: `node tests/yusuke-square-v10.cjs`, `node
 tests/yusuke-directional-v8.cjs`, and the Chromium browser smoke test.
+
+
+## Yusuke V12: double the Square combat cels and smooth punch-to-punch transitions
+
+**Jab, cross, body shot and uppercut now each have twelve source-derived keyed
+poses instead of six** (48 Square cels versus 24 previously). Together with
+16 movement and 16 other combat poses, the runtime can use 80 source-derived
+cels. The Square sheet is an optional 4096 × 3072 transparent texture arranged
+as 8 columns × 6 rows, using the same premium, alpha-cleaned palette and
+single-piece sprite drawing as other Yusuke poses.
+
+To make buffered Square presses transition naturally, every attack starts and
+ends on the identical authentic movement-neutral source pose. Between those
+endpoints, graded full-body windup, extension, recoil and reset shapes are
+keyed by the real animation progress. Lightweight easing supplies continuous
+single-body rotation, stretch and foot-anchor adjustment between keys, without
+cross-fading two whole bodies or reintroducing white seam/outline artifacts.
+The display-render interpolation fraction lets the short jab visit twelve
+pose indices at a nominal 60 Hz, while regular movement sampling stays
+**40 FPS** and simulation/hit detection remains at **60 Hz**. Low-refresh
+displays may skip some short-lived images; the in-between deformation remains
+continuous between render updates.
+
+The visual system does not change combo damage, active attack windows, hitstop,
+Square input buffering, directional movement, Spirit Gun/Shotgun, 5000 HP or
+COMBO-5 effect gating. If a low-memory browser cannot allocate the optional
+Square sheet, the 16 movement plus 16 combat fallback still runs.
+
+The sprite studio exports `yusuke-directional-square-v12.png` plus
+`yusuke-directional-v12-frames.json`, describing each of the twelve keys.
+These are transformed existing high-detail source paintings, not 48
+independently redrawn anime action frames. A further manually illustrated
+in-between pass would be needed to match the reference video's full animation
+quality.
+
+Tests: `node tests/yusuke-square-v12.cjs`, the existing Square and directional
+regression tests, and Chromium's `tests/browser-fluid.cjs` combat renderer.

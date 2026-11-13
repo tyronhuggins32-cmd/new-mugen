@@ -22,6 +22,8 @@ jobs:
         run: node tests/yusuke-directional-v8.cjs
       - name: Square combo expanded pose timeline
         run: node tests/yusuke-square-v10.cjs
+      - name: Doubled Square sprites and seamless 60Hz handoffs
+        run: node tests/yusuke-square-v12.cjs
       - name: Small original combat sound cues and sound-off safety
         run: node tests/combat-sfx-v8.cjs
       - name: Cinematic attack effects and sprite-safe cleanup

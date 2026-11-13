@@ -16,6 +16,7 @@ on:
       - "tests/combat-sfx-v8.cjs"
       - "tests/yusuke-directional-v8.cjs"
       - "tests/yusuke-square-v10.cjs"
+      - "tests/yusuke-square-v12.cjs"
       - "tests/engine.cjs"
       - "characters/yusuke/premium-atlas.json"
       - "characters/yusuke/*.png"

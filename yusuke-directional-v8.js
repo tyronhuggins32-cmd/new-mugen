@@ -1,13 +1,14 @@
-/* Yusuke Directional V10: 56 source-matched, 1:1 pixel-anime cels.
+/* Yusuke Directional V12: 80 source-matched, one-piece pixel-anime cels.
  * Reference goals: backward footwork, forward rush, aerial direction changes,
  * individual punch windup/contact/recovery and readable aerial strikes.
- * 24 new Square poses animate jab, cross, body, upper with six staged keys.
- * All source-derived cels use the cleaned V8 premium paintings; they are
- * not 56 new hand-drawn poses. Primary 8-frame originals remain unchanged.
+ * 48 Square cels (12 per jab, cross, body and uppercut) preserve each
+ * punch's anticipation, acceleration, contact, recoil and neutral recovery.
+ * These are source-derived in-betweens, not 80 individually hand-drawn sprites.
+ * All phases use the same alpha-cleaned premium art, not sliced limb strips.
  */
 (function(root){
  "use strict";
- const FPS=40,CELL=512,COLS=4,ROWS=4,SQUARE_ROWS=6;
+ const FPS=40,SQUARE_FPS=60,CELL=512,COLS=4,ROWS=4,SQUARE_COLS=8,SQUARE_ROWS=6;
  const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
  // movement atlas: 3 advance, 3 retreat, 2 rush, 2 directional air, 2 low/reset,
  // plus 2 fast backsteps, 1 pivot and 1 planted landing pose.
@@ -33,61 +34,95 @@
   {src:0,lean:-20,twist:-11,lift:0},{src:4,lean:27,twist:13,lift:-2},
   {src:0,lean:-8,twist:-6,lift:0},{src:5,lean:-5,twist:-4,lift:2}
  ]);
- // Six purposeful key poses per Square attack: readable pre-load,
- // acceleration, active contact and recoil. Each cel uses ONE intact source
- // drawing with a planted foot pivot, never cut-and-shift limb strips.
- // No frame is copied verbatim; shear/stretch/vertical settling differ.
+ // Twelve one-piece silhouettes for each Square attack. Each clip starts
+ // AND ENDS on the same source-matched premium neutral stance, so buffered
+ // Square chains flow without a sudden new body silhouette or ghost overlap.
+ // Small graded shoulder and weight shifts supply in-between frames, while
+ // the two premium painting sheets supply the existing exact color/alpha.
+ const neutral=Object.freeze({part:"movement",src:0,lean:0,twist:0,lift:0,sx:1,sy:1});
  const square=Object.freeze([
-  // light jab: load, set, release, follow-through, contact, reset
-  {src:0,lean:-25,twist:-8,lift:0,sx:.955,sy:.98},
-  {src:0,lean:-11,twist:-4,lift:0,sx:.985,sy:1},
-  {src:1,lean:4,twist:1,lift:-1,sx:1.005,sy:1},
-  {src:1,lean:14,twist:5,lift:-2,sx:1.025,sy:.993},
-  {src:1,lean:23,twist:8,lift:-1,sx:1.045,sy:.99},
-  {src:5,lean:-8,twist:-3,lift:0,sx:.98,sy:1},
-  // cross: coil, turn, rotate shoulder, connect, snap, recover
-  {src:0,lean:-27,twist:-11,lift:0,sx:.95,sy:.99},
-  {src:2,lean:-10,twist:-5,lift:0,sx:.98,sy:1},
-  {src:2,lean:5,twist:3,lift:-1,sx:1.015,sy:1},
-  {src:2,lean:17,twist:7,lift:-2,sx:1.03,sy:.995},
-  {src:2,lean:25,twist:10,lift:-2,sx:1.045,sy:.987},
-  {src:5,lean:-7,twist:-4,lift:0,sx:.987,sy:1},
-  // body: low plant, shoulder dip, rising drive, impact, hold, recoil
-  {src:3,lean:-19,twist:-8,lift:0,sx:.962,sy:.94},
-  {src:3,lean:-11,twist:-5,lift:0,sx:.985,sy:.945},
-  {src:3,lean:4,twist:1,lift:-1,sx:1.006,sy:.95},
-  {src:3,lean:15,twist:6,lift:-2,sx:1.027,sy:.957},
-  {src:3,lean:24,twist:10,lift:-1,sx:1.042,sy:.96},
-  {src:5,lean:-6,twist:-4,lift:0,sx:.99,sy:1},
-  // uppercut: sink, wind, launch, rise, apex, grounded recovery
-  {src:3,lean:-22,twist:-9,lift:0,sx:.967,sy:.945},
-  {src:3,lean:-13,twist:-5,lift:0,sx:.984,sy:.955},
-  {src:4,lean:3,twist:3,lift:-4,sx:1.01,sy:1},
-  {src:4,lean:11,twist:6,lift:-8,sx:1.025,sy:1.005},
-  {src:4,lean:21,twist:11,lift:-12,sx:1.04,sy:1.013},
-  {src:5,lean:-7,twist:-3,lift:0,sx:.985,sy:1}
+  // JAB: grounded guard, draw-back, straight release, precise contact, reset.
+  neutral,
+  {part:"movement",src:0,lean:-5,twist:-2,lift:0,sx:.99,sy:1},
+  {src:0,lean:-15,twist:-7,lift:0,sx:.970,sy:.99},
+  {src:0,lean:-9,twist:-4,lift:0,sx:.988,sy:1},
+  {src:0,lean:1,twist:0,lift:-1,sx:1.00,sy:1},
+  {src:1,lean:9,twist:3,lift:-1,sx:1.012,sy:.998},
+  {src:1,lean:17,twist:6,lift:-2,sx:1.027,sy:.995},
+  {src:1,lean:23,twist:9,lift:-2,sx:1.040,sy:.99},
+  {src:1,lean:14,twist:5,lift:-1,sx:1.024,sy:.998},
+  {src:5,lean:-7,twist:-3,lift:0,sx:.988,sy:1},
+  {part:"movement",src:0,lean:3,twist:1,lift:0,sx:1.005,sy:1},
+  neutral,
+  // CROSS: coil through the shoulder, rotate through contact, recover guard.
+  neutral,
+  {part:"movement",src:0,lean:-6,twist:-3,lift:0,sx:.988,sy:1},
+  {src:0,lean:-19,twist:-9,lift:0,sx:.962,sy:.993},
+  {src:2,lean:-10,twist:-5,lift:0,sx:.982,sy:.995},
+  {src:2,lean:3,twist:1,lift:-1,sx:1.004,sy:1},
+  {src:2,lean:11,twist:4,lift:-1,sx:1.015,sy:1},
+  {src:2,lean:19,twist:8,lift:-2,sx:1.032,sy:.994},
+  {src:2,lean:26,twist:10,lift:-2,sx:1.045,sy:.99},
+  {src:2,lean:16,twist:6,lift:-1,sx:1.025,sy:.997},
+  {src:5,lean:-8,twist:-4,lift:0,sx:.986,sy:1},
+  {part:"movement",src:0,lean:3,twist:1,lift:0,sx:1.005,sy:1},
+  neutral,
+  // BODY: foot plant, lower center of gravity, compact body-shot followthrough.
+  neutral,
+  {part:"movement",src:0,lean:-5,twist:-2,lift:0,sx:.991,sy:.993},
+  {src:3,lean:-18,twist:-8,lift:0,sx:.961,sy:.945},
+  {src:3,lean:-11,twist:-5,lift:0,sx:.984,sy:.950},
+  {src:3,lean:-2,twist:-1,lift:0,sx:.997,sy:.955},
+  {src:3,lean:7,twist:3,lift:-1,sx:1.009,sy:.959},
+  {src:3,lean:16,twist:6,lift:-1,sx:1.026,sy:.958},
+  {src:3,lean:23,twist:10,lift:-2,sx:1.040,sy:.957},
+  {src:3,lean:15,twist:6,lift:-1,sx:1.027,sy:.965},
+  {src:5,lean:-7,twist:-4,lift:0,sx:.988,sy:1},
+  {part:"movement",src:0,lean:2,twist:1,lift:0,sx:1.004,sy:1},
+  neutral,
+  // UPPERCUT: crouched windup, rising strike, visible apex and grounded reset.
+  neutral,
+  {part:"movement",src:0,lean:-4,twist:-2,lift:0,sx:.993,sy:1},
+  {src:3,lean:-19,twist:-9,lift:0,sx:.965,sy:.945},
+  {src:3,lean:-12,twist:-5,lift:0,sx:.983,sy:.957},
+  {src:3,lean:-1,twist:1,lift:-1,sx:1.004,sy:.975},
+  {src:4,lean:7,twist:3,lift:-3,sx:1.014,sy:1},
+  {src:4,lean:15,twist:7,lift:-7,sx:1.029,sy:1.005},
+  {src:4,lean:23,twist:11,lift:-11,sx:1.043,sy:1.012},
+  {src:4,lean:14,twist:6,lift:-7,sx:1.028,sy:1.005},
+  {src:5,lean:-8,twist:-4,lift:0,sx:.987,sy:1},
+  {part:"movement",src:0,lean:2,twist:1,lift:0,sx:1.004,sy:1},
+  neutral
  ]);
+ // Nearly one Square pose per 60Hz display update on the 0.19s jab; slower
+ // attacks hold some stages longer. Hitbox timings and damage are unchanged.
+ const SQUARE_BREAKS=Object.freeze([.075,.16,.245,.33,.415,.50,.585,.67,.755,.84,.925]);
  const SQUARE_CLIPS=Object.freeze({
-   light:Object.freeze({clip:"jab",offset:0,breaks:[.07,.19,.34,.49,.69]}),
-   cross:Object.freeze({clip:"cross",offset:6,breaks:[.08,.23,.36,.52,.70]}),
-   body:Object.freeze({clip:"body",offset:12,breaks:[.08,.21,.34,.50,.68]}),
-   upper:Object.freeze({clip:"upper",offset:18,breaks:[.07,.21,.34,.48,.67]})
+   light:Object.freeze({clip:"jab",offset:0,breaks:SQUARE_BREAKS}),
+   cross:Object.freeze({clip:"cross",offset:12,breaks:SQUARE_BREAKS}),
+   body:Object.freeze({clip:"body",offset:24,breaks:SQUARE_BREAKS}),
+   upper:Object.freeze({clip:"upper",offset:36,breaks:SQUARE_BREAKS})
  });
  const layouts=Object.freeze({movement,combat,square});
- function compose(part,image,meta) {
+ function compose(part,image,meta,alternate) {
   if(!image || !(image.naturalWidth || image.width) || !meta?.frames?.length ||
     !meta.frames.every(f=>f.w>0&&f.h>0&&f.w<=470&&f.h<=458))return null;
   const source=layouts[part];
+  const columns=part==="square"?SQUARE_COLS:COLS;
   const canvas=document.createElement("canvas");
-  canvas.width=CELL*COLS;canvas.height=CELL*(part==="square"?SQUARE_ROWS:ROWS);
+  canvas.width=CELL*columns;canvas.height=CELL*(part==="square"?SQUARE_ROWS:ROWS);
   const ctx=canvas.getContext("2d",{alpha:true});
   if(!ctx)return null;
   ctx.imageSmoothingEnabled=false;
   const frames=[];
   for(let i=0;i<source.length;i++){
-   const spec=source[i],base=meta.frames[spec.src];
-   if(!base || base.w>470 || base.h>458) return null;
-   const x=(i%COLS)*CELL,y=Math.floor(i/COLS)*CELL;
+   const spec=source[i];
+   const useMovement=part==="square" && spec.part==="movement";
+   const sourceMeta=useMovement ? alternate?.meta : meta;
+   const sourceImage=useMovement ? alternate?.image : image;
+   const base=sourceMeta?.frames?.[spec.src];
+   if(!base || !sourceImage || base.w>470 || base.h>458) return null;
+   const x=(i%columns)*CELL,y=Math.floor(i/columns)*CELL;
    const origin=Math.floor((CELL-base.w)/2);
    // Composite each source sprite ONCE, without chopping limbs into
    // ten offset strips. Those slice boundaries created white seams,
@@ -99,7 +134,7 @@
    ctx.save();
    ctx.translate(x+origin+base.ax,y+CELL);
    ctx.transform(spec.sx||1,0,shear,spec.sy||1,0,0);
-   ctx.drawImage(image,base.x,base.y,base.w,base.h,
+   ctx.drawImage(sourceImage,base.x,base.y,base.w,base.h,
      -base.ax,-base.h+rise,base.w,base.h);
    ctx.restore();
    frames.push({x,y:y+32,w:CELL,h:CELL-32,ax:origin+base.ax});
@@ -114,13 +149,17 @@
   try{
    const moved=compose("movement",images.movement,meta.movement);
    const striking=compose("combat",images.combat,meta.combat);
-   // The third texture is optional on low-memory browsers. Legacy 32-cel
-   // combat and movement remain playable if its allocation fails.
-   const squareArt=compose("square",images.combat,meta.combat);
-   return moved&&striking?{
-     movement:moved,combat:striking,square:squareArt,
-     frameCount:squareArt?56:32,fps:FPS
-   }:null;
+   if(!moved || !striking)return null;
+   // The 48-cel high-detail sheet is optional on low-memory devices:
+   // 16 movement + 16 legacy combat cels remain playable if it cannot
+   // allocate a 4096x3072 transparent texture.
+   let squareArt=null;
+   try {
+     squareArt=compose("square",images.combat,meta.combat,
+       {image:images.movement,meta:meta.movement});
+   }catch(_){squareArt=null;}
+   return {movement:moved,combat:striking,square:squareArt,
+     frameCount:squareArt?80:32,fps:FPS};
   }catch(e){return null;}
  }
  const frameAt=(keys,time,rate=FPS)=>keys[Math.floor(Math.max(0,time)*rate)%keys.length];
@@ -139,8 +178,10 @@
    }else if(atlas.square?.image && SQUARE_CLIPS[attack]){
     const action=SQUARE_CLIPS[attack];
     clip=action.clip;part="square";
-    // Sample by normalized move progress, not unrelated wall-clock time.
-    // Six distinct cels play at 40 FPS on real .19-.39s punch durations.
+    // Select all twelve stages from the actual attack duration. The game's
+    // 60Hz render clock can display the fast jab in twelve successive poses
+    // while movement stays at 40FPS. Subframe lean/stretch is continuous,
+    // but only ONE alpha-cleaned figure is ever drawn at once.
     const stage=action.breaks.reduce((acc,limit)=>acc+(p>=limit?1:0),0);
     index=action.offset+stage;
    }else{
@@ -180,6 +221,25 @@
   }else{return null;}
   const atlasSheet=atlas[part],frame=atlasSheet?.frames?.[index];
   if(!frame)return null;
+  let motion=null;
+  if(part==="square"){
+    const action=SQUARE_CLIPS[attack];
+    const stage=index-action.offset;
+    const from=stage>0?action.breaks[stage-1]:0;
+    const until=stage<11?action.breaks[stage]:1;
+    const t=clamp((p-from)/Math.max(.001,until-from));
+    const ease=t*t*(3-2*t);
+    const pose=layouts.square[index];
+    const next=layouts.square[Math.min(action.offset+11,index+1)];
+    // One-body micro-in-betweens bridge the baked full-cel keyframes.
+    // Avoid blended duplicate arms, fractional sprite strips and white halos.
+    motion={
+      tilt:clamp((next.lean-pose.lean)*ease/600,-.060,.060),
+      stretchX:1+(next.sx-pose.sx)*ease,
+      stretchY:1+(next.sy-pose.sy)*ease,
+      lift:(next.lift-pose.lift)*ease
+    };
+  }
   const memo=fighter._directionalSprite || (fighter._directionalSprite={
    clip:null,frame:null,image:null,started:0,from:null,fromImage:null,
    part:null,fromPart:null
@@ -190,15 +250,15 @@
    memo.clip=clip;memo.started=t;
   }
   const mix=clamp((t-memo.started)/.075);
-  // Square sprites have already been expanded to six stages. Rendering an
-  // old full body over the new one for 75ms causes duplicate hands/outlines.
+  // Square cels now cover twelve contiguous stages with a matching neutral
+  // boundary. An old full body crossfade would duplicate arms/outlines.
   // Keep only one intact figure for Square entry, exit, and chained punches.
   const ghostSquare=part==="square" || memo.fromPart==="square";
   const previous=!ghostSquare && mix<.95 ? memo.from : null;
   const previousImage=previous?memo.fromImage:null;
   memo.frame=frame;memo.image=atlasSheet.image;memo.part=part;
   return {frame,image:atlasSheet.image,scale:atlasSheet.scale,source:"directional",
-   part,index,clip,frames:atlasSheet.frames,
+   part,index,clip,frames:atlasSheet.frames,motion,
    transitionFrame:previous,transitionImage:previousImage,transitionMix:mix};
  }
  // Lightweight world-space speed streaks and wind-up accents influenced by
@@ -272,5 +332,7 @@
   }
   ctx.restore();
  }
- root.MugenDirectional=Object.freeze({fps:FPS,layouts,build,choosePose,drawBehind,drawFront});
+ root.MugenDirectional=Object.freeze({
+   fps:FPS,squareFPS:SQUARE_FPS,layouts,build,choosePose,drawBehind,drawFront
+ });
 })(typeof window==="undefined"?globalThis:window);
