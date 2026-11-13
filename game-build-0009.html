@@ -1769,6 +1769,7 @@
   <script src="mugen-yusuke-palette-v11.js?v=1"></script>
   <script src="yusuke-directional-v8.js?v=5"></script>
   <script src="mugen-yusuke-reference-v13.js?v=2"></script>
+  <script src="yusuke-exact-reference-v15.js?v=1"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
@@ -1805,6 +1806,9 @@
       premiumCombatSheet.decoding = "async";
       const premiumMotionSheet = new Image();
       premiumMotionSheet.decoding = "async";
+      const exactYusukeSpriteSheet = new Image();
+      exactYusukeSpriteSheet.decoding = "async";
+      let exactYusukeAtlas = null;
       let premiumArt = null;
       let premiumReady = false;
       let directionalAtlas = null;
@@ -2208,6 +2212,7 @@
         premiumReady = false;
         premiumArt = null;
         yusukeMotionAtlas = null;
+        exactYusukeAtlas = null;
         chooseCharacter.disabled = true;
         startBattleButton.disabled = true;
         chooseCharacter.textContent = "PREPARING FIGHTER...";
@@ -2227,6 +2232,21 @@
             loadSpriteAsset(yusukeSpriteSheet, character.spriteSheet, "Yusuke sprite sheet"),
             loadSpriteAsset(yusukeSpiritGunSheet, character.effectSheets.spiritGun, "Spirit Gun effect sheet")
           ]);
+
+          // The user's uploaded 4x4 sheet is the single visual model for
+          // ALL Yusuke moves, damage, jumps, specials and idle. This image is
+          // alpha-cleaned and stored in GitHub, not fetched from a temp URL.
+          try {
+            await loadSpriteAsset(exactYusukeSpriteSheet,{
+              src:"characters/yusuke/yusuke-reference-exact-v15.png",
+              width:1536,height:1024
+            },"Uploaded Yusuke 16-pose reference");
+            exactYusukeAtlas = window.MugenExactYusuke?.build(exactYusukeSpriteSheet) || null;
+            if(!exactYusukeAtlas) throw Error("Exact Yusuke sprite module unavailable");
+          } catch (error) {
+            exactYusukeAtlas = null;
+            console.warn("Uploaded reference artwork could not load; original art fallback remains.",error);
+          }
 
           // Extra poses must not prevent the original fighter from loading.
           // The 24-frame original sheet remains the motion fallback; the matching
@@ -3034,6 +3054,14 @@
         }
 
         drawYusukeSprite(context, time, alpha = 1, ghost = false) {
+          // The exact reference takes priority over ALL legacy Yusuke atlases.
+          // Never draw a second differently scaled/paletted Yusuke over this.
+          if (exactYusukeAtlas && window.MugenExactYusuke?.draw(
+            this,context,time,alpha,exactYusukeAtlas,
+            attackData[this.currentAttack()]?.duration)) {
+            this._usingPremiumCel = true;
+            return;
+          }
           const attackType = this.currentAttack();
           const attackProgress = attackType ? Math.min(1, this.stateTime / attackData[attackType].duration) : 0;
           // The render fraction interpolates VISUAL Square progress between
