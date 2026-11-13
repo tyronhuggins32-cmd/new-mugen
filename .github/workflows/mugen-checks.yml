@@ -20,3 +20,5 @@ jobs:
         run: node tests/visuals.cjs
       - name: DualSense controller checks
         run: node tests/gamepad.cjs
+      - name: Neon arcade home and character select checks
+        run: node tests/neon-ui.cjs
