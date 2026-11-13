@@ -434,3 +434,27 @@ uploaded video.
 Verification: `node tests/yusuke-reference-v13.cjs` and
 `node tests/browser-reference-v13.cjs`, alongside existing Chromium and
 combat regression workflows.
+
+## V14 attack library expansion: rapid punches and a ranged Spirit Wave
+
+The unbound combat kit now includes **eight attacks**, with an optional
+**4096 × 4096 transparent atlas containing 64 source-derived cels**.
+The extra attacks are:
+
+- `rapidBarrage`: ten alternating pressure punches, followed by a heavy
+  finisher. Eleven actual fixed-timing contacts, a compact forward rush and
+  restrained, directional hand trails
+- `spiritWave`: a 35-energy, mid-range horizontal Spirit Energy beam with
+  a charging animation and three true hit windows. It cannot hit enemies
+  behind Yusuke, outside its range, or too high above the visible beam
+
+All eight moves are **unbound**. No Square/Triangle/DualSense button mapping
+has been changed. Review them at `yusuke-attack-lab-v13.html`; the attack
+lab can export both the transparent 64-cel PNG and JSON containing timing,
+animation crops, hit windows, energy cost and attack restrictions. Sprite
+variants derive from existing manually drawn premium references rather than
+64 independently illustrated character poses. Existing gameplay, character
+select, 5000 health, main-menu music and Combo-5 effects gating remain intact.
+
+Regressions include `node tests/yusuke-reference-v14.cjs` plus existing
+V13 and Chromium reference and fight-browser suites.
