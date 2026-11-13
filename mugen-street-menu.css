@@ -79,7 +79,7 @@ body:not([data-screen="fight"]):not([data-screen="arcade"]) .scanlines {display:
   object-fit:cover;
   object-position:53% 9%;
   opacity:.98;
-  filter:sepia(.24) saturate(.73) contrast(1.17);
+  filter:sepia(.58) saturate(.94) contrast(1.18) brightness(1.04);
   animation:sf4-push 14s ease-in-out infinite alternate;
 }
 @keyframes sf4-push {from{transform:scale(1)}to{transform:scale(1.048) translate(-.8%,-.5%)}}
