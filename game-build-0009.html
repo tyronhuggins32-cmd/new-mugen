@@ -2565,10 +2565,7 @@
             this.state="attack-"+type;this.stateTime=0;this.attackConnected=false;this.projectileSpawned=false;
             this.actionBuffer=null;this.actionBufferTime=0;playTone(305,.07);return true;
           }
-          // Square punches create a real chain. The first two are normal;
-          // only the THIRD valid Square press unlocks the combo multiplier.
-          // Triangle is evaluated at activation time, not at button mapping:
-          // >50 Spirit = fist-fired shotgun; <=50 = launching power kick.
+          // Keep Yusuke's existing attack rules and Spirit threshold untouched.
           if (type === "heavy" && !this.cpu) {
             type = this.energy > 50 ? "shotgun" : "powerKick";
           }
@@ -2583,7 +2580,6 @@
               this.comboTime = yusukeCombat.combo?.displayTime ?? 2.2;
             }
           } else if (type !== "light") {
-            // Special attacks do not extend a Square input chain.
             this.punchStep = 0;
             this.squarePresses = 0;
             this.punchWindow = 0;
