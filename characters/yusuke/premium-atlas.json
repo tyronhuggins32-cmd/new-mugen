@@ -1,9 +1,9 @@
 {
-  "version": 2,
-  "masterModel": "high-detail pixel fighter",
+  "version": 3,
+  "masterModel": "unified detailed pixel-anime fighter v7",
   "pixelRenderScale": 0.5,
   "combat": {
-    "src": "characters/yusuke/yusuke-premium-combat.png",
+    "src": "characters/yusuke/yusuke-premium-combat-v7.png",
     "width": 2048,
     "height": 1024,
     "scale": 0.5,
@@ -67,7 +67,7 @@
     ]
   },
   "movement": {
-    "src": "characters/yusuke/yusuke-premium-movement.png",
+    "src": "characters/yusuke/yusuke-premium-movement-v7.png",
     "width": 2048,
     "height": 1024,
     "scale": 0.5,
@@ -129,5 +129,11 @@
         "ax": 187
       }
     ]
+  },
+  "refinement": {
+    "palette": "one shared shirt/skin/pants/wristband reference",
+    "alphaEdges": "source silhouette preserved; red/magenta fringe cleaned",
+    "rig": "one-piece foot-pivot render",
+    "sheetsMustLoadTogether": true
   }
 }
