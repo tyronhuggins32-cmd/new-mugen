@@ -1726,6 +1726,7 @@
 
   <script src="mugen-cinematics.js?v=1"></script>
   <script src="mugen-visuals-v2.js?v=2"></script>
+  <script src="yusuke-motion.js?v=1"></script>
   <script src="dualsense-controller.js?v=1"></script>
   <script>
     (() => {
@@ -1774,6 +1775,7 @@
       const yusukeSpiritGunSheet = new Image();
       yusukeSpiritGunSheet.decoding = "async";
       let combatAtlasReady = false;
+      let yusukeMotionAtlas = null;
       let activeCharacterDefinition = null;
       let yusukeSpriteFrames = [];
       let yusukeAnimations = Object.create(null);
@@ -2094,6 +2096,7 @@
       async function loadCharacterDefinition() {
         characterReady = false;
         combatAtlasReady = false;
+        yusukeMotionAtlas = null;
         chooseCharacter.disabled = true;
         startBattleButton.disabled = true;
         chooseCharacter.textContent = "Loading Yusuke...";
@@ -2125,6 +2128,17 @@
               combatAtlasReady = false;
               console.warn("Combat expansion unavailable; retaining original sprite animations.", error);
             }
+          }
+
+          // Synthesise and cache 10 FPS movement cels from the existing 24 poses.
+          // A canvas/context failure must not prevent combat or controller input.
+          try {
+            yusukeMotionAtlas = window.MugenMotion?.createAtlas(
+              yusukeSpriteSheet, character.spriteSheet.frames, character.spriteSheet.scale || 1
+            ) || null;
+          } catch (error) {
+            yusukeMotionAtlas = null;
+            console.warn("Movement in-betweens unavailable; keeping base sprite animation.", error);
           }
 
           activeCharacterDefinition = character;
@@ -2622,18 +2636,23 @@
             ? animationFrameFrom(firingSheet.fighterAnimation, this.stateTime, attackProgress)
             : -1;
           const combatPose = usesFiringAnimation ? null : selectYusukeCombatPose(this, attackType, attackProgress);
+          // Track movement state every draw, including during attacks, so stop
+          // and landing transitions never inherit a stale run pose.
+          const motionPose = window.MugenMotion?.selectPose(
+            this, yusukeMotionAtlas, !usesFiringAnimation && !combatPose && !attackType
+          );
           const renderSheet = usesFiringAnimation
-            ? yusukeSpecialSheet : combatPose ? yusukeCombatSheet : yusukeSpriteSheet;
+            ? yusukeSpecialSheet : combatPose ? yusukeCombatSheet : motionPose?.image || yusukeSpriteSheet;
           const frame = usesFiringAnimation
             ? firingSheet.fighterFrames[firingFrameIndex] || firingSheet.fighterFrames[0]
-            : combatPose?.frame || yusukeSpriteFrames[this.yusukeFrameIndex()] || yusukeSpriteFrames[0];
+            : combatPose?.frame || motionPose?.frame || yusukeSpriteFrames[this.yusukeFrameIndex()] || yusukeSpriteFrames[0];
           if (!frame) return;
           const lunge = ["light", "cross", "body", "upper"].includes(attackType)
             ? Math.sin(attackProgress * Math.PI) * ({ light: 7, cross: 19, body: 12, upper: 5 }[attackType])
             : attackType === "heavy" ? Math.sin(attackProgress * Math.PI) * 14 : 0;
           const scale = usesFiringAnimation
             ? firingSheet.fighterScale || activeCharacterDefinition.spriteSheet.scale || 1
-            : combatPose?.scale || activeCharacterDefinition.spriteSheet.scale || 1;
+            : combatPose?.scale || motionPose?.scale || activeCharacterDefinition.spriteSheet.scale || 1;
           const drawX = -frame.ax * scale;
           const drawY = -frame.h * scale + (attackType === "body" ? Math.sin(attackProgress * Math.PI) * 23 : attackType === "upper" ? -Math.sin(attackProgress * Math.PI) * 12 : 0);
           const drawWidth = frame.w * scale;
@@ -2742,7 +2761,7 @@
           if (this.invulnerability > 0 && Math.floor(time / 34) % 2 && !ghost) context.globalAlpha = .68;
           // Ease between existing sprite poses near frame boundaries rather than
           // hard-snapping at 13/22 FPS. Collision remains fixed-step.
-          let animation = combatPose?.animation || (usesFiringAnimation ? firingSheet.fighterAnimation : null);
+          let animation = combatPose?.animation || motionPose?.animation || (usesFiringAnimation ? firingSheet.fighterAnimation : null);
           if (!animation) {
             let animationName = "idle";
             if (this.state === "hit") animationName = "hit";
@@ -2755,11 +2774,11 @@
             else if (this.state === "walk") animationName = "run";
             animation = yusukeAnimations[animationName];
           }
-          const sourceFrames = usesFiringAnimation ? firingSheet.fighterFrames : combatPose?.frames || yusukeSpriteFrames;
+          const sourceFrames = usesFiringAnimation ? firingSheet.fighterFrames : combatPose?.frames || motionPose?.frames || yusukeSpriteFrames;
           const progressForFrames = this.state === "hit"
             ? Math.min(1, this.stateTime / (yusukeCombat.effects.hitAnimationDuration || .3))
             : attackProgress;
-          const tween = window.MugenVisuals?.animBlend(animation, this.stateTime, progressForFrames);
+          const tween = motionPose ? null : window.MugenVisuals?.animBlend(animation, this.stateTime, progressForFrames);
           const nextFrame = sourceFrames?.[tween?.to];
           const baseAlpha = context.globalAlpha;
           if (tween && tween.mix > .005 && tween.mix < .995 && nextFrame && nextFrame !== frame) {
