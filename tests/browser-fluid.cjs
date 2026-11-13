@@ -17,7 +17,7 @@ const path = require("node:path");
       "      window.testEngine = { get game() { return arcadeGame; }, arena }; \n      function beginFight() {")
   }));
   await page.goto("http://127.0.0.1:8000/");
-  await page.locator('[data-mode="arcade"]').click();
+  await page.locator('button.menu-item[data-mode="arcade"]').click();
   await page.locator("#choose-character").click();
   await page.waitForFunction(()=>window.testEngine?.game?.state==="play" && window.MugenFluid && window.MugenMotion,
     {timeout:20000});
