@@ -11,7 +11,7 @@ A browser fighting-game prototype featuring Yusuke versus the CPU Demon Scout. R
 - Jump-over cross-ups, body-sized collision, and corner separation.
 - Simultaneous melee strikes can trade rather than always favoring player one.
 - Pause/resume button and P shortcut; losing focus pauses the match.
-- Keyboard aliases and touch inputs are tracked independently.
+- Keyboard aliases and DualSense inputs are tracked independently.
 - Stopping a fight cancels its animation callback before re-entry.
 - The external character JSON now contains the current format-3 definition, including actual sprite and effect paths, instead of silently falling back to embedded data.
 
@@ -31,7 +31,7 @@ A browser fighting-game prototype featuring Yusuke versus the CPU Demon Scout. R
 | Pause / resume | P or Pause button |
 | Character select | Esc or B |
 
-On-screen buttons support touch play.
+No on-screen touch controls are shown; controller and keyboard controls leave the arena clear.
 
 ## Verification
 
@@ -64,6 +64,27 @@ Artwork was created with the built-in image generator using the original fighter
 
 The original Yusuke fighter is still the first selectable character, with the Demon Scout as a CPU sparring opponent. The new mugen-cinematics.js layer adds a hand-rendered nighttime rooftop stage, energy-charge aura, fast forward dash, and a MAX Spirit Gun finisher inspired by the presentation style of the user-provided MUGEN reference clip, not a copied animation. MAX Spirit Gun costs all 100 spirit energy, briefly locks both combatants in a cinematic, and delivers up to eight mechanically counted hits if the opponent is in front and in range. Blocking still reduces damage; missing the attack wastes the meter. No external artwork or assets are required for these effects.
 
-Touch actions are arranged in a 3-column grid so the six attack/utility buttons fit on phones. Normal Spirit Gun and the punch-to-Shotgun combo still work. Keyboard directions, blocking, pausing, and existing round rules remain unchanged.
+DualSense support removes the touch-action overlay. Normal Spirit Gun and the punch-to-Shotgun combo still work. Keyboard directions, blocking, pausing, and existing round rules remain unchanged.
 
 This pass does not yet include literal MUGEN character imports, transformation sprites, character-versus-character roster selection, destructible environments, or a 100-hit cinematic. Those are further development areas, not implemented features. PS5/gamepad mappings are also not added in this pass.
+
+## PS5 DualSense controller (touch-free gameplay)
+
+The browser build uses the standard Web Gamepad API. Pair your controller to the device via Bluetooth or USB and press a controller button after loading the page. On an iPhone, use Settings > Bluetooth and hold Create + PS until the controller lights flash; select DualSense Wireless Controller. Open the game in a browser that supports the Gamepad API, ideally a secure HTTPS page. The header changes to DUALSENSE CONNECTED when the controller is detected.
+
+| DualSense input | In battle |
+|---|---|
+| Left stick / D-pad left & right | Move |
+| X (Cross), D-pad up, stick up | Jump |
+| L1, D-pad down, stick down | Guard |
+| Square | Light punch combo |
+| Triangle | Heavy spirit attack |
+| Circle | Spirit Gun; after three punches, Spirit Shotgun |
+| R1 | Quick forward dash |
+| Hold L2 | Charge spirit meter |
+| R2 | MAX Spirit Gun (requires 100 meter) |
+| Options | Pause/resume |
+
+In menus: D-pad/left stick up/down navigates; X confirms; Circle goes back. While a fight is paused, Circle returns to character select; while active, Circle fires Spirit Gun. After a match, X can select rematch and Circle returns to character select. The Options pause behavior releases held attack inputs to avoid accidental attacks upon resuming. Disconnecting the active gamepad pauses the game. Keyboard input remains a fallback if the controller is unavailable; touch input is no longer necessary.
+
+This mapping is designed for DualSense's standard browser layout. It is covered by synthetic input regression tests (`node tests/gamepad.cjs`). Real Bluetooth pairing and button mapping must still be verified on a physical PS5 controller and target browser.
