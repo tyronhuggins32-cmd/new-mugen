@@ -80,11 +80,20 @@ const assert=require("node:assert/strict");
     if(i===90)game.render(4000);
    }
    const voidHits=hitCount,finalHealth=game.cpu.health;
+   setUp(480,685);hitCount=0;
+   const startedBarrage=window.YusukeAttackLab.play("rapidBarrage");
+   for(let i=0;i<180;i++)game.update(1/60);
+   const barrageHits=hitCount;
+   setUp(480,1160);hitCount=0;
+   const startedWave=window.YusukeAttackLab.play("spiritWave");
+   for(let i=0;i<195;i++)game.update(1/60);
+   const waveHits=hitCount;
+   const energyAfterWave=game.player.energy;
    ctx.drawImage=originalDraw;game.damageFighter=original;
    return {moves,atlasSize:[atlas?.image.width,atlas?.image.height],
      atlasFrames:atlas?.frameCount,drew,flashed,flash,immediate,groundAirDenied,
      airAllowed,airHits,deniedVoid,startedVoid,cinematicSeen,voidHits,
-     finalHealth,heavyHits};
+     finalHealth,heavyHits,startedBarrage,barrageHits,startedWave,waveHits,energyAfterWave};
   });
   assert.deepEqual(result.moves,[
    "flashRush","risingBreaker","skyPursuit","spiritCyclone","spiritVoid","meteorFinish","rapidBarrage","spiritWave"]);
@@ -107,6 +116,11 @@ const assert=require("node:assert/strict");
   assert.ok(result.finalHealth<5000,
    "cinematic must deal a sequenced set of real hits and finish");
   assert.ok(result.heavyHits>=1);
+  assert.equal(result.startedBarrage,true,"barrage is callable without remapping Square");
+  assert.equal(result.barrageHits,11,"eleven real rapid punch contacts in live battle");
+  assert.equal(result.startedWave,true,"wave is callable without remapping Triangle");
+  assert.equal(result.waveHits,3,"three wave contacts in live browser fight");
+  assert.ok(result.energyAfterWave<100,"wave costs Spirit Energy");
   assert.equal(errors.length,0,errors.join("\n"));
   console.log("PASS: eight unbound Yusuke reference moves live in Chromium, atlas renders, flash rush, aerial gate and Spirit Void deal real hits.");
   console.log(result);
