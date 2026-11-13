@@ -1790,9 +1790,9 @@
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="mugen-sfx-v8.js?v=1"></script>
-  <script src="yusuke-premium-v6.js?v=1"></script>
+  <script src="yusuke-premium-v6.js?v=2"></script>
   <script src="yusuke-alpha-v9.js?v=1"></script>
-  <script src="yusuke-directional-v8.js?v=2"></script>
+  <script src="yusuke-directional-v8.js?v=3"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
@@ -2974,6 +2974,14 @@
           context.save();
           context.translate(posX + this.facing * lunge, posY + pose.bob);
           context.scale(this.facing * turnCompression, 1);
+          // Frame-to-frame carry is eased at render rate (60Hz+) while the
+          // Square atlas remains 40FPS. This prevents the stop/start jerk
+          // between jab, cross, body and uppercut without ghost overlays.
+          const attackCarry = premiumPose?.motion;
+          if (attackCarry) {
+            context.translate(attackCarry.forward, attackCarry.lift);
+            context.rotate(attackCarry.tilt);
+          }
           context.rotate(pose.tilt);
           context.scale(pose.stretchX, pose.stretchY);
           context.imageSmoothingEnabled = false;
@@ -3098,7 +3106,10 @@
                 ox, oy, sprite.w * scale, sprite.h * scale);
             }
           };
-          const handoff = premiumPose?.transitionFrame ? premiumPose : motionPose;
+          // Square punches use a shared planted first/last cel, not a stacked
+          // two-silhouette handoff. Old ghost blends made wrists double.
+          const handoff = premiumPose?.squareFrame != null ? null
+            : premiumPose?.transitionFrame ? premiumPose : motionPose;
           if (handoff?.transitionFrame && handoff.transitionMix < .96) {
             // Crossfade on animation *state* boundaries, preserving the right
             // source texture for old and new frames rather than flashing atlas
