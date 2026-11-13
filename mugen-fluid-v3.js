@@ -73,6 +73,25 @@
       ctx.drawImage(image, frame.x, frame.y, frame.w, frame.h, dx, dy, dw, dh);
       return true;
     }
+    // High-detail sprites contain finished anatomy and clean outlines.
+    // Don't chop those authored figures into eight strips: warping strips
+    // produces detached limbs and jagged seams on punches and energy poses.
+    // A tiny whole-cel pivot provides motion while feet remain grounded.
+    if (fighter._usingPremiumCel) {
+      const walking = fighter.state === "walk" && fighter.grounded;
+      const resting = fighter.state === "idle" && fighter.grounded;
+      const phase = Number(fighter.stateTime) || 0;
+      const angle = walking
+        ? Math.sin(phase * 14) * .011 + Math.max(-.015, Math.min(.015, (fighter.vx || 0) / 28000))
+        : resting ? Math.sin(time * .0025) * .003 : 0;
+      const bob = walking ? Math.abs(Math.sin(phase * 13)) * .9
+        : resting ? Math.sin(time * .0036) * .42 : 0;
+      ctx.save();
+      ctx.rotate(angle);
+      ctx.drawImage(image, frame.x, frame.y, frame.w, frame.h, dx, dy - bob, dw, dh);
+      ctx.restore();
+      return true;
+    }
     const pose = bend(fighter, time);
     // By slicing equally in source space, seams remain pixel-aligned; the feet
     // (bottom slice) never inherit head recoil or torso sway.
