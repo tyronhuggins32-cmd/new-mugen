@@ -14,7 +14,10 @@ const path = require("node:path");
   await page.route("**/game-build-0009.html",route=>route.fulfill({
     contentType:"text/html",
     body:html.replace("      function beginFight() {",
-      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, arena }; \n      function beginFight() {")
+      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; },
+        get premiumReady() { return premiumReady; },
+        get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; },
+        arena }; \n      function beginFight() {")
   }));
   await page.goto("http://127.0.0.1:8000/");
   await page.locator('button.menu-item[data-mode="arcade"]').click();
@@ -64,7 +67,10 @@ const path = require("node:path");
     const state={first,second,before,after,shotgunProjectileCount,shotgunVisualFragments,
       shotgunImpacts,shotgunDamage,atlasFrameCount:window.MugenMotion.clips.run.count,
       motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
-      kickReady:window.testEngine.kickReady,lowAction,highAction,
+      kickReady:window.testEngine.kickReady,
+      premiumReady:window.testEngine.premiumReady,
+      premiumWidths:window.testEngine.premiumWidths,
+      arenaWidth:window.testEngine.arena.width,lowAction,highAction,
       playerHealth:g.player.health,gamepadConnected:!!window.MugenGamepad};
     return state;
   });
@@ -75,6 +81,10 @@ const path = require("node:path");
   assert.equal(result.derivedSpriteCount,28,"twelve new stagger/recoil/recovery sprites join the original 16");
   assert.equal(result.playerHealth,1000);
   assert.equal(result.kickReady,true,"the eight-frame kick PNG must load into the browser");
+  assert.equal(result.premiumReady,true,"both high-detail Yusuke sprite families must load");
+  assert.equal(result.premiumWidths[0],2048,"combat pose sprites must load at high resolution");
+  assert.equal(result.premiumWidths[1],2048,"movement pose sprites must load at high resolution");
+  assert.equal(result.arenaWidth,2600,"rooftop stage world must be larger than the viewport");
   assert.equal(result.lowAction,"powerKick","at 50 Spirit Triangle becomes Power Kick");
   assert.equal(result.highAction,"shotgun","at 51 Spirit Triangle becomes Spirit Shotgun");
   assert.equal(result.shotgunProjectileCount,7,"Spirit Shotgun keeps seven damaging collision pellets");
