@@ -7,11 +7,55 @@
   const MIN_SPACING = 142;
   const CONTACT_ASSIST = 25;
   const PUNCHES = new Set(["light", "cross", "body", "upper", "heavy"]);
+  // Body hurtboxes follow the actual stance. Pushbox rules below are
+  // deliberately separate: an airborne fighter must be able to cross over
+  // an opponent's head without disappearing into their body.
+  function hurtbox(f) {
+    const air = !f.grounded;
+    const low = !air && (f.state === "crouch" || f.state === "crouchWalk");
+    const recoil = !air && f.state === "hit";
+    const width = (f.width || 84) * (air ? .77 : low ? .88 : .91);
+    const height = (f.height || 194) * (air ? .72 : low ? .57 : recoil ? .82 : .95);
+    return { x: f.x - width/2, y: f.y - height, width, height };
+  }
+
+  const HITBOXES = Object.freeze({
+    light:     {forward:28, reach:112, above:168, height:74},
+    cross:     {forward:36, reach:125, above:162, height:78},
+    body:      {forward:29, reach:110, above:124, height:74},
+    upper:     {forward:17, reach:102, above:207, height:142},
+    heavy:     {forward:35, reach:126, above:183, height:122},
+    powerKick: {forward:44, reach:155, above:155, height:88}
+  });
+  function attackHitbox(f, attack, type) {
+    if (!f || !attack || attack.projectile) return null;
+    const preset = HITBOXES[type];
+    if (!preset) return null;
+    const dir = f.facing < 0 ? -1 : 1;
+    const air = !f.grounded;
+    const forward = preset.forward + (air ? 10 : 0);
+    const reach = preset.reach * (air ? .86 : 1);
+    const above = air ? Math.min(126,preset.above) : preset.above;
+    const height = air ? Math.min(83,preset.height) : preset.height;
+    return {x:dir>0?f.x+forward:f.x-forward-reach,
+      y:f.y-above, width:reach, height};
+  }
+
+  function airCrossOver(a,b) {
+    if (a.grounded === b.grounded) return false;
+    const jumping = a.grounded ? b : a;
+    const grounded = a.grounded ? a : b;
+    // Once the jumping fighter's feet clear the head/shoulder band,
+    // there is no horizontal push collision. The attack/hurtbox can still
+    // interact in mid-air, independently of body separation.
+    return jumping.y <= grounded.hurtbox.y + 61;
+  }
 
   // Body boxes define height overlap. Stage spacing remains readable even
   // when characters are not yet physically overlapping one another.
   function separate(a, b, arena, distance = MIN_SPACING) {
     if (!a || !b || !arena) return false;
+    if (airCrossOver(a,b)) return false;
     const abox = a.hurtbox, bbox = b.hurtbox;
     if (!abox || !bbox ||
         abox.y + abox.height <= bbox.y || bbox.y + bbox.height <= abox.y) return false;
@@ -51,7 +95,10 @@
     const signedDistance = (defender.x - attacker.x) * direction;
     const minSpacing = opts.minSpacing || MIN_SPACING;
     const maxAssist = opts.maxAssist || CONTACT_ASSIST;
-    const reach = 18 + attack.range + defender.width / 2 - 6;
+    const box = attackHitbox(attacker,attack,kind);
+    const tip = box ? (direction>0?box.x+box.width:box.x)
+                    : attacker.x + direction*(18 + attack.range);
+    const reach = (tip-attacker.x)*direction + defender.width*.48;
     if (signedDistance < minSpacing || signedDistance > reach + maxAssist ||
         signedDistance <= reach) return false;
     const desired = Math.max(minSpacing, reach - 1);
@@ -94,6 +141,7 @@
   }
 
   root.MugenCombatV5 = Object.freeze({
-    MIN_SPACING, CONTACT_ASSIST, separate, assistPunch, sweepCircle, cameraZoom
+    MIN_SPACING, CONTACT_ASSIST, hurtbox, attackHitbox,
+    airCrossOver, separate, assistPunch, sweepCircle, cameraZoom
   });
 })(typeof window === "undefined" ? globalThis : window);
