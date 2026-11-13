@@ -16,6 +16,8 @@ jobs:
         run: node tests/triangle-combo.cjs
       - name: Spirit Shotgun anime-reference VFX and damage safety
         run: node tests/shotgun-v4.cjs
+      - name: Premium 16-frame fighter and extended rooftop checks
+        run: node tests/premium-v6.cjs
       - name: Yusuke sprite expansion checks
         run: node tests/yusuke-sprites.cjs
       - name: Yusuke skin and costume palette consistency
