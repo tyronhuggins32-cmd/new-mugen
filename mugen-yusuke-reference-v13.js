@@ -63,7 +63,7 @@
   }),
   meteorFinish:Object.freeze({
    title:"Meteor Finish",description:"A descending strike with ground impact and wide knockback.",
-   duration:.76,cost:0,airOnly:false,cinematic:false,rush:560,bound:false,
+   duration:.76,cost:0,airOnly:true,cinematic:false,rush:560,bound:false,
    hits:Object.freeze([H(.42,76,222,890,.53,true,185)]),
    cels:Object.freeze([K(M,0),K(C,4,-17,-8),K(C,7,-15,-7,-8),
     K(C,7,9,6,-13),K(C,7,25,11,-8),K(C,4,19,7),
@@ -205,6 +205,12 @@
       referenceHit:true
     };
     game.damageFighter?.(actor,target,attack,impactX,impactY);
+    // Rising Breaker launches BOTH fighters into the chase window.
+    // The next Sky Pursuit still needs its own unassigned input later.
+    if(id==="risingBreaker" && !actor.cpu && hit.heavy){
+      actor.vy=Math.min(actor.vy||0,-760);
+      actor.y-=1;
+    }
     memo.connected++;
     s.active[s.active.length-1].count=memo.connected;
     s.events.push({name:id,x:impactX,y:impactY,age:0,
