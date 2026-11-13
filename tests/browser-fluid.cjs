@@ -11,7 +11,7 @@ const path = require("node:path");
   const errors=[];
   page.on("pageerror",error=>errors.push(error.stack || error.message));
   const html=fs.readFileSync(path.resolve(__dirname,"../game-build-0009.html"),"utf8");
-  await page.route("**/game-build-0009.html",route=>route.fulfill({
+  await page.route("**/game-build-0009.html*",route=>route.fulfill({
     contentType:"text/html",
     body:html.replace("      function beginFight() {",
       "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get directionalAtlas() { return directionalAtlas; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, get premiumArt() { return premiumArt; }, get premiumImages() { return {combat:premiumCombatSheet,movement:premiumMotionSheet}; }, get cleanedPremium() { return {combat:cleanPremiumCombatSheet,movement:cleanPremiumMotionSheet}; }, arena }; \n      function beginFight() {")
@@ -20,7 +20,7 @@ const path = require("node:path");
   await page.locator('button.menu-item[data-mode="arcade"]').click();
   await page.locator("#choose-character").click();
   await page.waitForFunction(()=>window.testEngine?.game?.state==="play" && window.MugenFluid && window.MugenMotion,
-    {timeout:20000});
+    null,{timeout:30000});
   const result=await page.evaluate(async ()=>{
     const g=window.testEngine.game;
     g.stop();
