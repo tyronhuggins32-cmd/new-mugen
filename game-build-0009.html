@@ -2566,6 +2566,8 @@
           this.dashTimer = 0;
           this.dashDirection = facing;
           this.dashCooldown = 0;
+          this.jumpBuffer = 0;
+          this._crossOverActive = false;
         }
 
         get grounded() {
@@ -2698,6 +2700,10 @@
           this.energy = Math.min(100, this.energy + dt * regenRate);
           this.stateTime += dt;
           this.turnTimer = Math.max(0, this.turnTimer - dt);
+          // Briefly buffer a jump through attack recovery, preserving a
+          // retreating jump even if the opponent is swinging.
+          if (input.jumpPressed) this.jumpBuffer = .16;
+          else this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);
 
           if (this.hitstun > 0) {
             this.resetCombo();
@@ -2740,6 +2746,22 @@
               if (bufferedAttack && (!attackData[bufferedAttack]?.projectile || this.grounded))
                 this.beginAttack(bufferedAttack, bufferedEnergy ?? this.energy);
             }
+            this.applyPhysics(dt);
+            return;
+          }
+
+          // Jump takes priority over dashing/guarding, including holding away
+          // + jump at point-blank range. Air crossovers remain unblocked until
+          // landing through the combat geometry's crossover flag.
+          if (this.jumpBuffer > 0 && this.grounded) {
+            this.jumpBuffer = 0;
+            this._crossOverActive = false;
+            this.vy = movement.jumpVelocity;
+            const airborneDirection = Number(Boolean(input.right)) - Number(Boolean(input.left));
+            if (airborneDirection) this.vx = airborneDirection * movement.airSpeed;
+            this.setState("jump");
+            if (!window.MugenPlayCombatSfx?.("jump", .4))
+              if (!window.MugenSFX) playTone(285, .04);
             this.applyPhysics(dt);
             return;
           }
@@ -2814,13 +2836,6 @@
             if (this.grounded) this.setState("idle");
           }
 
-          if (input.jumpPressed && this.grounded) {
-            this.vy = movement.jumpVelocity;
-            this.setState("jump");
-            if (!window.MugenPlayCombatSfx?.("jump", .4))
-              if (!window.MugenSFX) playTone(285, .04);
-          }
-
           this.applyPhysics(dt);
         }
 
@@ -2835,6 +2850,7 @@
             this.y = arena.floor;
             this.vy = 0;
             if (startedAirborne && landingSpeed > 450) window.MugenPlayCombatSfx?.("land", .42);
+            this._crossOverActive = false;
             if (this.state === "jump") this.setState("idle");
           }
         }
