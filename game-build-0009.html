@@ -1768,8 +1768,11 @@
       const yusukeSpriteSheet = new Image();
       yusukeSpriteSheet.decoding = "async";
       const yusukeSpecialSheet = new Image();
+      const yusukeCombatSheet = new Image();
+      yusukeCombatSheet.decoding = "async";
       const yusukeSpiritGunSheet = new Image();
       yusukeSpiritGunSheet.decoding = "async";
+      let combatAtlasReady = false;
       let activeCharacterDefinition = null;
       let yusukeSpriteFrames = [];
       let yusukeAnimations = Object.create(null);
@@ -2016,6 +2019,29 @@
           }
         });
 
+        const expansion = character.combatSpriteSheet;
+        if (expansion) {
+          if (!expansion.src || !Number.isFinite(expansion.width) || !Number.isFinite(expansion.height)
+              || !Array.isArray(expansion.frames) || !expansion.frames.length) {
+            throw new Error("Yusuke combat expansion sprite sheet is invalid.");
+          }
+          expansion.frames.forEach((frame, index) => {
+            const values = [frame.x, frame.y, frame.w, frame.h, frame.ax];
+            if (!values.every(Number.isFinite) || frame.x < 0 || frame.y < 0 || frame.w <= 0
+                || frame.h <= 0 || frame.x + frame.w > expansion.width || frame.y + frame.h > expansion.height) {
+              throw new Error(`Combat expansion frame ${index} is outside its atlas.`);
+            }
+          });
+          Object.entries(expansion.animations || {}).forEach(([name, animation]) => {
+            const ids = Array.isArray(animation.frames)
+              ? animation.frames
+              : (animation.keyframes || []).map(key => key.frame);
+            if (!ids.length || ids.some(id => !Number.isInteger(id) || id < 0 || id >= expansion.frames.length)) {
+              throw new Error(`Combat expansion animation ${name} references invalid frames.`);
+            }
+          });
+        }
+
         const spiritGunSheet = character.effectSheets?.spiritGun;
         if (!spiritGunSheet?.src || !Number.isFinite(spiritGunSheet.width) || !Number.isFinite(spiritGunSheet.height)
           || !Array.isArray(spiritGunSheet.frames) || spiritGunSheet.frames.length < 5) {
@@ -2066,6 +2092,7 @@
 
       async function loadCharacterDefinition() {
         characterReady = false;
+        combatAtlasReady = false;
         chooseCharacter.disabled = true;
         startBattleButton.disabled = true;
         chooseCharacter.textContent = "Loading Yusuke...";
@@ -2086,6 +2113,18 @@
             loadSpriteAsset(yusukeSpecialSheet, character.specialSpriteSheet, "Special attack sprite sheet"),
             loadSpriteAsset(yusukeSpiritGunSheet, character.effectSheets.spiritGun, "Spirit Gun effect sheet")
           ]);
+
+          // Extra poses must not prevent the original fighter from loading.
+          // The 24-frame base sheet and eight-frame special sheet remain fallbacks.
+          if (character.combatSpriteSheet) {
+            try {
+              await loadSpriteAsset(yusukeCombatSheet, character.combatSpriteSheet, "Yusuke combat expansion");
+              combatAtlasReady = true;
+            } catch (error) {
+              combatAtlasReady = false;
+              console.warn("Combat expansion unavailable; retaining original sprite animations.", error);
+            }
+          }
 
           activeCharacterDefinition = character;
           yusukeSpriteFrames = character.spriteSheet.frames;
@@ -2275,6 +2314,34 @@
 
       function animationFrame(name, elapsed = 0, progress = 0) {
         return animationFrameFrom(yusukeAnimations[name], elapsed, progress);
+      }
+
+      // Build-0010 supplemental artwork selection. This only affects visuals;
+      // all attack timing, hitboxes, controller inputs, and damage stay unchanged.
+      function selectYusukeCombatPose(fighter, attackType, progress = 0) {
+        const extra = combatAtlasReady ? activeCharacterDefinition?.combatSpriteSheet : null;
+        if (!extra) return null;
+        const choose = name => {
+          const animation = extra.animations?.[name];
+          if (!animation) return null;
+          const frameIndex = animationFrameFrom(animation, fighter.stateTime, progress);
+          const frame = extra.frames[frameIndex];
+          return frame ? { frame, scale: extra.scale || activeCharacterDefinition.spriteSheet.scale || 1 } : null;
+        };
+
+        // Preserve the detailed existing firing sheet on projectile release.
+        if (attackType === "gun" || attackType === "shotgun") return null;
+        if (attackType === "cross") return choose("straightCross");
+        if (attackType === "body") return choose("lowSlide");
+        if (attackType === "upper") return choose("risingUppercut");
+        if (attackType === "heavy") return choose(fighter.attackVariant === 0 ? "risingUppercut" : "jumpingKick");
+        if (attackType === "light" && !fighter.grounded) return choose("jumpingKick");
+        if (fighter.state === "hit") return choose("stagger");
+        if (fighter.state === "block") return choose("highGuard");
+        if (fighter.state === "charge") return choose("spiritCharge");
+        if (fighter.dashTimer > 0) return choose("spiritDash");
+        if (!fighter.grounded && fighter.state === "jump") return choose("risingKnee");
+        return null;
       }
 
       class Fighter {
@@ -2551,17 +2618,19 @@
           const firingFrameIndex = usesFiringAnimation
             ? animationFrameFrom(firingSheet.fighterAnimation, this.stateTime, attackProgress)
             : -1;
-          const renderSheet = usesFiringAnimation ? yusukeSpecialSheet : yusukeSpriteSheet;
+          const combatPose = usesFiringAnimation ? null : selectYusukeCombatPose(this, attackType, attackProgress);
+          const renderSheet = usesFiringAnimation
+            ? yusukeSpecialSheet : combatPose ? yusukeCombatSheet : yusukeSpriteSheet;
           const frame = usesFiringAnimation
             ? firingSheet.fighterFrames[firingFrameIndex] || firingSheet.fighterFrames[0]
-            : yusukeSpriteFrames[this.yusukeFrameIndex()] || yusukeSpriteFrames[0];
+            : combatPose?.frame || yusukeSpriteFrames[this.yusukeFrameIndex()] || yusukeSpriteFrames[0];
           if (!frame) return;
           const lunge = ["light", "cross", "body", "upper"].includes(attackType)
             ? Math.sin(attackProgress * Math.PI) * ({ light: 7, cross: 19, body: 12, upper: 5 }[attackType])
             : attackType === "heavy" ? Math.sin(attackProgress * Math.PI) * 14 : 0;
           const scale = usesFiringAnimation
             ? firingSheet.fighterScale || activeCharacterDefinition.spriteSheet.scale || 1
-            : activeCharacterDefinition.spriteSheet.scale || 1;
+            : combatPose?.scale || activeCharacterDefinition.spriteSheet.scale || 1;
           const drawX = -frame.ax * scale;
           const drawY = -frame.h * scale + (attackType === "body" ? Math.sin(attackProgress * Math.PI) * 23 : attackType === "upper" ? -Math.sin(attackProgress * Math.PI) * 12 : 0);
           const drawWidth = frame.w * scale;
