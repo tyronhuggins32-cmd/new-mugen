@@ -573,3 +573,16 @@ body:not([data-screen="fight"]) .modal-backdrop .ready-card button:focus-visible
 @media(prefers-reduced-motion:reduce){
  .rebirth-home *, .rebirth-select *{animation:none!important;transition:none!important;}
 }
+
+/* The arcade matchup belongs only to Arcade, never to unfinished modes. */
+.rebirth-home:not([data-mode="arcade"]) .rb-briefing-match{display:none;}
+.rebirth-home:not([data-mode="arcade"]) .rb-briefing-badge{margin-bottom:12px;}
+.rebirth-home[data-mode="versus"] .rb-briefing .mode-card,
+.rebirth-home[data-mode="training"] .rb-briefing .mode-card,
+.rebirth-home[data-mode="watch"] .rb-briefing .mode-card{
+ border-color:#79c5d0;
+ background:linear-gradient(145deg,#114b65f6,#09213be8);
+}
+.rebirth-home[data-mode="options"] .rb-briefing .mode-card{border-color:#dcff85;}
+/* Keep embedded art and dynamic identity on top of the atmospheric overlays. */
+.rebirth-select .character-art.missing{display:none;}
