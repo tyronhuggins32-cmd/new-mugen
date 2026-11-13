@@ -104,6 +104,7 @@
       lastState: state, previousState: null
     });
     if (state !== memory.lastState) {
+      memory.transitionFrom = memory.lastFrame || null;
       memory.previousState = memory.lastState;
       memory.lastState = state;
     }
@@ -131,8 +132,13 @@
     const animation = atlas.animations[name];
     const index = frameAt(animation, clipTime);
     const frame = atlas.frames[index];
+    const transitionFrame = ["idle", "walk", "jump"].includes(memory.previousState)
+      && elapsed < 0.16 ? memory.transitionFrom : null;
+    const transitionMix = Math.min(1, elapsed / 0.16);
+    if (frame) memory.lastFrame = frame;
     return frame ? { frame, frames: atlas.frames, animation, scale: atlas.scale,
-      image: atlas.image, generated: true, clip: name, index } : null;
+      image: atlas.image, generated: true, clip: name, index,
+      transitionFrame, transitionMix } : null;
   }
 
   root.MugenMotion = Object.freeze({ fps: FPS, clips: SPECS, sampleKeys, frameAt, createAtlas, selectPose });
