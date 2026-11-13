@@ -1,0 +1,43 @@
+name: Install authored Yusuke V8 energy VFX
+on:
+  push:
+    paths:
+      - ".github/workflows/install-yusuke-vfx-v8.yml"
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve and checksum real transparent energy art
+        env:
+          SOURCE_URL: "https://at.adobe.com/knLocWParqvOHnWD"
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 4 --silent --show-error "$SOURCE_URL"             -o characters/yusuke/yusuke-spirit-vfx-v8.png
+          echo "d662207693417eaec6b01d826e6d94126a1d57cc2ac3632c2bc74a480b788a01  characters/yusuke/yusuke-spirit-vfx-v8.png" | sha256sum --check
+          python3 - <<'PY'
+          import struct
+          from pathlib import Path
+          p=Path("characters/yusuke/yusuke-spirit-vfx-v8.png")
+          h=p.read_bytes()[:26]
+          assert h[:8]==bytes.fromhex("89504e470d0a1a0a")
+          assert struct.unpack(">II",h[16:24])==(1536,1024)
+          assert h[25]==6, "PNG must have RGBA transparency"
+          assert p.stat().st_size>350000
+          print("Verified 8 transparent cinematic effects and high-detail alpha texture")
+          PY
+      - name: Validate real effect atlas rendering
+        run: node tests/air-and-vfx-v8.cjs
+      - name: Install artist-produced VFX in game
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke-spirit-vfx-v8.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Install hand-authored cyan anime energy and impact VFX texture atlas"
+            git pull --rebase origin main
+            git push
+          fi
