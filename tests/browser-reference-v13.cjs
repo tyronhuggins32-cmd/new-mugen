@@ -1,0 +1,104 @@
+"use strict";
+const {chromium}=require("playwright");
+const fs=require("node:fs");
+const path=require("node:path");
+const assert=require("node:assert/strict");
+(async()=>{
+ const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
+ try{
+  const page=await browser.newPage({viewport:{width:1280,height:900}});
+  const errors=[];page.on("pageerror",e=>errors.push(e.message));
+  const html=fs.readFileSync(path.resolve(__dirname,"../game-build-0009.html"),"utf8");
+  await page.route("**/game-build-0009.html*",route=>route.fulfill({
+   contentType:"text/html",body:html.replace("      function beginFight() {",
+    '      window.testReference = { get game() { return arcadeGame; }, get atlas(){ return referenceAttackAtlas; }, arena };\n      function beginFight() {')
+  }));
+  await page.goto("http://127.0.0.1:8000/");
+  await page.locator('button.menu-item[data-mode="arcade"]').click();
+  await page.locator("#choose-character").click();
+  await page.waitForFunction(()=>window.testReference?.game?.state==="play" && window.MugenReferenceV13,
+   null,{timeout:30000});
+  const result=await page.evaluate(()=>{
+   const game=window.testReference.game,mod=window.MugenReferenceV13,
+     original=game.damageFighter;
+   game.stop();
+   game.controller.update=()=>({left:false,right:false,block:false});
+   const moves=window.YusukeAttackLab.moves();
+   const atlas=window.testReference.atlas;
+   let atlasDrawCount=0,hitCount=0,heavyHits=0;
+   const canvas=document.querySelector("#game-canvas"),ctx=canvas.getContext("2d"),
+    originalDraw=ctx.drawImage.bind(ctx);
+   ctx.drawImage=function(...args){
+     if(atlas && args[0]===atlas.image)atlasDrawCount++;
+     return originalDraw(...args);
+   };
+   game.damageFighter=function(a,d,h,x,y){
+     if(h.referenceHit){hitCount++;if(h.heavyImpact)heavyHits++;}
+     return original.call(game,a,d,h,x,y);
+   };
+   function setUp(x=480,enemyX=730){
+     game.reset();game.state="play";game.hitStop=0;
+     game.player.x=x;game.cpu.x=enemyX;
+     game.player.energy=100;game.cpu.health=5000;
+     game.player.state="idle";game.cpu.state="idle";
+     game.player.facing=1;game.cpu.facing=-1;
+     game.player.vx=0;game.cpu.vx=0;
+     game.player.invulnerability=0;game.cpu.invulnerability=0;
+     game.player.y=window.testReference.arena.floor;
+     game.cpu.y=window.testReference.arena.floor;
+   }
+   setUp();
+   const flashed=window.YusukeAttackLab.play("flashRush");
+   const immediate=window.YusukeAttackLab.status()?.move;
+   game.render(3000);
+   const drew=atlasDrawCount;
+   for(let i=0;i<150;i++)game.update(1/60);
+   const flash={hits:hitCount,remaining:game.cpu.health,advanced:game.player.x>480};
+   setUp();hitCount=0;
+   const groundAirDenied=!window.YusukeAttackLab.play("skyPursuit");
+   game.player.y-=170;game.player.state="jump";
+   const airAllowed=window.YusukeAttackLab.play("skyPursuit");
+   for(let i=0;i<145;i++)game.update(1/60);
+   const airHits=hitCount;
+   setUp(480,780);hitCount=0;
+   game.player.energy=50;
+   const deniedVoid=!window.YusukeAttackLab.play("spiritVoid");
+   game.player.energy=100;
+   const startedVoid=window.YusukeAttackLab.play("spiritVoid");
+   let cinematicSeen=false;
+   for(let i=0;i<240;i++){
+    game.update(1/60);
+    if(window.YusukeAttackLab.status()?.move==="spiritVoid")
+     cinematicSeen=true;
+    if(i===90)game.render(4000);
+   }
+   const voidHits=hitCount,finalHealth=game.cpu.health;
+   ctx.drawImage=originalDraw;game.damageFighter=original;
+   return {moves,atlasSize:[atlas?.image.width,atlas?.image.height],
+     atlasFrames:atlas?.frameCount,drew,flashed,immediate,groundAirDenied,
+     airAllowed,airHits,deniedVoid,startedVoid,cinematicSeen,voidHits,
+     finalHealth,heavyHits,errors};
+  });
+  assert.deepEqual(result.moves,[
+   "flashRush","risingBreaker","skyPursuit","spiritCyclone","spiritVoid","meteorFinish"]);
+  assert.equal(result.atlasFrames,48,"all 48 new cel poses built in real Chromium");
+  assert.deepEqual(result.atlasSize,[3072,4096]);
+  assert.ok(result.drew>=1,"game draws reference premium art atlas for live Yusuke");
+  assert.equal(result.flashed,true);
+  assert.equal(result.immediate,"flashRush");
+  assert.ok(result.flash.hits>=2 && result.flash.remaining<5000,
+   "flashstep must connect multiple real damage calls against CPU");
+  assert.ok(result.flash.advanced,"flashstep advances toward target");
+  assert.equal(result.groundAirDenied,true);
+  assert.equal(result.airAllowed,true);
+  assert.equal(result.deniedVoid,true,"cinematic energy cost is enforced");
+  assert.equal(result.startedVoid,true);
+  assert.equal(result.cinematicSeen,true);
+  assert.ok(result.voidHits>=6 && result.finalHealth<5000,
+   "cinematic must deal a sequenced set of real hits and finish");
+  assert.ok(result.heavyHits>=1);
+  assert.equal(errors.length,0,errors.join("\n"));
+  console.log("PASS: six unbound Yusuke reference moves live in Chromium, atlas renders, flash rush, aerial gate and Spirit Void deal real hits.");
+  console.log(result);
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1);});
