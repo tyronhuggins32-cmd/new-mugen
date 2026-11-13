@@ -68,7 +68,7 @@ const path = require("node:path");
     return state;
   });
   assert.notEqual(result.first,result.second,"movement should modify actual rendered pixels continuously");
-  assert.ok(result.after>result.before,"fight camera should follow and zoom closer");
+  assert.ok(result.after<result.before,"fight camera should ease out to show point-blank combat");
   assert.equal(result.atlasFrameCount,32,"run uses the expanded 60 Hz virtual motion timeline");
   assert.equal(result.playerHealth,1000);
   assert.equal(result.kickReady,true,"the eight-frame kick PNG must load into the browser");

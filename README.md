@@ -203,6 +203,21 @@ The Spirit Shotgun now follows the user-supplied ~29-second anime clip as a **vi
 
 Checks: `node tests/shotgun-v4.cjs` covers windup, fan shape, visual-only pellet count, clustered impacts and cleanup; `node tests/browser-fluid.cjs` tests the render path and one-volley damage in Chromium. The extra effects do not create additional damaging hitboxes.
 
+## Cinematic combat and Spirit Gun V5 (13 November 2026)
+
+The fifth combat pass fixes three gameplay-readability problems: fighters merged into one silhouette, punches whiffed inside visually reachable range, and Spirit Gun occasionally crossed a target between physics updates without hitting.
+
+- **Stage spacing:** grounded fighters maintain **142 px of horizontal center spacing**. Separation respects stage borders and lets airborne fighters pass over one another; this prevents unreadable stacked silhouettes.
+- **Punch registration:** Square's jab, cross, body punch and uppercut use more forgiving *active frames* and range tuning, plus at most **25 px of active-frame contact assistance**. Assistance never teleports across the opponent or violates minimum spacing. The combo meter still unlocks only on the third Square press.
+- **Camera:** at close range, framing returns to full stage width instead of cropping tighter. Confirmed heavy hits and Spirit Gun impacts get a brief, restrained focus. Camera shake remains bounded.
+- **Spirit Gun:** Circle launches a single **non-piercing** blue-white shot. The beam now uses continuous **swept circle collision** against the target's hurtbox, resolves the first contact point, explodes and despawns on hit, and bursts at the arena walls. Even invulnerable targets stop the shot without taking damage.
+- **New visual pass:** the existing 17 canonical Spirit Gun fighter poses are kept for color consistency. `mugen-spiritgun-v5.js` adds a fingertip orb and converging electric filaments during charge, a tapered cyan projectile with white core, a blue-white impact explosion, brief hit-stop, knockback and an unobtrusive screen tint. This is procedural VFX, not a new hand-drawn sprite atlas.
+- **Balance:** Spirit Gun deals **78 base damage** (formerly 51), stronger knockback and a **0.46-second** hit stun. Shotgun's 50% Spirit rule, the Power Kick, and PS5/DualSense controls remain unchanged.
+- **Source files:** `mugen-combat-v5.js` owns spacing, contact assistance and swept collision. `mugen-fluid-v3.js` owns camera behavior. `mugen-spiritgun-v5.js` owns energy VFX and short cinematic impact states.
+- **Verification:** `node tests/cinematic-v5.cjs` covers contact geometry, borders, camera, swept collision, the on-hit blast and its lifecycle. Chromium browser tests verify a shot crossing a full hurtbox in one simulation step still hits, stops, explodes and deals damage once.
+
+The original anime still image and video supplied by the user were **visual references** for Spirit Gun, not assets embedded in the game.
+
 ## Yusuke 40 FPS sprite reactions and impact VFX (13 November 2026)
 
 The v5 motion layer adds **twelve supplemental transparent sprite cels** to the sixteen previously generated idle/run cels. The new set is divided into four light-hit **stagger** poses, four heavy **knockback/recoil** poses, and four **recovery** poses. They are synthesized from matching pixels in the original 24-frame Yusuke sheet with slight torso/head displacement and stable foot anchoring, not independently redrawn character anatomy. These poses use the same original colors, face, costume, pivots, and render scale as all other Yusuke animation families.

@@ -118,11 +118,19 @@
     const midpoint = ((game.player.prevX ?? game.player.x) + game.player.x +
       (game.cpu.prevX ?? game.cpu.x) + game.cpu.x) * .25;
     const distance = Math.abs(game.player.x - game.cpu.x);
-    const desiredZoom = 1 + .095 * (1 - clamp((distance - 140) / 650));
-    const rate = 1 - Math.exp(-dt * 5.4);
+    // A point-blank brawl needs MORE room, not the old close-up crop.
+    // Keep the full stage visible at grappling distance, then apply only a
+    // restrained zoom at long range or during a confirmed special impact.
+    const emphasis = game.cinematicImpact
+      ? clamp(game.cinematicImpact.life / game.cinematicImpact.maxLife) : 0;
+    const desiredZoom = root.MugenCombatV5?.cameraZoom(distance, emphasis)
+      ?? (1 + .055 * clamp((distance - 160) / 550) + .012 * emphasis);
+    const rate = 1 - Math.exp(-dt * 6.2);
     c.zoom = lerp(c.zoom, desiredZoom, rate);
     const halfWidth = arena.width / (2 * c.zoom);
-    const targetX = clamp(midpoint, halfWidth, arena.width - halfWidth);
+    const impact = game.cinematicImpact;
+    const focusX = impact ? midpoint * .82 + impact.x * .18 : midpoint;
+    const targetX = clamp(focusX, halfWidth, arena.width - halfWidth);
     c.x = lerp(c.x || targetX, targetX, rate);
     const jitter = Math.min(10, game.shake || 0);
     const shiftX = Math.sin(time * .077) * jitter * .37;

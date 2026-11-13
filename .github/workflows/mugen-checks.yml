@@ -24,6 +24,8 @@ jobs:
         run: node tests/yusuke-motion.cjs
       - name: Fluid 60 Hz combat and adaptive camera checks
         run: node tests/fluid-v3.cjs
+      - name: Cinematic Spirit Gun, punch assist, swept collision and spacing
+        run: node tests/cinematic-v5.cjs
       - name: Visual effects and sprite interpolation checks
         run: node tests/visuals.cjs
       - name: DualSense controller checks

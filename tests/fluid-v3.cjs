@@ -64,7 +64,7 @@ assert.ok(original.zoom>=1 && original.zoom<1.10,"camera zoom stays safe");
 assert.ok(original.cameraX>=0&&original.cameraX<=1280,"camera clamped to fighting stage");
 hero.x=650;cpu.x=750;
 for(let i=2;i<20;i++)fluid.beginFrame(game,canvas,1000+i*16,arena);
-assert.ok(fluid.getStats(game).zoom>original.zoom,"camera smoothly zooms in as fighters close");
+assert.ok(fluid.getStats(game).zoom<original.zoom,"camera eases back to full framing when fighters close");
 hero.grounded=false;hero.state="jump";fluid.tick(game,1/60);
 hero.y=600;hero.grounded=true;hero.state="idle";fluid.tick(game,1/60);
 assert.ok(fluid.getStats(game).dust>=1,"landing triggers dust");

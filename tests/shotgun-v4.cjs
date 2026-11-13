@@ -64,7 +64,8 @@ assert.equal(v.stats(game).fired,0,"round reset removes prior visual state");
 const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(html,/mugen-shotgun-v4\.js\?v=1/);
 assert.match(html,/MugenShotgun\?\.onFire\(this, owner/);
-assert.match(html,/MugenShotgun\?\.onImpact\(this, projectile\.x/);
+assert.match(html,/MugenShotgun\?\.onImpact\(this, contact\.x/,
+  "the shotgun must impact the first point of swept collision");
 assert.match(html,/MugenShotgun\?\.drawFan\(this, context, time\)/);
 assert.match(html,/MugenShotgun\?\.drawImpacts\(this, context, time\)/);
 assert.match(html,/MugenShotgun\.drawPellet\(context, projectile, x, y, time\)/);

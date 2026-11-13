@@ -53,8 +53,34 @@ const assert = require('node:assert/strict');
   ok(document.querySelector('.combo-panel').hidden,'combo meter is hidden before three Square taps');
   g.player.beginAttack('light');g.player.beginAttack('light');g.updateHud(true);
   ok(!document.querySelector('.combo-panel').hidden,'combo meter appears after third Square');
+  // Browser-accurate overlap protection, punch magnetism and gun impact.
+  g.reset();g.state='play';g.player.x=550;g.cpu.x=568;g.separateFighters();
+  ok(Math.abs(g.cpu.x-g.player.x)>=142-0.01,'readable close-fighter spacing');
+  g.reset();g.state='play';g.player.x=400;g.cpu.x=585;
+  g.player.facing=1;g.player.setState('attack-light');
+  g.player.stateTime=.08;
+  const contact=g.prepareMelee(g.player,g.cpu);
+  ok(typeof contact==='function' && g.player.x>400,'jab snaps into its active hit range');
+  contact();ok(g.cpu.health<1000,'assisted jab registers actual damage');
+
+  g.reset();g.state='play';g.player.x=350;g.cpu.x=740;
+  g.player.facing=1;g.player.energy=100;
+  g.spawnProjectile(g.player,'spiritGun');
+  ok(g.projectiles.length===1,'gun spawns exactly one shot');
+  g.updateProjectiles(.3); // Bullet crosses the entire hurtbox in one large step.
+  ok(g.projectiles.length===0,'swept Spirit Gun stops on the defender');
+  ok(g.cpu.health===922,'Spirit Gun lands its configured 78 base damage');
+  ok(g.hitStop>=.1 && g.shake>=15,'gun impact drives cinematic hit-stop and shake');
+  ok(window.MugenSpiritGun?.stats(g).shotsHit===1,'new Spirit Gun effect triggers on contact');
+
+  g.reset();g.state='play';g.player.x=350;g.cpu.x=740;
+  g.cpu.invulnerability=1;
+  g.spawnProjectile(g.player,'spiritGun');
+  g.updateProjectiles(.3);
+  ok(g.projectiles.length===0 && g.cpu.health===1000,
+    'gun stops even on an invulnerable target without damaging it');
   g.reset();g.state='play';g.start();
-  return 15;
+  return 22;
  });
  await page.keyboard.press('p');
  const pausedTime=await page.evaluate(()=>testEngine.game.timer);

@@ -1778,6 +1778,8 @@
   <script src="mugen-cinematics.js?v=1"></script>
   <script src="mugen-visuals-v2.js?v=2"></script>
   <script src="mugen-fluid-v3.js?v=2"></script>
+  <script src="mugen-combat-v5.js?v=1"></script>
+  <script src="mugen-spiritgun-v5.js?v=1"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
@@ -2785,8 +2787,7 @@
           const firingFrameIndex = usesFiringAnimation
             ? animationFrameFrom(firingSheet.fighterAnimation, this.stateTime, attackProgress)
             : -1;
-          // Strong-hit reactions use new source-matched knockback frames; the
-          // legacy combat stagger remains available when the atlas is unavailable.
+          // New hit sprites take priority when the derived atlas is loaded.
           const combatPose = usesFiringAnimation ||
             (this.state === "hit" && yusukeMotionAtlas?.generated)
             ? null : selectYusukeCombatPose(this, attackType, attackProgress);
@@ -3256,12 +3257,14 @@
           this.winner = null;
           this.shake = 0;
           this.hitStop = 0;
+          this.cinematicImpact = null;
           this.visualEchoes = [];
           this.visualHits = [];
           this.renderAlpha = 1;
           this._lastHudAt = 0;
           window.MugenFluid?.reset(this);
           window.MugenShotgun?.reset(this);
+          window.MugenSpiritGun?.reset(this);
           battleResult.classList.remove("open");
           roundBanner.classList.add("show");
           roundBannerText.textContent = `Round ${this.roundNumber}`;
@@ -3329,6 +3332,7 @@
           this.updateImpacts(dt);
           window.MugenVisuals?.tick(this, dt);
           window.MugenShotgun?.tick(this, dt);
+          window.MugenSpiritGun?.tick(this, dt);
           this.shake = Math.max(0, this.shake - dt * 26);
 
           if (this.state === "intro") {
@@ -3388,6 +3392,11 @@
         }
 
         separateFighters() {
+          if (window.MugenCombatV5?.separate) {
+            window.MugenCombatV5.separate(this.player, this.cpu, arena);
+            return;
+          }
+          // Legacy fallback when the optional geometry module cannot load.
           // Only overlapping bodies collide, allowing jump-over cross-ups.
           if (!rectanglesOverlap(this.player.hurtbox, this.cpu.hurtbox)) return;
           const spacing = (this.player.width + this.cpu.width) / 2;
@@ -3408,11 +3417,20 @@
         }
 
         prepareMelee(attacker, defender) {
-          const hitbox = attacker.activeHitbox();
-          if (!hitbox || attacker.attackConnected || defender.invulnerability > 0 || !rectanglesOverlap(hitbox, defender.hurtbox)) return;
-          attacker.attackConnected = true;
           const type = attacker.currentAttack();
-          return () => this.damageFighter(attacker, defender, attackData[type], defender.x, defender.y - 105);
+          const attack = attackData[type];
+          if (!attack || attacker.attackConnected || defender.invulnerability > 0) return;
+          const earlyHitbox = attacker.activeHitbox();
+          if (!earlyHitbox) return;
+          // Snap forward only during active punch frames and only as far as
+          // stage edges and readable fighter spacing allow.
+          window.MugenCombatV5?.assistPunch(attacker, defender, attack, arena);
+          const hitbox = attacker.activeHitbox();
+          if (!hitbox || !rectanglesOverlap(hitbox, defender.hurtbox)) return;
+          attacker.attackConnected = true;
+          const impactX = attacker.facing > 0 ? defender.hurtbox.x + 8
+            : defender.hurtbox.x + defender.hurtbox.width - 8;
+          return () => this.damageFighter(attacker, defender, attack, impactX, defender.y - 105);
         }
 
         spawnProjectile(owner, kind = "spiritGun") {
@@ -3480,6 +3498,7 @@
             kind: "spiritGun"
           });
           this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, .54, "muzzle");
+          window.MugenSpiritGun?.onFire(this, owner, muzzleX, muzzleY);
         }
 
         updateProjectiles(dt) {
@@ -3491,26 +3510,47 @@
             projectile.y += (projectile.vy || 0) * dt;
             projectile.life -= dt;
             const target = projectile.owner === this.player ? this.cpu : this.player;
-            if (projectile.life > 0 && target.invulnerability <= 0 && circleHitsRectangle(projectile, target.hurtbox)) {
+            const contact = window.MugenCombatV5?.sweepCircle(
+              projectile.prevX, projectile.prevY, projectile.x, projectile.y,
+              projectile.radius, target.hurtbox
+            ) || (!window.MugenCombatV5 &&
+                circleHitsRectangle(projectile, target.hurtbox)
+                  ? {x:projectile.x,y:projectile.y,t:1} : null);
+            if (projectile.life > 0 && contact) {
+              projectile.x = contact.x;
+              projectile.y = contact.y;
+              const vulnerable = target.invulnerability <= 0;
               this.addSpiritBurst(
-                projectile.x,
-                projectile.y,
-                projectile.color,
+                contact.x, contact.y, projectile.color,
                 Math.sign(projectile.vx) || 1,
                 projectile.kind === "spiritShotgun" ? .72 : yusukeCombat.projectileVfx.impactScale,
                 "impact"
               );
-              this.damageFighter(projectile.owner, target, projectile, projectile.x, projectile.y);
-              if (projectile.kind === "spiritShotgun") {
-                window.MugenShotgun?.onImpact(this, projectile.x, projectile.y,
+              if (vulnerable)
+                this.damageFighter(projectile.owner, target, projectile, contact.x, contact.y);
+              // Energy shots always collide and vanish. During i-frames the
+              // target takes no damage, but a shot never phases through it.
+              if (projectile.kind === "spiritGun")
+                window.MugenSpiritGun?.onImpact(this, projectile.owner,
+                  contact.x, contact.y, !vulnerable || target.state === "block");
+              if (projectile.kind === "spiritShotgun")
+                window.MugenShotgun?.onImpact(this, contact.x, contact.y,
                   Boolean(projectile.owner.cpu), yusukeCombat.projectileVfx?.shotgun);
-              }
               projectile.life = 0;
               if (projectile.volleyId) {
                 for (const sibling of this.projectiles) {
                   if (sibling.volleyId === projectile.volleyId) sibling.life = 0;
                 }
               }
+            } else if (projectile.life > 0 && projectile.kind === "spiritGun"
+                       && (projectile.x <= arena.left || projectile.x >= arena.right)) {
+              // A missed Spirit Gun bursts at the stage wall rather than
+              // traveling through the arena boundary.
+              const wallX = Math.max(arena.left, Math.min(arena.right, projectile.x));
+              window.MugenSpiritGun?.onImpact(this, projectile.owner,
+                wallX, projectile.y, false, true);
+              projectile.x = wallX;
+              projectile.life = 0;
             }
           }
           this.projectiles = this.projectiles.filter(projectile => projectile.life > 0
@@ -3551,6 +3591,10 @@
           if (!blocked) defender.resetCombo();
           attacker.energy = Math.min(100, attacker.energy + (attack.energyGain ?? 5));
           const heavyHit = Boolean(attack.heavyImpact);
+          // Uppercuts and Power Kicks briefly hold the camera on contact,
+          // without an over-tight zoom that would hide either fighter.
+          if (!blocked && heavyHit && !attack.projectile)
+            this.cinematicImpact = { x: impactX, y: impactY, life: .12, maxLife: .12 };
           const impactCount = blocked ? 8 : heavyHit ? 27 : 17;
           this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", impactCount);
           window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
@@ -3766,6 +3810,15 @@
         }
 
         drawSpiritProjectile(context, projectile, time) {
+          if (projectile.kind === "spiritGun" && window.MugenSpiritGun?.drawShot) {
+            const t = this.renderAlpha ?? 1;
+            const x = (projectile.prevX ?? projectile.x)
+              + (projectile.x - (projectile.prevX ?? projectile.x)) * t;
+            const y = (projectile.prevY ?? projectile.y)
+              + (projectile.y - (projectile.prevY ?? projectile.y)) * t;
+            window.MugenSpiritGun.drawShot(context, projectile, x, y, time);
+            return;
+          }
           if (projectile.kind === "spiritShotgun" && window.MugenShotgun?.drawPellet) {
             const t = this.renderAlpha ?? 1;
             const x = (projectile.prevX ?? projectile.x) + (projectile.x - (projectile.prevX ?? projectile.x)) * t;
@@ -3877,6 +3930,7 @@
           this.cpu.draw(context, time, this.renderAlpha ?? 1);
           window.MugenVisuals?.drawCharge(this.player, context, time);
           window.MugenShotgun?.drawWindup(this, context, time, yusukeCombat.projectileVfx?.shotgun);
+          window.MugenSpiritGun?.drawWindup(this, context, time, yusukeCombat.projectileVfx);
           if (this.superSequence) window.MugenCinematics?.aura(this, context, time);
           for (const burst of this.energyBursts) this.drawSpiritBurst(context, burst, time);
           for (const impact of this.impacts) {
@@ -3887,8 +3941,10 @@
           context.globalAlpha = 1;
           window.MugenVisuals?.drawHits(this, context, time);
           window.MugenShotgun?.drawImpacts(this, context, time);
+          window.MugenSpiritGun?.drawImpact(this, context, time);
           window.MugenFluid?.drawFront(this, context, time);
           context.restore();
+          window.MugenSpiritGun?.drawOverlay(this, context, arena);
           window.MugenCinematics?.render(this, context, time);
         }
       }
