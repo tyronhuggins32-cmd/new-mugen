@@ -48,6 +48,25 @@ const path = require("node:path");
     const airClip=fake(260,"jump",false)?.clip;
     const crossClip=fake(0,"attack-cross",true,"cross")?.clip;
     const atlasCounts=extra?[extra.movement.frames.length,extra.combat.frames.length]:[];
+    // Sample ALL four Square phases from the real clean combat atlas, including
+    // the shared neutral first/last poses that connect the next input.
+    const squareKeys={};
+    for(const attack of ["light","cross","body","upper"]){
+      squareKeys[attack]=[.04,.22,.45,.86].map(p=>{
+        const fighter={facing:1,state:"attack-"+attack,grounded:true,
+          vx:0,stateTime:p*.3,dashTimer:0};
+        const pose=window.MugenDirectional.choosePose(fighter,attack,extra,p);
+        return {index:pose?.index,ghost:!!pose?.transitionFrame,
+          carry:pose?.motion?.forward??null};
+      });
+    }
+    // Render jab at two contact phases in actual Chromium canvas.
+    g.player.state="attack-light";g.player.grounded;
+    g.player.stateTime=.04;g.render(1030);
+    const punchBefore=sample();
+    g.player.stateTime=.10;g.render(1031);
+    const punchAfter=sample();
+    g.player.state="walk";g.player.stateTime=.2;
     const before=window.MugenFluid.getStats(g).zoom;
     g.player.x=605;g.cpu.x=705;
     for(let i=0;i<25;i++)g.render(1058+i*16);
@@ -98,7 +117,8 @@ const path = require("node:path");
         window.testEngine.premiumImages,.5);
       return pose && pose.part==="combat" && pose.frame?.w>0;
     });
-    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
+    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,
+      atlasCounts,squareKeys,punchBefore,punchAfter,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
       shotgunImpacts,shotgunDamage,retreatMoved,backdashMoved,backdashMirrored,atlasFrameCount:window.MugenMotion.clips.run.count,
       motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
       kickReady:window.testEngine.kickReady,
@@ -110,7 +130,17 @@ const path = require("node:path");
     return state;
   });
   assert.notEqual(result.first,result.second,"movement should modify actual rendered pixels continuously");
-  assert.deepEqual(result.atlasCounts,[16,16],"premium fighter builds 32 source-derived cels");
+  assert.deepEqual(result.atlasCounts,[16,32],
+    "premium fighter builds 48 cels with double the Square combat art");
+  for(const [attack,base] of [["light",16],["cross",20],["body",24],["upper",28]]){
+    const phases=result.squareKeys[attack];
+    assert.deepEqual(phases.map(x=>x.index),[base,base+1,base+2,base+3],
+      attack+" should move through four unique authored-source-derived frames");
+    assert.ok(phases.every(x=>!x.ghost && Number.isFinite(x.carry)),
+      attack+" body must never double-ghost or drop animated carry");
+  }
+  assert.notEqual(result.punchBefore,result.punchAfter,
+    "real Chromium renders visibly different frames across a Square strike");
   assert.equal(result.forwardClip,"advance","forward directional artwork is active in Chromium");
   assert.equal(result.backwardClip,"retreat","backward footwork has distinct art");
   assert.equal(result.retreatMoved,true,"real left input must backwalk even near enemy attacks");
