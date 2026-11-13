@@ -75,7 +75,7 @@ const assert=require("node:assert/strict");
    const voidHits=hitCount,finalHealth=game.cpu.health;
    ctx.drawImage=originalDraw;game.damageFighter=original;
    return {moves,atlasSize:[atlas?.image.width,atlas?.image.height],
-     atlasFrames:atlas?.frameCount,drew,flashed,immediate,groundAirDenied,
+     atlasFrames:atlas?.frameCount,drew,flashed,flash,immediate,groundAirDenied,
      airAllowed,airHits,deniedVoid,startedVoid,cinematicSeen,voidHits,
      finalHealth,heavyHits};
   });
