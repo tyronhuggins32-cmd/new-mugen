@@ -1,0 +1,44 @@
+name: Install high-detail Yusuke animation art
+on:
+  push:
+    paths:
+      - ".github/workflows/install-yusuke-premium.yml"
+permissions:
+  contents: write
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve verified 16-frame artist pack
+        env:
+          COMBAT_SOURCE: "https://at.adobe.com/uoAi3HvdMDpYeYZy"
+          MOVEMENT_SOURCE: "https://at.adobe.com/JU6Jn0Zpofpbd5sU"
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --show-error --silent "$COMBAT_SOURCE" -o characters/yusuke/yusuke-premium-combat.png
+          curl --fail --location --retry 3 --show-error --silent "$MOVEMENT_SOURCE" -o characters/yusuke/yusuke-premium-movement.png
+          echo "a361f1196c3827ff2ba81271df67d454e58bdfa1990e57829d8230b6728475bd  characters/yusuke/yusuke-premium-combat.png" | sha256sum -c
+          echo "912feb7bcf7af6908ea0d61e5b617e9b18e0485492dc983fc0775f0ade15da93  characters/yusuke/yusuke-premium-movement.png" | sha256sum -c
+          python3 - <<'PY'
+          import json,struct
+          with open("characters/yusuke/premium-atlas.json") as f: data=json.load(f)
+          for key in ["combat","movement"]:
+            info=data[key]
+            with open(info["src"],"rb") as f: h=f.read(26)
+            assert h[:8]==bytes.fromhex("89504e470d0a1a0a")
+            assert struct.unpack(">II",h[16:24])==(2048,1024)
+            assert h[25]==6, "Expected RGBA transparency"
+            assert len(info["frames"])==8
+          print("Verified both high-detail atlases and 16 frame bounds")
+          PY
+      - name: Commit finished production art
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke-premium-*.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Install unified high-detail Yusuke 16-frame art pack"
+            git pull --rebase origin main
+            git push
+          fi
