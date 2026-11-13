@@ -49,6 +49,20 @@ for (const [name, anim] of Object.entries(sheet.animations)) {
   assert.ok(ids.every(n => Number.isInteger(n) && n >= 0 && n < sheet.frames.length), `animation ${name} must reference valid sprites`);
 }
 
+const kick=config.powerKickSpriteSheet;
+assert.ok(kick && kick.frames.length===8 && kick.width===1536 && kick.height===512);
+assert.equal(kick.scale,config.spriteSheet.scale,"power kick matches Yusuke's original scale");
+const kickBytes=fs.readFileSync(kick.src);
+assert.equal(kickBytes.subarray(0,8).toString("hex"),"89504e470d0a1a0a");
+assert.equal(kickBytes.readUInt32BE(16),1536);
+assert.equal(kickBytes.readUInt32BE(20),512);
+assert.equal(kickBytes[25],6,"kick uses transparent RGBA artwork");
+assert.equal(crypto.createHash("sha256").update(kickBytes).digest("hex"),
+  "e8f2f18af9f58fcae29026ae799cb55d69b5a53499fc1221c85b5b38671de929");
+for (const [index,frame] of kick.frames.entries()) {
+  assert.ok(frame.x>=0 && frame.y>=0 && frame.w>0 && frame.h>0, "kick frame "+index);
+  assert.ok(frame.x+frame.w<=kick.width && frame.y+frame.h<=kick.height);
+}
 const html = fs.readFileSync("game-build-0009.html", "utf8");
 const script = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
   .map(match => match[1])
@@ -58,8 +72,10 @@ new vm.Script(script, { filename: "game-build-0009-inline.js" });
 assert.match(script, /loadSpriteAsset\(yusukeCombatSheet,/);
 assert.match(script, /combatPose\?\.frame/);
 assert.match(script, /combatAtlasReady = false/);
-assert.match(script, /\? yusukeSpiritGunSheet : combatPose \? yusukeCombatSheet/,
-  "gun and shotgun must render from the original color/scale matched spirit-gun sheet");
+assert.match(script, /loadSpriteAsset\(yusukeKickSheet,/);
+assert.match(script, /kickAtlasReady/);
+assert.match(script, /\? yusukeSpiritGunSheet : combatPose \? combatPose\.image \|\| yusukeCombatSheet/,
+  "Spirit Gun keeps its canonical art, kick and punches use their own frame sheet");
 assert.doesNotMatch(script, /loadSpriteAsset\(yusukeSpecialSheet/,
   "do not load the inconsistent retired Spirit Gun artwork");
 console.log("Yusuke sprites: atlas PNG, all 12 frames, animation references, and game script verified.");
