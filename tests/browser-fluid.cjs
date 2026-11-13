@@ -14,10 +14,7 @@ const path = require("node:path");
   await page.route("**/game-build-0009.html",route=>route.fulfill({
     contentType:"text/html",
     body:html.replace("      function beginFight() {",
-      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; },
-        get premiumReady() { return premiumReady; },
-        get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; },
-        arena }; \n      function beginFight() {")
+      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, arena }; \n      function beginFight() {")
   }));
   await page.goto("http://127.0.0.1:8000/");
   await page.locator('button.menu-item[data-mode="arcade"]').click();
