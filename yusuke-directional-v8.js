@@ -153,17 +153,17 @@
    const attack=f.currentAttack?.();
    if(root.MugenComboFX && !root.MugenComboFX.allows(f,attack))continue;
    const speed=Math.abs(f.vx||0);
-   const active=(f.dashTimer||0)>0 || (f.state==="walk"&&speed>310) ||
-     (!f.grounded && speed>210);
+   const active=(f.dashTimer||0)>0 || (f.state==="walk"&&speed>520) ||
+     (!f.grounded && speed>460);
    if(!active)continue;
    const dir=Math.sign(f.vx||f.facing||1);
    const color=f.cpu?"#ff759d":"#8dfaff";
    const length=clamp(speed*.13,40,130);
-   const count=q<.6?2:5;
+   const count=q<.6?2:3;
    ctx.strokeStyle=color;ctx.lineCap="round";
    for(let i=0;i<count;i++){
     const row=i*24+(i%2?3:-3); // anchored lanes, no random-looking jitter
-    ctx.globalAlpha=.29*(1-i/count);
+    ctx.globalAlpha=.19*(1-i/count);
     ctx.lineWidth=1+i%2;
     const x=f.x-dir*(36+i*7);
     const y=f.y-36-row;
