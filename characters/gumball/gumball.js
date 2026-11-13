@@ -91,7 +91,7 @@
   });
   root.GumballCharacter = Object.freeze({
     profile, animations:Object.freeze(animations), attacks:Object.freeze(attacks),
-    sprite:{src:"characters/gumball/gumball-sprites.png",columns:8,rows:12,cellWidth:256,cellHeight:256,frameCount:96,scale:1.0,assetStatus:"awaiting-dedicated-animation-atlas"},
+    sprite:{columns:8,rows:12,cellWidth:256,cellHeight:256,frameCount:96,scale:1.0,assetStatus:"awaiting-dedicated-animation-atlas"},
     movement:{groundSpeed:385,airSpeed:340,gravity:1580,jumpVelocity:-690,groundFriction:1850,airFriction:480,attackFriction:620},
     combo:{requiredLights:3,window:.92,scaleStart:1.12,scaleStep:.13,maxScale:2.25,decay:.012,maxHits:12},
     reactions:{hitStopLight:.045,hitStopHeavy:.085,blockStun:.13,wallBounce:.45,groundBounce:-390}
