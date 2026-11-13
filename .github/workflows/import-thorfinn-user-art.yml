@@ -1,0 +1,32 @@
+name: Import creator's Thorfinn artwork
+on:
+  push:
+    branches: ["feature/thorfinn-original-sprites"]
+    paths: [".github/workflows/import-thorfinn-user-art.yml"]
+permissions:
+  contents: write
+jobs:
+  import-artwork:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Retrieve the two processed sprites from the exact uploaded art
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-all-errors 'https://d2ol7oe51mr4n9.cloudfront.net/user_3J3FsehSSM8aaRaK5HcNwjYb3e6/dacdb8f8-5341-4d94-8893-020e2b7b22cd.webp' -o characters/thorfinn/user-sprites.webp
+          curl -fL --retry 3 --retry-all-errors 'https://d2ol7oe51mr4n9.cloudfront.net/user_3J3FsehSSM8aaRaK5HcNwjYb3e6/63f5b4bc-00f1-4709-b89b-3f5b1a7bce59.webp' -o characters/thorfinn/user-portrait.webp
+          echo '5b1f246296184ed58e49bcd799144ca9dbaf40a1e0652d73ed6ddb7ba8788e24  characters/thorfinn/user-sprites.webp' | sha256sum -c -
+          echo '1c3cacc2f8a9be2e6becd151b9e04ff14f1a0faf15849e50cdf75e931a48144f  characters/thorfinn/user-portrait.webp' | sha256sum -c -
+      - name: Commit original sprites to the feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add characters/thorfinn/user-sprites.webp characters/thorfinn/user-portrait.webp
+          git rm .github/workflows/import-thorfinn-user-art.yml
+          git commit -m 'Import the creator-provided Thorfinn sprite assets'
+          git push origin HEAD:feature/thorfinn-original-sprites
