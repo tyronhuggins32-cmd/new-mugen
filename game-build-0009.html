@@ -2153,7 +2153,7 @@
         });
       }
 
-      const GUMBALL_PROFILE_URL="characters/gumball/profile-reference.png";
+      const GUMBALL_PROFILE_URL=embeddedYusukePortrait;
       function gumballRosterDefinition(){
         const p=window.GumballCharacter.profile;
         return {displayName:p.name,shortName:"Gumball",series:p.series,profile:{title:p.role,archetype:p.archetype,description:"Unpredictable Elmore speed fighter with elastic cartoon physics and aerial combo routes."},selectStats:p.stats,moves:p.specialMoves.map(m=>({name:m.name,input:m.input}))};
