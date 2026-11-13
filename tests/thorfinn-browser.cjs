@@ -33,8 +33,8 @@ const assert=require('node:assert/strict');
    height:window.thorfinnSmoke?.atlas?.naturalHeight
   }));
   assert.equal(data.id,'thorfinn_karlsefni');
-  assert.equal(data.width,960);
-  assert.equal(data.height,960);
+  assert.equal(data.width,2048);
+  assert.equal(data.height,1400);
   await page.locator('#choose-character').click();
   await page.waitForFunction(()=>window.thorfinnSmoke.game?.state==='play',{timeout:10000});
   const result=await page.evaluate(()=>{
