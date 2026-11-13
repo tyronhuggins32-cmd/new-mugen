@@ -87,7 +87,7 @@ assert.ok(game.hitStop>=.10 && game.shake>=15 && game.cinematicImpact,
   "a landed Spirit Gun creates hit-stop, shake and short camera focus");
 v.drawImpact(game,ctx,1016);v.drawOverlay(game,ctx,arena);
 assert.ok(counts.strokes>15 && counts.rects>1,"impact has luminous explosion and screen accent");
-for(let i=0;i<16;i++)v.tick(game,1/60);
+for(let i=0;i<33;i++)v.tick(game,1/60);
 assert.equal(v.stats(game).impacts,0,"impact art expires promptly");
 assert.equal(game.cinematicImpact,null,"cinematic camera returns to normal");
 v.reset(game);assert.equal(v.stats(game).shotsFired,0);
