@@ -34,7 +34,7 @@ for(const part of ["movement","combat","square"]){
  assert.equal(sheet.frames.length,part==="square"?24:16);
  assert.equal(sheet.scale,.5);
  for(const f of sheet.frames){
-  assert.ok(f.x>=0&&f.y>=0&&f.w>0&&f.h>0&&f.x+f.w<=2048&&f.y+f.h<=2048);
+  assert.ok(f.x>=0&&f.y>=0&&f.w>0&&f.h>0&&f.x+f.w<=sheet.image.width&&f.y+f.h<=sheet.image.height);
   assert.ok(f.ax>=0&&f.ax<=f.w);
  }
 }
