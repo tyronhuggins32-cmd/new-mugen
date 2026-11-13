@@ -87,9 +87,9 @@ const assert=require("node:assert/strict");
      finalHealth,heavyHits};
   });
   assert.deepEqual(result.moves,[
-   "flashRush","risingBreaker","skyPursuit","spiritCyclone","spiritVoid","meteorFinish"]);
-  assert.equal(result.atlasFrames,48,"all 48 new cel poses built in real Chromium");
-  assert.deepEqual(result.atlasSize,[3072,4096]);
+   "flashRush","risingBreaker","skyPursuit","spiritCyclone","spiritVoid","meteorFinish","rapidBarrage","spiritWave"]);
+  assert.equal(result.atlasFrames,64,"all 64 new cel poses built in real Chromium");
+  assert.deepEqual(result.atlasSize,[4096,4096]);
   assert.ok(result.drew>=1,"game draws reference premium art atlas for live Yusuke");
   assert.equal(result.flashed,true);
   assert.equal(result.immediate,"flashRush");
@@ -108,7 +108,7 @@ const assert=require("node:assert/strict");
    "cinematic must deal a sequenced set of real hits and finish");
   assert.ok(result.heavyHits>=1);
   assert.equal(errors.length,0,errors.join("\n"));
-  console.log("PASS: six unbound Yusuke reference moves live in Chromium, atlas renders, flash rush, aerial gate and Spirit Void deal real hits.");
+  console.log("PASS: eight unbound Yusuke reference moves live in Chromium, atlas renders, flash rush, aerial gate and Spirit Void deal real hits.");
   console.log(result);
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});
