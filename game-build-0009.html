@@ -3604,6 +3604,7 @@
           });
           this.addSpiritBurst(muzzleX, muzzleY, color, owner.facing, .54, "muzzle");
           window.MugenSpiritGun?.onFire(this, owner, muzzleX, muzzleY);
+          playCombatSfx("spirit-shot", .56, owner.facing * .22);
         }
 
         updateProjectiles(dt) {
