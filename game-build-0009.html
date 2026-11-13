@@ -2158,15 +2158,28 @@
         const p=window.GumballCharacter.profile;
         return {displayName:p.name,shortName:"Gumball",series:p.series,profile:{title:p.role,archetype:p.archetype,description:"Unpredictable Elmore speed fighter with elastic cartoon physics and aerial combo routes."},selectStats:p.stats,moves:p.specialMoves.map(m=>({name:m.name,input:m.input}))};
       }
+      const GUMBALL_PROFILE_URL = embeddedYusukePortrait;
+      function gumballRosterDefinition(){
+        const p=window.GumballCharacter.profile;
+        return {displayName:p.name,shortName:"Gumball",series:p.series,profile:{title:p.role,archetype:p.archetype,description:"Unpredictable Elmore speed fighter with elastic cartoon physics, aerial combo routes and reality-breaking specials."},selectStats:p.stats,moves:p.specialMoves.map(m=>({name:m.name,input:m.input}))};
+      }
       function selectRosterFighter(id){
         selectedFighterId=id==="gumball_watterson"?"gumball_watterson":"yusuke_urameshi";
         rosterCards.forEach(card=>{const active=card.dataset.character===selectedFighterId;card.classList.toggle("selected",active);if(active)card.setAttribute("aria-current","true");else card.removeAttribute("aria-current");});
         rosterChoice=rosterCards.find(card=>card.dataset.character===selectedFighterId)||rosterCards[0];
-        const portrait=selectedFighterId==="gumball_watterson"?GUMBALL_PROFILE_URL:"characters/yusuke/portrait.webp";rosterPortrait.src=portrait;
-        if(selectedFighterId==="gumball_watterson"){renderCharacter(gumballRosterDefinition(),{portrait});characterArt.alt="Gumball Watterson profile reference";characterReady=true;chooseCharacter.disabled=false;startBattleButton.disabled=false;window.GumballCombat.load().catch(error=>console.warn("Gumball sprite atlas is not installed; fallback renderer active.",error));}
-        else{renderCharacter(activeCharacterDefinition||embeddedYusukeDefinition,{portrait});characterReady=Boolean(activeCharacterDefinition);chooseCharacter.disabled=!characterReady;startBattleButton.disabled=!characterReady;}
+        const portrait=selectedFighterId==="gumball_watterson"?GUMBALL_PROFILE_URL:"characters/yusuke/portrait.webp";
+        rosterPortrait.src=portrait;
+        if(selectedFighterId==="gumball_watterson"){
+          renderCharacter(gumballRosterDefinition(),{portrait});
+          characterArt.alt="Gumball Watterson profile placeholder";
+          characterReady=true;chooseCharacter.disabled=false;startBattleButton.disabled=false;
+          window.GumballCombat.load().catch(error=>console.warn("Gumball sprite atlas not supplied; fallback renderer active.",error));
+        }else{
+          renderCharacter(activeCharacterDefinition||embeddedYusukeDefinition,{portrait});
+          characterReady=Boolean(activeCharacterDefinition);chooseCharacter.disabled=!characterReady;startBattleButton.disabled=!characterReady;
+        }
       }
-      async function loadCharacterDefinition() {
+            async function loadCharacterDefinition() {
         characterReady = false;
         combatAtlasReady = false;
         kickAtlasReady = false;
