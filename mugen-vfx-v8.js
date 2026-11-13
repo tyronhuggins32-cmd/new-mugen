@@ -8,7 +8,7 @@
   const TYPES=Object.freeze({
     charge:0,shot:1,blast:2,shotgun:3,punch:4,slash:5,dust:6,ring:7
   });
-  const FX_TIME=Object.freeze({punch:.21,heavy:.29,blast:.39,shotgun:.28,dust:.39});
+  const FX_TIME=Object.freeze({punch:.19,blast:.27,shotgun:.24,charge:.23,slash:.19,ring:.18,dust:.30});
   const instances=new WeakMap();
   const image=(typeof Image==="function"?new Image():null);
   let ready=false;
@@ -20,7 +20,7 @@
   }
   function holder(game){
     let s=instances.get(game);
-    if(!s){s={fx:[],ground:new WeakMap(),shots:0};instances.set(game,s);}
+    if(!s){s={fx:[],ground:new WeakMap(),shots:0,contacts:0};instances.set(game,s);}
     return s;
   }
   function reset(game){instances.delete(game);}
@@ -29,16 +29,24 @@
     const s=holder(game),length=FX_TIME[kind]||.27;
     s.fx.push({kind,x,y,direction:opts.direction||1,cpu:!!opts.cpu,
       age:0,length,scale:opts.scale||1});
-    if(s.fx.length>25)s.fx.splice(0,s.fx.length-25);
+    if(s.fx.length>14)s.fx.splice(0,s.fx.length-14);
   }
   function onHit(game,attacker,defender,attack,blocked,x,y){
     if(!game||!attacker)return;
     if(root.MugenComboFX && !root.MugenComboFX.allows(attacker))return;
     const heavy=!!attack?.heavyImpact;
-    const kind=heavy?"blast":blocked?"ring":"punch";
-    append(game,kind,x,y,{direction:attacker.facing,cpu:attacker.cpu,scale:heavy?1.25:1});
-    if(heavy)append(game,"slash",x-attacker.facing*24,y+8,
-      {direction:attacker.facing,cpu:attacker.cpu,scale:.95});
+    const s=holder(game);
+    // Block first, even against a heavy move. A single contact generates
+    // one coherent hit sprite, rather than a blast plus a random fan.
+    const kind=blocked?"ring":heavy?"blast":"punch";
+    const previous=s.fx[s.fx.length-1];
+    if(previous && previous.kind===kind && previous.age<.045 &&
+      Math.abs(previous.x-x)<9 && Math.abs(previous.y-y)<9)return;
+    append(game,kind,x,y,{
+      direction:attacker.facing,cpu:attacker.cpu,
+      scale:blocked?.66:heavy?1.1:.78
+    });
+    s.contacts++;
   }
   function onShot(game,owner,x,y,shotgun=false){
     append(game,shotgun?"shotgun":"charge",x,y,
@@ -89,16 +97,16 @@
       const t=Math.min(1,e.age/e.length);
       let w,h;
       switch(e.kind){
-        case "shotgun":w=270;h=165;break;
+        case "shotgun":w=245;h=150;break;
         case "charge":w=105;h=110;break;
-        case "slash":w=170;h=200;break;
-        case "punch":w=130;h=140;break;
-        case "blast":w=215;h=205;break;
-        case "ring":w=190;h=180;break;
+        case "slash":w=150;h=176;break;
+        case "punch":w=116;h=123;break;
+        case "blast":w=190;h=180;break;
+        case "ring":w=152;h=140;break;
         default:w=150;h=100;break;
       }
-      const growth=1+(e.kind==="blast"?.4:.16)*t;
-      const fade=(1-t)**(isDust?1.4:1.1);
+      const growth=1+(e.kind==="blast"?.20:.10)*t;
+      const fade=(1-t)**(isDust?1.6:1.35);
       const y=e.y+(isDust?5:0);
       paint(ctx,TYPES[e.kind],e.x,y,e.direction,
         w*e.scale*growth,h*e.scale*growth,fade);
@@ -129,6 +137,6 @@
   root.MugenVfxV8=Object.freeze({
     ready:()=>ready,reset,onHit,onShot,onImpact,tick,
     drawBehind,drawFront,drawWindup,drawProjectile,
-    stats(game){const s=holder(game);return {active:s.fx.length,shots:s.shots,loaded:ready};}
+    stats(game){const s=holder(game);return {active:s.fx.length,shots:s.shots,contacts:s.contacts,loaded:ready};}
   });
 })(typeof window==="undefined"?globalThis:window);
