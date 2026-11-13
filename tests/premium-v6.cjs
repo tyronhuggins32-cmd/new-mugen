@@ -52,6 +52,19 @@ check("attack-body","body","combat",3);
 check("attack-upper","upper","combat",4);
 check("attack-gun","gun","combat",6);
 check("attack-shotgun","shotgun","combat",2);
+
+const cleanedSources={combat:{width:2048,height:1024},movement:{width:2048,height:1024}};
+for(const [state,attack,part] of [
+ ["idle",null,"movement"],["attack-gun","gun","combat"],
+ ["attack-shotgun","shotgun","combat"],["block",null,"combat"]
+]){
+ fighter.state=state;
+ const clean=premium.choosePose(fighter,attack,data,cleanedSources,.5);
+ assert.ok(clean&&clean.part===part,
+   "cleaned alpha canvases must remain valid for idle and specials");
+ assert.equal(clean.image,cleanedSources[part]);
+}
+
 check("attack-powerKick","powerKick","combat",7);
 check("hit",null,"combat",5);
 fighter.state="walk";fighter.stateTime=.2;
