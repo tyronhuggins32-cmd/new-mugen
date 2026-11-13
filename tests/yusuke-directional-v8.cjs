@@ -26,19 +26,19 @@ vm.runInNewContext(script,{window:w,document,Math});
 const images={movement:{naturalWidth:2048,width:2048},combat:{naturalWidth:2048,width:2048}};
 const atlas=w.MugenDirectional.build(meta,images);
 assert.ok(atlas);
-assert.equal(allocated.length,2,"movement and combat textures built once");
-for(const part of ["movement","combat"]){
+assert.equal(allocated.length,3,"movement, combat and Square textures built once");
+for(const part of ["movement","combat","square"]){
  const sheet=atlas[part];
  assert.equal(sheet.image.width,2048);
- assert.equal(sheet.image.height,2048);
- assert.equal(sheet.frames.length,16);
+ assert.equal(sheet.image.height,part==="square"?3072:2048);
+ assert.equal(sheet.frames.length,part==="square"?24:16);
  assert.equal(sheet.scale,.5);
  for(const f of sheet.frames){
-  assert.ok(f.x>=0&&f.y>=0&&f.w>0&&f.h>0&&f.x+f.w<=2048&&f.y+f.h<=2048);
+  assert.ok(f.x>=0&&f.y>=0&&f.w>0&&f.h>0&&f.x+f.w<=sheet.image.width&&f.y+f.h<=sheet.image.height);
   assert.ok(f.ax>=0&&f.ax<=f.w);
  }
 }
-assert.equal(draws.length,32,"all derived cels preserve each body as one complete source sprite");
+assert.equal(draws.length,56,"all 56 cels preserve each full source silhouette without strips");
 assert.ok(draws.every(args=>args.length===9),
   "no partial sprite-strip cropping is allowed: it creates white seams");
 assert.ok(draws.every(args=>images.movement===args[0]||images.combat===args[0]));
@@ -103,18 +103,18 @@ const opponent={state:"idle",grounded:true,x:900,y:600,vx:0,facing:-1,
 director.drawBehind({player:runner,cpu:opponent},ctx,1200);
 director.drawFront({player:runner,cpu:opponent},ctx,1200);
 assert.ok(streaks>=6,"rush and cross release have bounded visible speed arcs");
-assert.equal(allocated.length,2,"rendering never allocates new textures");
+assert.equal(allocated.length,3,"rendering never allocates new textures");
 const studio=fs.readFileSync("yusuke-sprite-studio.html","utf8");
 assert.ok(studio.includes('"yusuke-directional-"+part+"-v8.png"'),
  "studio exports each transparent sheet with a stable file name");
 assert.ok(studio.includes("columns:4,rows:4"),"sprite studio must export the 4x4 atlas");
-assert.ok(studio.includes("yusuke-directional-v8-frames.json"),
+assert.ok(studio.includes("yusuke-directional-v10-frames.json"),
  "studio exports frame crop metadata for external import");
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/yusuke-directional-v8\.js\?v=2/);
+assert.match(html,/yusuke-directional-v8\.js\?v=3/);
 assert.match(html,/MugenDirectional\?\.build/);
 assert.match(html,/MugenDirectional\?\.choosePose/);
 assert.match(html,/premiumPose\.frames \|\| premiumArt/);
 new vm.Script([...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
   .map(x=>x[1]).find(x=>x.includes("function selectYusukeCombatPose")));
-console.log("PASS: 32 source-matched directional/combat cels, backdash both facings, 40 FPS and fallback.");
+console.log("PASS: 56 source-matched cels, 24 Square variants, clean backdash and 40 FPS timeline.");

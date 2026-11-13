@@ -1,12 +1,13 @@
-/* Yusuke Directional V8.1: 32 supplementary, 1:1-source pixel-anime cels.
+/* Yusuke Directional V10: 56 source-matched, 1:1 pixel-anime cels.
  * Reference goals: backward footwork, forward rush, aerial direction changes,
  * individual punch windup/contact/recovery and readable aerial strikes.
- * These are ORIGINAL-source-derived cels, not copied video images or thirty-two
- * independent hand drawings. The two static 8-frame premium PNGs stay primary.
+ * 24 new Square poses animate jab, cross, body, upper with six staged keys.
+ * All source-derived cels use the cleaned V8 premium paintings; they are
+ * not 56 new hand-drawn poses. Primary 8-frame originals remain unchanged.
  */
 (function(root){
  "use strict";
- const FPS=40,CELL=512,COLS=4,ROWS=4;
+ const FPS=40,CELL=512,COLS=4,ROWS=4,SQUARE_ROWS=6;
  const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
  // movement atlas: 3 advance, 3 retreat, 2 rush, 2 directional air, 2 low/reset,
  // plus 2 fast backsteps, 1 pivot and 1 planted landing pose.
@@ -32,13 +33,53 @@
   {src:0,lean:-20,twist:-11,lift:0},{src:4,lean:27,twist:13,lift:-2},
   {src:0,lean:-8,twist:-6,lift:0},{src:5,lean:-5,twist:-4,lift:2}
  ]);
- const layouts=Object.freeze({movement,combat});
+ // Six purposeful key poses per Square attack: readable pre-load,
+ // acceleration, active contact and recoil. Each cel uses ONE intact source
+ // drawing with a planted foot pivot, never cut-and-shift limb strips.
+ // No frame is copied verbatim; shear/stretch/vertical settling differ.
+ const square=Object.freeze([
+  // light jab: load, set, release, follow-through, contact, reset
+  {src:0,lean:-25,twist:-8,lift:0,sx:.955,sy:.98},
+  {src:0,lean:-11,twist:-4,lift:0,sx:.985,sy:1},
+  {src:1,lean:4,twist:1,lift:-1,sx:1.005,sy:1},
+  {src:1,lean:14,twist:5,lift:-2,sx:1.025,sy:.993},
+  {src:1,lean:23,twist:8,lift:-1,sx:1.045,sy:.99},
+  {src:5,lean:-8,twist:-3,lift:0,sx:.98,sy:1},
+  // cross: coil, turn, rotate shoulder, connect, snap, recover
+  {src:0,lean:-27,twist:-11,lift:0,sx:.95,sy:.99},
+  {src:2,lean:-10,twist:-5,lift:0,sx:.98,sy:1},
+  {src:2,lean:5,twist:3,lift:-1,sx:1.015,sy:1},
+  {src:2,lean:17,twist:7,lift:-2,sx:1.03,sy:.995},
+  {src:2,lean:25,twist:10,lift:-2,sx:1.045,sy:.987},
+  {src:5,lean:-7,twist:-4,lift:0,sx:.987,sy:1},
+  // body: low plant, shoulder dip, rising drive, impact, hold, recoil
+  {src:3,lean:-19,twist:-8,lift:0,sx:.962,sy:.94},
+  {src:3,lean:-11,twist:-5,lift:0,sx:.985,sy:.945},
+  {src:3,lean:4,twist:1,lift:-1,sx:1.006,sy:.95},
+  {src:3,lean:15,twist:6,lift:-2,sx:1.027,sy:.957},
+  {src:3,lean:24,twist:10,lift:-1,sx:1.042,sy:.96},
+  {src:5,lean:-6,twist:-4,lift:0,sx:.99,sy:1},
+  // uppercut: sink, wind, launch, rise, apex, grounded recovery
+  {src:3,lean:-22,twist:-9,lift:0,sx:.967,sy:.945},
+  {src:3,lean:-13,twist:-5,lift:0,sx:.984,sy:.955},
+  {src:4,lean:3,twist:3,lift:-4,sx:1.01,sy:1},
+  {src:4,lean:11,twist:6,lift:-8,sx:1.025,sy:1.005},
+  {src:4,lean:21,twist:11,lift:-12,sx:1.04,sy:1.013},
+  {src:5,lean:-7,twist:-3,lift:0,sx:.985,sy:1}
+ ]);
+ const SQUARE_CLIPS=Object.freeze({
+   light:Object.freeze({clip:"jab",offset:0,breaks:[.07,.19,.34,.49,.69]}),
+   cross:Object.freeze({clip:"cross",offset:6,breaks:[.08,.23,.36,.52,.70]}),
+   body:Object.freeze({clip:"body",offset:12,breaks:[.08,.21,.34,.50,.68]}),
+   upper:Object.freeze({clip:"upper",offset:18,breaks:[.07,.21,.34,.48,.67]})
+ });
+ const layouts=Object.freeze({movement,combat,square});
  function compose(part,image,meta) {
   if(!image || !(image.naturalWidth || image.width) || !meta?.frames?.length ||
     !meta.frames.every(f=>f.w>0&&f.h>0&&f.w<=470&&f.h<=458))return null;
   const source=layouts[part];
   const canvas=document.createElement("canvas");
-  canvas.width=CELL*COLS;canvas.height=CELL*ROWS;
+  canvas.width=CELL*COLS;canvas.height=CELL*(part==="square"?SQUARE_ROWS:ROWS);
   const ctx=canvas.getContext("2d",{alpha:true});
   if(!ctx)return null;
   ctx.imageSmoothingEnabled=false;
@@ -48,7 +89,6 @@
    if(!base || base.w>470 || base.h>458) return null;
    const x=(i%COLS)*CELL,y=Math.floor(i/COLS)*CELL;
    const origin=Math.floor((CELL-base.w)/2);
-   const fy=y+CELL-base.h;
    // Composite each source sprite ONCE, without chopping limbs into
    // ten offset strips. Those slice boundaries created white seams,
    // detached wrists and visibly changing silhouettes during attacks.
@@ -58,7 +98,7 @@
    const rise=Math.min(0,spec.lift);
    ctx.save();
    ctx.translate(x+origin+base.ax,y+CELL);
-   ctx.transform(1,0,shear,1,0,0);
+   ctx.transform(spec.sx||1,0,shear,spec.sy||1,0,0);
    ctx.drawImage(image,base.x,base.y,base.w,base.h,
      -base.ax,-base.h+rise,base.w,base.h);
    ctx.restore();
@@ -74,7 +114,13 @@
   try{
    const moved=compose("movement",images.movement,meta.movement);
    const striking=compose("combat",images.combat,meta.combat);
-   return moved&&striking?{movement:moved,combat:striking,frameCount:32,fps:FPS}:null;
+   // The third texture is optional on low-memory browsers. Legacy 32-cel
+   // combat and movement remain playable if its allocation fails.
+   const squareArt=compose("square",images.combat,meta.combat);
+   return moved&&striking?{
+     movement:moved,combat:striking,square:squareArt,
+     frameCount:squareArt?56:32,fps:FPS
+   }:null;
   }catch(e){return null;}
  }
  const frameAt=(keys,time,rate=FPS)=>keys[Math.floor(Math.max(0,time)*rate)%keys.length];
@@ -90,6 +136,13 @@
    part="combat";
    if(!grounded && ["light","cross","body","upper","heavy","powerKick"].includes(attack)){
     clip="airStrike";index=phase(p,.19,.83,7,8);
+   }else if(atlas.square?.image && SQUARE_CLIPS[attack]){
+    const action=SQUARE_CLIPS[attack];
+    clip=action.clip;part="square";
+    // Sample by normalized move progress, not unrelated wall-clock time.
+    // Six distinct cels play at 40 FPS on real .19-.39s punch durations.
+    const stage=action.breaks.reduce((acc,limit)=>acc+(p>=limit?1:0),0);
+    index=action.offset+stage;
    }else{
     switch(attack){
      case "light":clip="jab";index=phase(p,.2,.83,0,1);break;
@@ -125,7 +178,7 @@
     /^aerial/.test(fighter._directionalSprite?.clip||"")){
    clip="landing";index=15;
   }else{return null;}
-  const atlasSheet=atlas[part],frame=atlasSheet.frames[index];
+  const atlasSheet=atlas[part],frame=atlasSheet?.frames?.[index];
   if(!frame)return null;
   const memo=fighter._directionalSprite || (fighter._directionalSprite={
    clip:null,frame:null,image:null,started:0,from:null,fromImage:null

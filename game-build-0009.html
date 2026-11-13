@@ -1792,7 +1792,7 @@
   <script src="mugen-sfx-v8.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=1"></script>
   <script src="yusuke-alpha-v9.js?v=1"></script>
-  <script src="yusuke-directional-v8.js?v=2"></script>
+  <script src="yusuke-directional-v8.js?v=3"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
@@ -2941,9 +2941,14 @@
             : combatPose?.frame || motionPose?.frame || yusukeSpriteFrames[this.yusukeFrameIndex()] || yusukeSpriteFrames[0];
           if (!frame) return;
           this._usingPremiumCel = Boolean(premiumPose);
+          // Six Square key poses move the shoulders and arms, not the entire
+          // fighter sliding 12-18 pixels through the opponent's feet.
+          const squarePose = premiumPose?.part === "square";
           const lunge = ["light", "cross", "body", "upper", "powerKick"].includes(attackType)
             ? Math.sin(attackProgress * Math.PI)
-              * ({ light: 8, cross: 18, body: 15, upper: 12, powerKick: 26 }[attackType])
+              * (squarePose
+                ? ({ light: 3, cross: 5, body: 4, upper: 4 }[attackType])
+                : ({ light: 8, cross: 18, body: 15, upper: 12, powerKick: 26 }[attackType]))
             : attackType === "heavy" ? Math.sin(attackProgress * Math.PI) * 14 : 0;
           const scale = usesFiringAnimation
             ? firingSheet.fighterScale || activeCharacterDefinition.spriteSheet.scale || 1
@@ -2974,8 +2979,16 @@
           context.save();
           context.translate(posX + this.facing * lunge, posY + pose.bob);
           context.scale(this.facing * turnCompression, 1);
-          context.rotate(pose.tilt);
-          context.scale(pose.stretchX, pose.stretchY);
+          // Continuous sub-frame inertia between the six keyed Square cels.
+          // Small planted-foot rotation/extension fills the 60Hz render gaps
+          // without translucent onion-skin ghosts or additional hitboxes.
+          const strikeEnergy = squarePose ? Math.sin(Math.PI*attackProgress) : 0;
+          const squareTurn = squarePose
+            ? (attackType==="upper" ? -.017 : .013)*strikeEnergy
+            : 0;
+          context.rotate(pose.tilt + squareTurn);
+          context.scale(pose.stretchX*(1+strikeEnergy*.013),
+            pose.stretchY*(1-strikeEnergy*.008));
           context.imageSmoothingEnabled = false;
 
           if (!ghost && !this._usingPremiumCel &&

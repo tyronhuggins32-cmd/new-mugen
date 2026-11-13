@@ -311,3 +311,31 @@ Square punches remain fully damaging but are **visually clean at combo counts 1â
 **Both fighters have 5,000 starting and maximum HP.** The HUD reports current/maximum HP and bars remain proportional. Yusuke's low-health Fighting Instinct passive activates at **1,500 HP** (the same 30% threshold as before). Existing base attack damage, energy costs, Spirit Shotgun threshold, Power Kick and combo scaling are preserved.
 
 Regression coverage: `tests/triangle-combo.cjs` validates visually clean early Square hits and COMBO 5 activation. `tests/combat.cjs` exercises full five-hit VFX gating, reverse turning and 5,000 HP in Chromium, and `tests/engine.cjs` checks movement, dash and HP in fixed-step gameplay. The browser smoke suite matches the cache-busted game URL used by `index.html`.
+
+## Yusuke V10: six-stage Square punch animation
+
+The four Square-chain moves (jab, cross, body punch, uppercut) now each use **six
+source-matched cels** instead of one or two holds. The 24 supplementary action
+frames are a new optional **2048 x 3072 transparent Square atlas**, built at
+character load from the cleaned premium Yusuke combat PNG. Combined with the
+16 movement and 16 base combat variants, the runtime now supports **56 pose
+cels**. These are distinct transformations of the existing premium drawings,
+not independently hand-illustrated frames or new assets copied from a video.
+
+Each move progresses through restrained anticipation, acceleration, active
+contact and planted-foot recoil keyed to its actual attack duration (jab
+0.19 s, cross 0.25 s, body 0.29 s, uppercut 0.39 s). Rendering samples at
+40 FPS, with a small continuous momentum transformation between the staged
+frames. Square lunges are reduced to a few pixels so the body does not slide
+across the stage as if on skates; foot pivots, scale and existing hitboxes stay
+unchanged. Guard, stagger, air attacks, Spirit Gun and Shotgun retain their
+current mappings. COMBO 5 still gates normal punch VFX.
+
+The `yusuke-sprite-studio.html` exports the added Square PNG as
+`yusuke-directional-square-v10.png` alongside updated JSON frame metadata
+(`yusuke-directional-v10-frames.json`). On a device that cannot allocate
+the third texture, the game falls back to the existing 32-cel movement/combat
+atlases rather than blocking the match.
+
+Validation: `node tests/yusuke-square-v10.cjs`, `node
+tests/yusuke-directional-v8.cjs`, and the Chromium browser smoke test.
