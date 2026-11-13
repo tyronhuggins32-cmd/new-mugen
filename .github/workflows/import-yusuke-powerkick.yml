@@ -1,0 +1,41 @@
+name: Import verified Yusuke Power Kick art
+on:
+  push:
+    paths:
+      - ".github/workflows/import-yusuke-powerkick.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-kick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PNG processing dependencies
+        run: python3 -m pip install --quiet --break-system-packages pillow numpy
+      - name: Pack eight consistent kick sprites
+        env:
+          SOURCE_URL: "https://at.adobe.com/DQYUdxvdNWLiEvO1"
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --silent --show-error --output /tmp/yusuke-kick-original.png "$SOURCE_URL"
+          python3 tools/pack-yusuke-kick.py /tmp/yusuke-kick-original.png characters/yusuke/yusuke-power-kick.png
+          python3 - <<'PY'
+          import struct,hashlib
+          p="characters/yusuke/yusuke-power-kick.png"
+          with open(p,"rb") as f: data=f.read()
+          assert data[:8]==bytes.fromhex("89504e470d0a1a0a")
+          assert struct.unpack(">II",data[16:24])==(1536,512)
+          assert data[25]==6 and len(data)>100000
+          print("Verified eight-pose RGBA atlas, bytes",len(data),"sha256",hashlib.sha256(data).hexdigest())
+          PY
+      - name: Commit production sprite asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke-power-kick.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Add eight-frame Yusuke Power Kick sprite animation"
+            git pull --rebase origin main
+            git push
+          fi
