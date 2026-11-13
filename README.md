@@ -218,3 +218,14 @@ The fifth combat pass fixes three gameplay-readability problems: fighters merged
 
 The original anime still image and video supplied by the user were **visual references** for Spirit Gun, not assets embedded in the game.
 
+## Yusuke 40 FPS sprite reactions and impact VFX (13 November 2026)
+
+The v5 motion layer adds **twelve supplemental transparent sprite cels** to the sixteen previously generated idle/run cels. The new set is divided into four light-hit **stagger** poses, four heavy **knockback/recoil** poses, and four **recovery** poses. They are synthesized from matching pixels in the original 24-frame Yusuke sheet with slight torso/head displacement and stable foot anchoring, not independently redrawn character anatomy. These poses use the same original colors, face, costume, pivots, and render scale as all other Yusuke animation families.
+
+The game builds **28 derived cels** in a single optional **1024 × 1792 RGBA atlas** (about 7 MiB uncompressed). Animation sampling is now **40 frames per second** (25 ms per timeline sample), with **188 timeline samples** across idle, focus, run, accelerating, braking, jump-rise/fall, landing, stagger, knockback, and recovery. These samples do not represent 188 individually painted images. The combat engine remains on a fixed **60 Hz physics** step, and the canvas continues to render as often as the browser/display permits.
+
+Unblocked light punches now select the stagger cel sequence. Heavy hits, powerful knockback and projectile hits choose the backward recoil sequence; landing or regaining control flows into recovery. This is visual selection layered on top of existing knockback velocity, launch physics, damage, hitstun and blocking rules. If the supplemental canvas fails to allocate, the renderer falls back to the original art.
+
+The fluid VFX renderer also adds hit-direction **spark slashes**, compact **contact flashes**, a secondary ripple, airborne **recoil streaks**, and **floor skid marks** for fast knockback. Effects are cosmetic and expire in fractions of a second. Bounded arrays (88 slashes, 48 trails, 5 flashes) and the existing adaptive quality gate prevent unlimited particle accumulation. Spirit Shotgun's seven collision pellets and cosmetic fan remain mechanically unchanged. DualSense controls remain unchanged.
+
+Run `node tests/yusuke-motion.cjs`, `node tests/fluid-v3.cjs` and `node tests/engine.cjs` to check frame counts/40 FPS timing, atlas limits, animation reaction assignment, impact effects, and physical stagger/launch. Automated checks cannot confirm subjective animation quality or actual PS5/iPhone frame rates; visual/device QA remains useful.
