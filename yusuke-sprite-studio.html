@@ -16,9 +16,9 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
 <header><small>NEW MUGEN / FIGHTER ASSET STUDIO</small><h1>Yusuke Directional Sprites</h1>
 <p>Preview and export transparent, source-matched movement and combat atlases. Every cel preserves pixels and colors from the existing high-resolution fighter art. These are synthesized action variations, not 24 separate hand illustrations. Left-facing animation is mirrored in the fighting engine.</p>
 <a class="button" href="./index.html">Return to game</a><p id="status">Building sprite atlases…</p></header>
-<main><section class="art"><h2>01 / Directional movement (12 cels)</h2><p>Advancing, backpedaling, high-speed rush, diagonal air movement, defensive low stance and recovery.</p>
+<main><section class="art"><h2>01 / Directional movement (16 cels)</h2><p>Advancing, backpedaling, high-speed rush, diagonal air movement, defensive low stance and recovery.</p>
 <div class="preview" id="move-preview"></div><button type="button" id="movement-download" disabled>Download transparent movement PNG</button></section>
-<section class="art"><h2>02 / Combo and combat (12 cels)</h2><p>Jab, cross, body blow, rising uppercut, jumping strike, finishing kick and hit-stagger variations.</p>
+<section class="art"><h2>02 / Combo and combat (16 cels)</h2><p>Jab, cross, body blow, rising uppercut, jumping strike, finishing kick and hit-stagger variations.</p>
 <div class="preview" id="combat-preview"></div><button type="button" id="combat-download" disabled>Download transparent combat PNG</button></section>
 <section class="art"><h2>Frame metadata</h2><p>Export frame coordinates, 512-pixel tile geometry, rendering scale, crop/foot-pivot alignment and 40 FPS playback rate for integration into a sprite editor.</p><button type="button" id="metadata-download" disabled>Download atlas frame JSON</button></section></main>
 <script src="./yusuke-premium-v6.js?v=1"></script>
@@ -38,12 +38,14 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
   const [movement,combat]=await Promise.all([load("movement"),load("combat")]);
   const atlas=window.MugenDirectional.build(meta,{movement,combat});
   if(!atlas)throw Error("Canvas generation unavailable; the playable game still uses original sprites");
-  const snapshots={fps:40,pixelScale:.5,cellSize:[512,512],columns:4,rows:3,
+  const snapshots={fps:40,pixelScale:.5,cellSize:[512,512],columns:4,rows:4,
    source:{movement:meta.movement.src,combat:meta.combat.src},
    animations:{movement:{advance:[0,1,2],retreat:[3,4,5],rush:[6,7],
-     aerialForward:[8],aerialBack:[9],lowGuard:[10,11]},
+     aerialForward:[8],aerialBack:[9],lowGuard:[10,11],
+     backdash:[12,13],pivot:[14],landing:[15]},
     combat:{jab:[0,1],cross:[2,3],body:[4],upper:[5,6],
-     airStrike:[7,8],finisher:[9,10],stagger:[11]}},
+     airStrike:[7,8],finisher:[9,10],stagger:[11],
+     heavy:[12,13],guard:[14],recovery:[15]}},
    sheets:{movement:{width:atlas.movement.image.width,height:atlas.movement.image.height,frames:atlas.movement.frames},
     combat:{width:atlas.combat.image.width,height:atlas.combat.image.height,frames:atlas.combat.frames}},
    note:"Cels are composites from the premium source artwork, with consistent color/pixel size and foot pivot. Horizontal facing is mirrored in game."};
@@ -65,7 +67,7 @@ button,a.button{display:inline-flex;align-items:center;margin:12px 9px 0 0;paddi
   button("metadata-download").onclick=()=>save(
    new Blob([JSON.stringify(snapshots,null,2)],{type:"application/json"}),
    "yusuke-directional-v8-frames.json");
-  status.textContent="Ready: 12 movement + 12 combat cels at 40 FPS. Assets were generated successfully.";
+  status.textContent="Ready: 16 movement + 16 combat cels at 40 FPS. Assets were generated successfully.";
  }catch(error){status.textContent="Sprite preview unavailable: "+error.message;}
 })();
 </script></body></html>
