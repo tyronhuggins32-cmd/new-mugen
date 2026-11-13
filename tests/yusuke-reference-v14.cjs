@@ -90,6 +90,6 @@ const html=fs.readFileSync("yusuke-attack-lab-v13.html","utf8");
 assert.match(html,/data-move="rapidBarrage"/);
 assert.match(html,/data-move="spiritWave"/);
 assert.match(html,/64 new source-derived combat cels/);
-assert.match(fs.readFileSync("game-build-0009.html","utf8"),
- /mugen-yusuke-reference-v13\\.js\\?v=2/);
+assert.ok(fs.readFileSync("game-build-0009.html","utf8")
+ .includes("mugen-yusuke-reference-v13.js?v=2"),"game loads expanded move library");
 console.log("PASS: 8 unbound Yusuke attacks, 64 source-derived cels, real 10+ hit barrage, ranged wave, no phantom damage.");
