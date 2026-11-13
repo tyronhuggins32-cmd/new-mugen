@@ -637,11 +637,11 @@
     },
     "movement": {
       "groundSpeed": 470,
-      "airSpeed": 330,
-      "jumpVelocity": -900,
+      "airSpeed": 475,
+      "jumpVelocity": -1120,
       "gravity": 2350,
       "groundFriction": 18,
-      "airFriction": 1.35,
+      "airFriction": 1,
       "attackFriction": 18,
       "turnDuration": 0.085
     },
@@ -846,7 +846,14 @@
       "maxMultiplier": 2.6
     },
     "spacing": 142,
-    "punchAssist": 25
+    "punchAssist": 25,
+    "collision": {
+      "groundedCenterSpacing": 142,
+      "crossoverHeightAboveHead": 61,
+      "crouchHeightFactor": 0.57,
+      "airHeightFactor": 0.72,
+      "note": "Ground pushboxes prevent stacking, airborne cross-over is legal once feet rise above opponent's shoulder line; hurtboxes and move hitboxes use pose-specific bounds."
+    }
   },
   "passives": {
     "fightingInstinct": {
