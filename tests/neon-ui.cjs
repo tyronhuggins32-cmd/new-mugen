@@ -38,7 +38,7 @@ const requiredIds=["main-menu-screen","arcade-screen","fight-screen","game-canva
 for(const id of requiredIds) {
  assert.equal(count(html,new RegExp('id="'+id+'"',"g")),1,"required id "+id+" must be unique");
 }
-assert.ok(html.includes('href="mugen-rebirth-ui.css?v=1"'),"Rebirth CSS linked");
+assert.match(html,/href="mugen-rebirth-ui\\.css\\?v=\\d+"/,"versioned Rebirth CSS linked");
 assert.ok(!html.includes('href="neon-arcade-ui.css?v=1"'),"previous skin not stacked");
 assert.ok(css.includes(".screen.neon-home.rebirth-home")&&css.includes(".arcade-screen.neon-select.rebirth-select"));
 assert.ok(css.includes("@media(max-width:760px)")&&css.includes("@media(max-height:560px)"));
