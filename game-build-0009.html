@@ -2393,7 +2393,7 @@
           if (character.id !== "thorfinn_karlsefni" || character.formatVersion < 3 ||
               !character.combat?.movement || !character.combat?.attacks ||
               !Array.isArray(character.moves) || !character.profile ||
-              !sheet?.src || !Array.isArray(sheet.frames) || sheet.frames.length < 40) {
+              !sheet?.src || !Array.isArray(sheet.frames) || sheet.frames.length < 56) {
             throw Error("Thorfinn character definition is incomplete");
           }
           for (const frame of sheet.frames) {
@@ -2951,6 +2951,17 @@
           // backward input used to consume the backwalk, especially up close.
           // L1 / down remains the explicit way to block.
           if (input.block && this.grounded) {
+            // Thorfinn: Down + direction is a low, mobile crouch-walk.
+            // Guard without horizontal input remains a stationary block.
+            // This uses the correct low hurtbox and deliberately does not
+            // grant blocking immunity while moving.
+            if (!this.cpu && isThorfinnSelected() && direction) {
+              this.setFacing(direction);
+              this.setState("crouchWalk");
+              this.vx = direction * 155;
+              this.applyPhysics(dt);
+              return;
+            }
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             this.setState("block");
             this.vx *= Math.max(0, 1 - dt * movement.groundFriction);
@@ -2958,7 +2969,7 @@
             return;
           }
 
-          if (this.state === "block") this.setState("idle");
+          if (this.state === "block" || this.state === "crouchWalk") this.setState("idle");
 
           if (input.gunPressed && this.grounded && this.beginAttack("gun")) {
             this.applyPhysics(dt);
@@ -3328,12 +3339,20 @@
             if (attackName === "shotgun") animName = "spiritGun";
             if (!this.grounded) animName = attack.airAnimation || "airKick";
           } else if (this.state === "block") animName = "guard";
+          else if (this.state === "crouchWalk") animName = "crouchWalk";
           else if (!this.grounded || this.state === "jump")
             animName = this.vy < 0 ? "jumpRise" : "jumpFall";
           else if (this.dashTimer > 0) animName = "sprint";
           else if (this.state === "walk") animName = "walk";
           const chosen = sprite.animations[animName] || sprite.animations.idle;
-          let index = animationFrameFrom(chosen, this.stateTime, progress);
+          // Falling starts midway through flight; restart the fall sequence
+          // at that transition instead of jumping straight to its last cel.
+          const apexSeconds = Math.abs(yusukeCombat.movement.jumpVelocity /
+            yusukeCombat.movement.gravity);
+          const poseSeconds = animName === "jumpFall"
+            ? Math.max(0, this.stateTime - apexSeconds)
+            : this.stateTime;
+          let index = animationFrameFrom(chosen, poseSeconds, progress);
           // Sprint uses the uploaded frames rather than the old placeholder frame 22.
           const frame = sprite.frames[index] || sprite.frames[0];
           const scale = sprite.scale || 1;
@@ -3345,7 +3364,10 @@
           context.fill();
           context.translate(this.x, this.y);
           context.scale(this.facing, 1);
-          context.imageSmoothingEnabled = false;
+          // Authored anime cels are antialiased art, not pixel blocks.
+          // Smooth only Thorfinn; Yusuke's existing rendering is unchanged.
+          context.imageSmoothingEnabled = true;
+          context.imageSmoothingQuality = "high";
           context.drawImage(thorfinnSpriteSheet,frame.x,frame.y,frame.w,frame.h,
             -(frame.ax || frame.w/2)*scale,-frame.h*scale,
             frame.w*scale,frame.h*scale);
