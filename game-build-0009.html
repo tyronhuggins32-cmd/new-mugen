@@ -3598,7 +3598,7 @@
           triangleHint.textContent = shotgunAvailable
             ? `△ SPIRIT SHOTGUN · ${Math.ceil(player.energy)}% SPIRIT`
             : `△ POWER KICK · ${Math.ceil(player.energy)}% SPIRIT`;
-          triangleHint.dataset.mode = shotgunAvailable ? "shotgun" : "kick";
+          if (triangleHint.dataset) triangleHint.dataset.mode = shotgunAvailable ? "shotgun" : "kick";
           document.querySelector("#match-score").textContent = `Rounds ${this.roundWins[0]} – ${this.roundWins[1]} · First to 2`;
           playerHealth.parentElement.title = `${Math.ceil(this.player.health)} / ${this.player.maxHealth} HP`;
           cpuHealth.parentElement.title = `${Math.ceil(this.cpu.health)} / ${this.cpu.maxHealth} HP`;
