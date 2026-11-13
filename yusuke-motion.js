@@ -1,21 +1,21 @@
-/* New Mugen: cached 10 FPS Yusuke movement sprite expansion.
+/* New Mugen: cached 30 FPS Yusuke movement sprite expansion.
  * Uses the original transparent artwork to synthesize extra, foot-aligned
  * in-between cels once at load time. Game physics remains at 60 Hz.
  */
 (function (root) {
   "use strict";
 
-  const FPS = 10;
+  const FPS = 30;
   const CELL = 240;
   const COLUMNS = 10;
   const SPECS = Object.freeze({
-    idle:      { keys: [0, 1, 2, 3, 2, 1], count: 10, loop: true },
-    run:       { keys: [6, 7, 8, 9],       count: 10, loop: true },
-    walkStart: { keys: [0, 0, 6],          count: 4, loop: false },
-    walkStop:  { keys: [6, 6, 0],          count: 4, loop: false },
-    jumpRise:  { keys: [0, 18, 19],        count: 4, loop: false },
-    jumpFall:  { keys: [19, 18],           count: 4, loop: false },
-    landing:   { keys: [18, 0, 1],         count: 4, loop: false }
+    idle:      { keys: [0, 1, 2, 3, 2, 1], count: 30, loop: true },
+    run:       { keys: [6, 7, 8, 9],       count: 30, loop: true },
+    walkStart: { keys: [0, 0, 6],          count: 12, loop: false },
+    walkStop:  { keys: [6, 6, 0],          count: 12, loop: false },
+    jumpRise:  { keys: [0, 18, 19],        count: 12, loop: false },
+    jumpFall:  { keys: [19, 18],           count: 12, loop: false },
+    landing:   { keys: [18, 0, 1],         count: 12, loop: false }
   });
 
   function clamp(value, lo, hi) {
