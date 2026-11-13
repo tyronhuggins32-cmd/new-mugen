@@ -48,6 +48,20 @@ for(const args of calls) {
 calls.length=0;
 fluid.drawCel(canvas,sprite,frame,-71,-209,143,209,neutral,1000,true);
 assert.equal(calls.length,1,"ghost echoes must use one cheap draw call");
+
+calls.length=0;
+const premium={...neutral,_usingPremiumCel:true,state:"attack-gun",
+  currentAttack:()=>"gun"};
+fluid.drawCel(canvas,sprite,frame,-71,-209,143,209,premium,1000);
+assert.equal(calls.length,1,"authored premium attacks must render as an unbroken silhouette");
+assert.equal(calls[0].length,9,"premium attacks use one exact source rectangle");
+assert.equal(calls[0][4],frame.h,"premium drawing does not slice the face or arms");
+assert.equal(calls[0][8],209,"premium drawing retains the original full-body height");
+calls.length=0;
+premium.state="walk";premium.stateTime=.22;premium.vx=400;
+fluid.drawCel(canvas,sprite,frame,-71,-209,143,209,premium,1100);
+assert.equal(calls.length,1,"premium running poses stay in one piece, even while bobbing");
+
 const breathingA=fluid.bend(neutral,1000),breathingB=fluid.bend(neutral,1200);
 assert.notEqual(breathingA.sway,breathingB.sway,"idle animates continuously");
 const sprint={...neutral,state:"walk",stateTime:.2,vx:470};
