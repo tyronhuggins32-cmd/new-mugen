@@ -1,0 +1,33 @@
+name: Menu music MP3 compatibility
+
+on:
+  push:
+    paths:
+      - '.github/workflows/menu-music-mp3.yml'
+      - 'assets/music/main-menu-theme.ogg'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-mp3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Convert uploaded OGG theme to widely supported MP3
+        shell: bash
+        run: |
+          test -s assets/music/main-menu-theme.ogg
+          ffmpeg -hide_banner -nostdin -loglevel error -y             -i assets/music/main-menu-theme.ogg             -vn -codec:a libmp3lame -b:a 160k             assets/music/main-menu-theme.mp3
+          test -s assets/music/main-menu-theme.mp3
+      - name: Save transcoded track to repository
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/music/main-menu-theme.mp3
+          if ! git diff --cached --quiet; then
+            git commit -m "Add Safari-compatible MP3 version of main menu theme"
+            git push
+          fi

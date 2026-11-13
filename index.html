@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>New Mugen</title>
   <script>
-    location.replace("./game-build-0009.html" + location.search + location.hash);
+    const params = new URLSearchParams(location.search);
+    params.set("build", "menu-music-5");
+    location.replace("./game-build-0009.html?" + params.toString() + location.hash);
   </script>
 </head>
 <body>

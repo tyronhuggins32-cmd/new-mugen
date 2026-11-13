@@ -3,6 +3,7 @@
   'use strict';
 
   const TRACK_URL = 'assets/music/main-menu-theme.ogg';
+  const MP3_URL = 'assets/music/main-menu-theme.mp3';
   const DB_NAME = 'new-mugen-audio';
   const DB_STORE = 'settings';
   const DB_KEY = 'main-menu-track';
@@ -12,23 +13,31 @@
   const audio = new Audio();
   audio.preload = 'auto';
   audio.loop = true;
-  audio.volume = 0;
-  audio.src = TRACK_URL;
+  audio.volume = 0.01;
+  // Older iOS Safari versions cannot decode OGG Vorbis; use MP3 there.
+  audio.src = audio.canPlayType?.('audio/ogg; codecs="vorbis"') === '' ? MP3_URL : TRACK_URL;
 
   const toggle = document.getElementById('menu-music-toggle');
   const importButton = document.getElementById('menu-music-import');
   const fileInput = document.getElementById('menu-theme-upload');
   const status = document.getElementById('menu-music-status');
+  const activationButton = document.getElementById('menu-music-activation');
   let enabled = true;
   let unlocked = false;
+  let autoplayBlocked = false;
   let preferredBlobUrl = null;
   let fadeFrame = 0;
   let fadeEpoch = 0;
   let playEpoch = 0;
   let imported = false;
+  let sourceError = false;
+  let triedBackup = false;
 
   const isMenu = () => (document.body.dataset.screen || 'menu') === 'menu' && !document.hidden;
   const setStatus = message => { if (status) status.textContent = message; };
+  const showActivationButton = visible => {
+    if (activationButton) activationButton.hidden = !visible || !isMenu() || !enabled;
+  };
   const syncButton = () => {
     if (!toggle) return;
     toggle.setAttribute('aria-pressed', String(enabled));
@@ -57,17 +66,42 @@
   }
 
   function syncPlayback() {
-    const desired = enabled && isMenu() && unlocked;
+    // Start music on page load whenever the browser's autoplay policy allows.
+    // Browsers that reject audible autoplay will succeed on the first trusted
+    // button, key, or PS5 controller menu interaction instead.
+    const desired = enabled && isMenu();
     const epoch = ++playEpoch;
     if (!desired) {
+      showActivationButton(false);
       fadeTo(0, FADE_OUT_MS);
       return;
     }
-    const playing = audio.play();
+    if (sourceError) {
+      setStatus('Audio file unsupported or unavailable. Import an MP3 in Options.');
+      showActivationButton(false);
+      return;
+    }
+    const wasPaused = audio.paused;
+    const playing = wasPaused ? audio.play() : Promise.resolve();
     if (playing && typeof playing.then === 'function') {
       playing.then(() => {
-        if (epoch === playEpoch && enabled && isMenu()) fadeTo(TARGET_VOLUME, FADE_IN_MS);
-      }).catch(() => setStatus('Press Enter, X, or tap the menu to enable music.'));
+        if (epoch !== playEpoch || !enabled || !isMenu()) return;
+        autoplayBlocked = false;
+        showActivationButton(false);
+        fadeTo(TARGET_VOLUME, FADE_IN_MS);
+        setStatus(imported ? 'Custom theme playing' : 'Main menu theme playing');
+      }).catch(error => {
+        if (epoch !== playEpoch) return;
+        if (error?.name === 'NotAllowedError') {
+          autoplayBlocked = true;
+          showActivationButton(true);
+          setStatus('Browser blocked autoplay. Tap Play Menu Music to enable sound.');
+        } else if (error?.name !== 'AbortError') {
+          sourceError = error?.name === 'NotSupportedError';
+          setStatus('Theme could not play. Import an MP3 in Options.');
+          showActivationButton(false);
+        }
+      });
     } else {
       fadeTo(TARGET_VOLUME, FADE_IN_MS);
     }
@@ -75,7 +109,7 @@
 
   function unlock() {
     unlocked = true;
-    syncPlayback();
+    if (enabled && isMenu() && (autoplayBlocked || audio.paused)) syncPlayback();
   }
 
   function setEnabled(value) {
@@ -124,7 +158,10 @@
     cancelAnimationFrame(fadeFrame);
     ++fadeEpoch;
     audio.pause();
-    audio.volume = 0;
+    audio.volume = 0.01;
+    sourceError = false;
+    triedBackup = true;
+    autoplayBlocked = false;
     if (preferredBlobUrl) URL.revokeObjectURL(preferredBlobUrl);
     preferredBlobUrl = URL.createObjectURL(blob);
     audio.src = preferredBlobUrl;
@@ -135,6 +172,7 @@
   }
 
   toggle?.addEventListener('click', () => setEnabled(!enabled));
+  activationButton?.addEventListener('click', unlock);
   importButton?.addEventListener('click', () => fileInput?.click());
   fileInput?.addEventListener('change', async () => {
     const file = fileInput.files?.[0];
@@ -157,18 +195,47 @@
   const screenObserver = new MutationObserver(() => syncPlayback());
   screenObserver.observe(document.body, { attributes: true, attributeFilter: ['data-screen'] });
   document.addEventListener('visibilitychange', syncPlayback);
+  window.addEventListener('pageshow', syncPlayback);
   window.addEventListener('pagehide', () => { ++playEpoch; cancelAnimationFrame(fadeFrame); audio.pause(); audio.volume = 0; });
-  const gesture = () => { if (!unlocked || (enabled && isMenu() && audio.paused)) unlock(); };
+  const gesture = () => { if (enabled && isMenu() && (!unlocked || autoplayBlocked || audio.paused)) unlock(); };
   document.addEventListener('pointerdown', gesture);
   document.addEventListener('keydown', gesture);
   audio.addEventListener('error', () => {
-    if (!imported) setStatus('To enable your theme, choose Import Theme or add the OGG in assets/music.');
+    if (!imported && !triedBackup) {
+      // A bad codec response, old Safari, or a temporarily missing cached
+      // asset can be recovered by trying the other hosted format once.
+      triedBackup = true;
+      sourceError = false;
+      audio.src = audio.src.includes('main-menu-theme.ogg') ? MP3_URL : TRACK_URL;
+      audio.load();
+      if (enabled && isMenu()) syncPlayback();
+      return;
+    }
+    sourceError = true;
+    showActivationButton(false);
+    setStatus('The soundtrack could not load. Import your MP3 in Options.');
+  });
+  // Safari and other browsers can stop a media element on programmatic
+  // volume changes, even after initially allowing a muted play().
+  audio.addEventListener('pause', () => {
+    if (!enabled || !isMenu() || sourceError) return;
+    if (audio.volume > 0.001) {
+      autoplayBlocked = true;
+      showActivationButton(true);
+      setStatus('Tap Play Menu Music to enable sound.');
+    }
   });
 
-  window.MugenMenuMusic = { unlock, setEnabled, isEnabled: () => enabled };
+  window.MugenMenuMusic = {
+    unlock, setEnabled, isEnabled: () => enabled,
+    getState: () => ({ paused: audio.paused, src: audio.currentSrc || audio.src,
+      error: audio.error?.code || null, blocked: autoplayBlocked, sourceError,
+      volume: audio.volume, screen: document.body.dataset.screen || 'menu' })
+  };
   syncButton();
+  // Don't delay initial audio until IndexedDB settles on Safari/private browsing.
+  syncPlayback();
   loadCustomTrack().then(file => {
     if (file instanceof Blob) setSource(file);
-    else syncPlayback();
-  }).catch(() => syncPlayback());
+  }).catch(() => {});
 })();

@@ -1,6 +1,6 @@
 # Main menu music
 
-Place `main-menu-theme.ogg` in this folder. The game loads it automatically on the main menu after the first keyboard, pointer, or gamepad menu interaction allowed by the browser.
+Place `main-menu-theme.ogg` in this folder. The game attempts to play it automatically when the main menu loads. Browsers that block audible autoplay start music on the first keyboard, pointer, or gamepad menu interaction.
 
 **Expected asset path:** `assets/music/main-menu-theme.ogg`
 

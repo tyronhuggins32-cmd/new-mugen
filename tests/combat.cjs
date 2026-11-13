@@ -8,7 +8,7 @@ const assert = require('node:assert/strict');
  const errors=[]; page.on('pageerror',e=>errors.push(e.message));
  const source=fs.readFileSync(require('node:path').join(__dirname,'../game-build-0009.html'),'utf8');
  // Expose lexical engine state only in the test response, never in the shipped game.
- await page.route('**/game-build-0009.html',r=>r.fulfill({contentType:'text/html',body:source.replace('      function beginFight() {','      window.testEngine = { get game() { return arcadeGame; }, Fighter, pressFightControl, releaseFightControl, humanInput, clearFightInput, arena };\n      function beginFight() {')}));
+ await page.route('**/game-build-0009.html*',r=>r.fulfill({contentType:'text/html',body:source.replace('      function beginFight() {','      window.testEngine = { get game() { return arcadeGame; }, Fighter, pressFightControl, releaseFightControl, humanInput, clearFightInput, arena };\n      function beginFight() {')}));
  await page.goto('http://127.0.0.1:8000/');
  await page.locator('button.menu-item[data-mode="arcade"]').click();
  await page.locator('#choose-character').click();
@@ -53,6 +53,38 @@ const assert = require('node:assert/strict');
   ok(document.querySelector('.combo-panel').hidden,'combo meter is hidden before three Square taps');
   g.player.beginAttack('light');g.player.beginAttack('light');g.updateHud(true);
   ok(!document.querySelector('.combo-panel').hidden,'combo meter appears after third Square');
+  // Test the real VFX layer, not just the combo-policy helper. Damage and hit
+  // reactions work from Square 1; all special punch art stays off through 4.
+  g.reset();g.state='play';g.player.x=530;g.cpu.x=700;
+  ok(g.player.maxHealth===5000 && g.cpu.maxHealth===5000,'both fighters have 5000 HP');
+  for(let press=1;press<=5;press++){
+    ok(g.player.beginAttack('light'),'Square chain remains available');
+    const type=g.player.currentAttack();
+    g.cpu.invulnerability=0;
+    g.damageFighter(g.player,g.cpu,g.config?.attacks?.[type] ||
+      ({light:{damage:20,knockback:110,hitstun:.17},
+        cross:{damage:26,knockback:140,hitstun:.23},
+        body:{damage:30,knockback:100,hitstun:.23},
+        upper:{damage:42,knockback:410,hitstun:.36}})[type],
+      g.cpu.x,g.cpu.y-105);
+    const fx=window.MugenVfxV8?.stats(g);
+    if(press<5){
+      ok(g.impacts.length===0 && (fx?.active||0)===0,
+        'Square ' + press + ' must be visually clean before COMBO 5');
+    }else{
+      ok(g.impacts.length>0 && fx?.active>0,
+        'exactly COMBO 5 unlocks painted punch effects');
+    }
+    g.updateHud(true);
+    if(press===5)ok(document.querySelector('#combo-label').textContent.includes('COMBO 5'),
+      'combo counter and VFX unlock agree');
+  }
+  // Human movement uses the selected direction even when away from rival.
+  g.reset();g.state='play';g.player.x=900;g.cpu.x=700;g.player.facing=-1;
+  const xBeforeRight=g.player.x;
+  g.player.update(1/60,{...neutral,right:true},g.cpu,g);
+  ok(g.player.facing===1 && g.player.state==='walk' && g.player.x>xBeforeRight,
+    'rightward turn-and-walk works when facing opponent to the left');
   // Browser-accurate overlap protection, punch magnetism and gun impact.
   g.reset();g.state='play';g.player.x=550;g.cpu.x=568;g.separateFighters();
   ok(Math.abs(g.cpu.x-g.player.x)>=142-0.01,'readable close-fighter spacing');
