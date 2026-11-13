@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#08060f">
-  <meta name="description" content="New Mugen — a modular browser fighting-game project.">
+  <meta name="theme-color" content="#0a3e52">
+  <meta name="description" content="New Mugen Rising: a cinematic 2D arcade fighter featuring Yusuke Urameshi and DualSense controller support.">
   <title>New Mugen Rising | Arcade Fighter</title>
   <style>
     :root {
@@ -1514,7 +1514,7 @@
 
   <div class="frame">
     <header class="topbar">
-      <div class="build-mark" id="build-mark">NEW MUGEN RISING // BUILD 0010</div>
+      <div class="build-mark" id="build-mark">NEW MUGEN RISING // REBIRTH 0011</div>
       <div class="controller-status-row"><span id="controller-status" aria-live="polite">PS5 CONTROLLER: PRESS A BUTTON</span><span class="online-dot"></span><span id="screen-status">Menu Online</span></div>
     </header>
 
@@ -1731,12 +1731,12 @@
 
     <footer class="footer">
       <div class="controls" id="menu-controls">
-        <span><span class="key">↑ ↓ / W S</span> Select</span>
-        <span><span class="key">Enter</span> Confirm</span>
+        <span><span class="key">PS5 ↑ ↓</span> Select</span>
+        <span><span class="key">✕ / Enter</span> Confirm</span>
       </div>
       <div class="controls" id="arcade-controls" hidden>
-        <span><span class="key">Enter</span> Choose fighter</span>
-        <span><span class="key">Esc / B</span> Back</span>
+        <span><span class="key">✕ / Enter</span> Choose fighter</span>
+        <span><span class="key">○ / Esc</span> Back</span>
       </div>
       <div class="controls" id="fight-controls" hidden>
         <span><span class="key">PS5</span> Stick / D-pad: Move · ×: Jump · L1: Block · □: Light · △: Heavy · ○: Spirit Gun · R1: Dash · L2: Charge · R2: MAX · Options: Pause</span>
@@ -1931,6 +1931,15 @@
         modeCode.textContent = mode.code;
         modeDescription.textContent = mode.description;
         mainMenuScreen.dataset.mode = selected.dataset.mode;
+        const briefingBadge = mainMenuScreen.querySelector(".rb-briefing-badge");
+        if (briefingBadge) {
+          const status = selected.dataset.mode === "arcade" ? "MATCH 01" :
+            selected.dataset.mode === "options" ? "CONFIGURATION" : "IN DEVELOPMENT";
+          briefingBadge.replaceChildren(document.createTextNode(status));
+          const number = document.createElement("b");
+          number.textContent = selected.dataset.mode === "arcade" ? "01" : selected.dataset.mode === "options" ? "05" : "SOON";
+          briefingBadge.append(number);
+        }
         if (focus) selected.focus({ preventScroll: true });
       }
 
