@@ -125,3 +125,16 @@ Yusuke now builds **120 cached movement cels** at character load from the origin
 Movement animation samples at **30 FPS (one cel per 33⅓ ms)** while keeping the 60 Hz fixed-step combat and physics simulation. The game renders position interpolation on each available display refresh. State changes still blend over 160 ms; existing attacks, Spirit Gun art, VFX, and DualSense inputs remain unchanged. The original sprite sheet is used when temporary canvas atlas generation fails.
 
 Run `node tests/yusuke-motion.cjs` to check 30 FPS timing, 120 generated frame references, clip boundaries, transitions, and renderer wiring. GitHub Actions runs the test on push and pull requests. Pixel-level visuals and real-world frame-rate performance still require browser/device QA.
+
+## NEW MUGEN RISING: neon arcade menus (November 2026)
+
+Both the **main menu** and **character selection** have been rebuilt around an original lime-green, aqua-blue and orange arcade cabinet presentation inspired by classic 2D MUGEN-style menus.
+
+- **Main menu:** giant NEW MUGEN RISING logo, rotating sci-fi rings, animated perspective grid, speed lines, Yusuke showcase, outlined blue welcome panel, oversized highlighted gold mode bars, and a live selected-mode description.
+- **Accurate availability:** Arcade and Options are active. Versus, Training, and Spectator are visibly labeled **SOON**, not represented as playable modes.
+- **Character select:** an entirely redesigned green/blue selection screen with a prominent Yusuke portrait, luminous fighter grid, eight slots (one playable and seven locked placeholders), extended fighter stats, technique controls, next-opponent banner and a gold action button.
+- **Responsive presentation:** distinct desktop, phone portrait, and compact landscape layouts. No touch controls were added to fights; the DualSense menu navigation and all existing game DOM IDs remain.
+- **Configuration:** the new styling lives in `neon-arcade-ui.css`. Main-menu and fighter-select markup resides in `game-build-0009.html` so the existing engine and controller scripts keep using the same IDs.
+- **Checks:** `node tests/neon-ui.cjs` validates the menu screens, roster, labels, preserved controls and responsive styles. The GitHub Actions workflow also runs all existing combat, sprite, VFX, and PS5 control tests.
+
+This is an original presentation, not a rip of the source game's logo or background artwork. It uses the existing Yusuke portrait from the repository. Locked roster cells are not newly playable fighters. Visual consistency and usability on a physical phone/controller still benefit from device QA.
