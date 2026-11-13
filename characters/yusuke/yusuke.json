@@ -1475,30 +1475,60 @@
   },
   "movementSprites": {
     "source": "spriteSheet",
-    "generation": "16-canonical-pixel-derived-256x256-cels-with-60hz-state-timeline",
+    "generation": "28-canonical-pixel-derived-256x256-cels-with-40fps-state-timeline",
     "renderer": "yusuke-motion.js + mugen-fluid-v3.js",
-    "fps": 60,
-    "timelineFrames": 228,
-    "generatedFrames": 16,
+    "fps": 40,
+    "timelineFrames": 188,
+    "existingGeneratedFrames": 16,
+    "newGeneratedFrames": 12,
+    "generatedFrames": 28,
     "atlasDimensions": [
       1024,
-      1024
+      1792
     ],
-    "maxAdditionalTexturePixels": 1048576,
+    "maxAdditionalTexturePixels": 1835008,
     "animations": {
-      "idle": 72,
-      "idleFocus": 60,
-      "run": 32,
-      "walkStart": 12,
-      "walkStop": 12,
-      "jumpRise": 14,
-      "jumpFall": 14,
-      "landing": 12
+      "idle": 48,
+      "idleFocus": 40,
+      "run": 24,
+      "walkStart": 8,
+      "walkStop": 8,
+      "jumpRise": 10,
+      "jumpFall": 10,
+      "landing": 8,
+      "stagger": 9,
+      "knockback": 14,
+      "recovery": 9
+    },
+    "reactionFrames": {
+      "stagger": [
+        40,
+        41,
+        42,
+        43
+      ],
+      "knockback": [
+        44,
+        45,
+        46,
+        47
+      ],
+      "recovery": [
+        48,
+        49,
+        50,
+        51
+      ]
+    },
+    "reactionRules": {
+      "knockbackThreshold": 250,
+      "heavyImpactAlwaysKnockback": true,
+      "physicsHz": 60
     },
     "consistency": {
       "canonicalSource": "characters/yusuke/sprites.png",
       "renderScale": 1.1,
-      "footPivot": "cell bottom; source pixels 1:1",
+      "footPivot": "cell bottom; original pixels 1:1",
       "recoloring": false,
       "generatedSourceFrames": [
         0,
@@ -1516,11 +1546,23 @@
         6,
         7,
         8,
-        9
+        9,
+        21,
+        10,
+        17,
+        12,
+        21,
+        16,
+        14,
+        15,
+        5,
+        4,
+        13,
+        0
       ],
       "fallback": "24 canonical sprites when canvas allocation fails"
     },
-    "note": "Adds 16 real precomposed source-derived RGBA sprite cels in one small optional canvas atlas. Palette and proportions are inherited from the original, not redrawn. 228 animation timeline samples are not 228 unique illustrated sprites; motion rendering remains smooth at display refresh rate."
+    "note": "Adds 12 new recoil/recovery sprite cels to the existing 16 source-derived poses. 40 FPS sampled sprite animation remains separate from the 60 Hz physics and display-refresh rendering. Generated cels are altered copies of existing art, not twelve hand-drawn poses."
   },
   "powerKickSpriteSheet": {
     "src": "characters/yusuke/yusuke-power-kick.png",
