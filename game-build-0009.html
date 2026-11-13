@@ -2844,6 +2844,7 @@
             ? firingSheet.fighterFrames[firingFrameIndex] || firingSheet.fighterFrames[0]
             : combatPose?.frame || motionPose?.frame || yusukeSpriteFrames[this.yusukeFrameIndex()] || yusukeSpriteFrames[0];
           if (!frame) return;
+          this._usingPremiumCel = Boolean(premiumPose);
           const lunge = ["light", "cross", "body", "upper", "powerKick"].includes(attackType)
             ? Math.sin(attackProgress * Math.PI)
               * ({ light: 8, cross: 18, body: 15, upper: 12, powerKick: 26 }[attackType])
@@ -2970,11 +2971,17 @@
             else if (this.state === "walk") animationName = "run";
             animation = yusukeAnimations[animationName];
           }
-          const sourceFrames = usesFiringAnimation ? firingSheet.fighterFrames : combatPose?.frames || motionPose?.frames || yusukeSpriteFrames;
+          // Premium poses own their entire source atlas and frame timeline.
+          // Never interpolate legacy frame indices against a premium PNG:
+          // those coordinates point at unrelated art and cause flashing limbs.
+          const sourceFrames = premiumPose ? premiumArt[premiumPose.part].frames
+            : usesFiringAnimation ? firingSheet.fighterFrames
+            : combatPose?.frames || motionPose?.frames || yusukeSpriteFrames;
           const progressForFrames = this.state === "hit"
             ? Math.min(1, this.stateTime / (yusukeCombat.effects.hitAnimationDuration || .3))
             : attackProgress;
-          const tween = motionPose ? null : window.MugenVisuals?.animBlend(animation, this.stateTime, progressForFrames);
+          const tween = premiumPose || motionPose ? null
+            : window.MugenVisuals?.animBlend(animation, this.stateTime, progressForFrames);
           const nextFrame = sourceFrames?.[tween?.to];
           // Deform the existing sprite at screen refresh rate rather than
           // stacking translucent full-body poses into a slideshow.
