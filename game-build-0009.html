@@ -1777,11 +1777,11 @@
 
   <script src="mugen-cinematics.js?v=1"></script>
   <script src="mugen-visuals-v2.js?v=2"></script>
-  <script src="mugen-fluid-v3.js?v=1"></script>
+  <script src="mugen-fluid-v3.js?v=2"></script>
   <script src="mugen-combat-v5.js?v=1"></script>
   <script src="mugen-spiritgun-v5.js?v=1"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
-  <script src="yusuke-motion.js?v=4"></script>
+  <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
   <script>
     (() => {
@@ -2479,6 +2479,7 @@
           this.state = "idle";
           this.stateTime = 0;
           this.hitstun = 0;
+          this.hitReaction = "stagger";
           this.invulnerability = 0;
           this.attackConnected = false;
           this.projectileSpawned = false;
@@ -2786,7 +2787,11 @@
           const firingFrameIndex = usesFiringAnimation
             ? animationFrameFrom(firingSheet.fighterAnimation, this.stateTime, attackProgress)
             : -1;
-          const combatPose = usesFiringAnimation ? null : selectYusukeCombatPose(this, attackType, attackProgress);
+          // The canonical-derived recoil cels override legacy generic hit
+          // artwork when the supplementary atlas is available.
+          const combatPose = usesFiringAnimation ||
+            (this.state === "hit" && yusukeMotionAtlas?.generated)
+            ? null : selectYusukeCombatPose(this, attackType, attackProgress);
           // Track movement state every draw, including during attacks, so stop
           // and landing transitions never inherit a stale run pose.
           const motionPose = window.MugenMotion?.selectPose(
@@ -3578,6 +3583,8 @@
           defender.hitstun = blocked ? .12 : attack.hitstun;
           defender.dashTimer = 0;
           defender.setState(blocked ? "block" : "hit");
+          defender.hitReaction = !blocked && (attack.heavyImpact || (attack.knockback || 0) >= 250)
+            ? "knockback" : "stagger";
           const direction = attack.facing || attacker.facing;
           defender.vx = direction * attack.knockback * (blocked ? .34 : 1);
           defender.knockbackDrag = !blocked ? (attack.knockbackDrag ?? 5.2) : 5.2;
