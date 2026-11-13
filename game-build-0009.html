@@ -3526,18 +3526,21 @@
           }
           const gumball=attacker.characterId==="gumball_watterson"&&!attacker.cpu;
           if(gumball&&!blocked&&attacker.comboActive)multiplier=Math.min(window.GumballCharacter.combo.maxScale,window.GumballCharacter.combo.scaleStart+attacker.comboHits*window.GumballCharacter.combo.scaleStep);
+          const gumballAttack=attacker.characterId==="gumball_watterson"&&!attacker.cpu;
+          if(gumballAttack&&!blocked&&attacker.comboActive)multiplier=Math.min(window.GumballCharacter.combo.maxScale,window.GumballCharacter.combo.scaleStart+Math.max(0,attacker.comboHits-1)*window.GumballCharacter.combo.scaleStep);
           const baseDamage = attack.damage * instinctBoost;
           const damage = baseDamage * multiplier * (blocked ? .25 : 1);
           if (!blocked && attacker.comboActive) attacker.comboBonusDamage += damage - baseDamage;
           defender.health = Math.max(0, defender.health - damage);
           defender.invulnerability = blocked ? .10 : .18;
-          defender.hitstun = blocked ? .12 : attack.hitstun;
+          defender.hitstun = blocked ? (gumballAttack?window.GumballCharacter.reactions.blockStun:.12) : attack.hitstun;
           defender.dashTimer = 0;
           defender.setState(blocked ? "block" : "hit");
           const direction = attack.facing || attacker.facing;
           defender.vx = direction * attack.knockback * (blocked ? .34 : 1);
           defender.knockbackDrag = !blocked ? (attack.knockbackDrag ?? 5.2) : 5.2;
           if (!blocked && attack.heavyImpact) defender.vy = attack.launchVelocity ?? -170;
+          if(gumballAttack)window.GumballCombat?.onHit(this,attacker,defender,attack,blocked,impactX,impactY);
           if (!blocked) defender.resetCombo();
           attacker.energy = Math.min(100, attacker.energy + (attack.energyGain ?? 5));
           const heavyHit = Boolean(attack.heavyImpact);
@@ -3642,15 +3645,16 @@
           const unlocked = player.comboActive && player.comboTime > 0;
           const meter = document.querySelector(".combo-panel");
           meter.hidden = !unlocked;
-          document.querySelector("#combo-label").textContent =
-            unlocked ? `COMBO ${Math.max(3, player.squarePresses + Math.max(0, player.comboHits - 1))} · DMG ×${player.comboMultiplier.toFixed(2)}`
-              : "SQUARE ×3 TO START COMBO";
+          document.querySelector("#combo-label").textContent = selectedFighterId==="gumball_watterson"
+            ? (unlocked ? `CARTOON COMBO ${player.comboHits+3} · DMG ×${player.comboMultiplier.toFixed(2)}` : "SQUARE ×3 TO START COMBO")
+            : (unlocked ? `COMBO ${Math.max(3,player.squarePresses+Math.max(0,player.comboHits-1))} · DMG ×${player.comboMultiplier.toFixed(2)}` : "SQUARE ×3 TO START COMBO");
           document.querySelector("#combo-fill").style.width =
             `${unlocked ? Math.min(100, 20 + player.comboHits * 15) : 0}%`;
           document.querySelector("#combo-window").style.width =
             `${unlocked ? (player.comboTime / (yusukeCombat.combo?.displayTime ?? 2.2)) * 100 : 0}%`;
-          document.querySelector("#shotgun-ready").textContent =
-            `SQUARE ×3 · +${Math.round(player.comboBonusDamage)} BONUS DAMAGE`;
+          document.querySelector("#shotgun-ready").textContent = selectedFighterId==="gumball_watterson"
+            ? `AERIAL CHAINS / SPECIAL CANCELS · +${Math.round(player.comboBonusDamage)} BONUS DAMAGE`
+            : `SQUARE ×3 · +${Math.round(player.comboBonusDamage)} BONUS DAMAGE`;
           const shotgunAvailable = player.energy > 50;
           const triangleHint = document.querySelector("#triangle-action");
           triangleHint.textContent = shotgunAvailable
