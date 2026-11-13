@@ -20,6 +20,8 @@ jobs:
         run: node tests/premium-v6.cjs
       - name: Directional footwork, aerial follow-ups and 32 new fighter cels
         run: node tests/yusuke-directional-v8.cjs
+      - name: Square combo expanded pose timeline
+        run: node tests/yusuke-square-v10.cjs
       - name: Small original combat sound cues and sound-off safety
         run: node tests/combat-sfx-v8.cjs
       - name: Cinematic attack effects and sprite-safe cleanup
