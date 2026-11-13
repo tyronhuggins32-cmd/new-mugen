@@ -1213,16 +1213,16 @@
     "source": "spriteSheet",
     "generation": "cached-foot-aligned-inbetweens",
     "renderer": "yusuke-motion.js",
-    "fps": 10,
-    "generatedFrames": 40,
+    "fps": 30,
+    "generatedFrames": 120,
     "animations": {
-      "idle": 10,
-      "run": 10,
-      "walkStart": 4,
-      "walkStop": 4,
-      "jumpRise": 4,
-      "jumpFall": 4,
-      "landing": 4
+      "idle": 30,
+      "run": 30,
+      "walkStart": 12,
+      "walkStop": 12,
+      "jumpRise": 12,
+      "jumpFall": 12,
+      "landing": 12
     }
   }
 }
