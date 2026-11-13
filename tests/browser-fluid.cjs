@@ -14,7 +14,7 @@ const path = require("node:path");
   await page.route("**/game-build-0009.html*",route=>route.fulfill({
     contentType:"text/html",
     body:html.replace("      function beginFight() {",
-      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get directionalAtlas() { return directionalAtlas; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, get premiumArt() { return premiumArt; }, get premiumImages() { return {combat:premiumCombatSheet,movement:premiumMotionSheet}; }, get cleanedPremium() { return {combat:cleanPremiumCombatSheet,movement:cleanPremiumMotionSheet}; }, arena }; \n      function beginFight() {")
+      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get exactYusukeAtlas() { return exactYusukeAtlas; }, get directionalAtlas() { return directionalAtlas; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, get premiumArt() { return premiumArt; }, get premiumImages() { return {combat:premiumCombatSheet,movement:premiumMotionSheet}; }, get cleanedPremium() { return {combat:cleanPremiumCombatSheet,movement:cleanPremiumMotionSheet}; }, arena }; \n      function beginFight() {")
   }));
   await page.goto("http://127.0.0.1:8000/");
   await page.locator('button.menu-item[data-mode="arcade"]').click();
@@ -39,6 +39,26 @@ const path = require("node:path");
     const first=sample();
     g.render(1042);
     const second=sample();
+    const exact=window.testEngine.exactYusukeAtlas;
+    const exactReady=Boolean(exact?.image && exact.frameCount===16 &&
+      exact.image.naturalWidth===1536 && exact.image.naturalHeight===1024);
+    const exactMaterial={hair:0,shirt:0,pants:0,shoes:0,transparent:0};
+    if(exactReady){
+      const scratch=document.createElement("canvas");
+      scratch.width=384;scratch.height=256;
+      const sc=scratch.getContext("2d",{willReadFrequently:true});
+      sc.drawImage(exact.image,0,0,384,256,0,0,384,256);
+      const pixels=sc.getImageData(0,0,384,256).data;
+      for(let k=0;k<pixels.length;k+=4){
+        const R=pixels[k],G=pixels[k+1],B=pixels[k+2],A=pixels[k+3];
+        if(A<12){exactMaterial.transparent++;continue;}
+        if(A<230)continue;
+        if(R<55&&G<95&&B<115)exactMaterial.hair++;
+        if(R>135&&G>110&&B<170&&R>G*1.12)exactMaterial.shirt++;
+        if(G>R*1.3&&G>B*1.03&&G>28&&R<130)exactMaterial.pants++;
+        if(R>168&&G>168&&B>168)exactMaterial.shoes++;
+      }
+    }
     const extra=window.testEngine.directionalAtlas;
     const fake=(vx,state="walk",grounded=true,attack=null)=>{
       const sample={state,grounded,vx,vy:-180,facing:1,stateTime:.18,dashTimer:0};
@@ -178,7 +198,7 @@ const path = require("node:path");
         window.testEngine.premiumImages,.5);
       return pose && pose.part==="combat" && pose.frame?.w>0;
     });
-    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,squareCount,squareTextureHeight,squareSequences,squareGhostFree,characterSizes,
+    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,squareCount,squareTextureHeight,squareSequences,squareGhostFree,characterSizes,exactReady,exactMaterial,
       specialFallbackClean,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
       shotgunImpacts,shotgunDamage,retreatMoved,backdashMoved,backdashMirrored,atlasFrameCount:window.MugenMotion.clips.run.count,
       motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
@@ -191,6 +211,13 @@ const path = require("node:path");
     return state;
   });
   assert.notEqual(result.first,result.second,"movement should modify actual rendered pixels continuously");
+  assert.equal(result.exactReady,true,
+    "all Yusuke states must render the user's 1536x1024 exact reference image");
+  assert.ok(result.exactMaterial.hair>1000 && result.exactMaterial.shirt>1000 &&
+    result.exactMaterial.pants>1000 && result.exactMaterial.shoes>100,
+    "uploaded cel must preserve dark hair, yellow shirt, green pants and white shoes");
+  assert.ok(result.exactMaterial.transparent>40000,
+    "old JPEG white background must be transparent in the playable game");
   assert.deepEqual(result.atlasCounts,[16,16],"existing premium sheets remain aligned");
   assert.equal(result.squareCount,48,"Square kit builds 48 cels (twelve per attack)");
   const idleHeight=result.characterSizes.idle?.maxHeight;

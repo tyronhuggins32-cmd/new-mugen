@@ -34,6 +34,8 @@ jobs:
         run: node tests/cinematic-fx-v6.cjs
       - name: Yusuke sprite expansion checks
         run: node tests/yusuke-sprites.cjs
+      - name: User's exact 16-pose Yusuke sprite reference and single-body rendering
+        run: node tests/yusuke-exact-v15.cjs
       - name: White alpha-edge and enclosed white-gap cleanup regression
         run: node tests/yusuke-alpha-v9.cjs
       - name: Yusuke skin and costume palette consistency

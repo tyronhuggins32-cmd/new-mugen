@@ -11,7 +11,7 @@ const assert=require("node:assert/strict");
   const html=fs.readFileSync(path.resolve(__dirname,"../game-build-0009.html"),"utf8");
   await page.route("**/game-build-0009.html*",route=>route.fulfill({
    contentType:"text/html",body:html.replace("      function beginFight() {",
-    '      window.testReference = { get game() { return arcadeGame; }, get atlas(){ return referenceAttackAtlas; }, arena };\n      function beginFight() {')
+    '      window.testReference = { get game() { return arcadeGame; }, get atlas(){ return referenceAttackAtlas; }, get exactAtlas(){ return exactYusukeAtlas; }, arena };\n      function beginFight() {')
   }));
   await page.goto("http://127.0.0.1:8000/");
   await page.locator('button.menu-item[data-mode="arcade"]').click();
@@ -24,12 +24,12 @@ const assert=require("node:assert/strict");
    game.stop();
    game.controller.update=()=>({left:false,right:false,block:false});
    const moves=window.YusukeAttackLab.moves();
-   const atlas=window.testReference.atlas;
-   let atlasDrawCount=0,hitCount=0,heavyHits=0;
+   const atlas=window.testReference.atlas, exact=window.testReference.exactAtlas;
+   let exactDrawCount=0,hitCount=0,heavyHits=0;
    const canvas=document.querySelector("#game-canvas"),ctx=canvas.getContext("2d"),
     originalDraw=ctx.drawImage.bind(ctx);
    ctx.drawImage=function(...args){
-     if(atlas && args[0]===atlas.image)atlasDrawCount++;
+     if(exact && args[0]===exact.image)exactDrawCount++;
      return originalDraw(...args);
    };
    game.damageFighter=function(a,d,h,x,y){
@@ -51,7 +51,7 @@ const assert=require("node:assert/strict");
    const flashed=window.YusukeAttackLab.play("flashRush");
    const immediate=window.YusukeAttackLab.status()?.move;
    game.render(3000);
-   const drew=atlasDrawCount;
+   const drew=exactDrawCount;
    let peakRushX=game.player.x;
    for(let i=0;i<150;i++){
     game.update(1/60);
@@ -90,7 +90,7 @@ const assert=require("node:assert/strict");
    const waveHits=hitCount;
    const energyAfterWave=game.player.energy;
    ctx.drawImage=originalDraw;game.damageFighter=original;
-   return {moves,atlasSize:[atlas?.image.width,atlas?.image.height],
+   return {moves,exactFrames:exact?.frameCount,atlasSize:[atlas?.image.width,atlas?.image.height],
      atlasFrames:atlas?.frameCount,drew,flashed,flash,immediate,groundAirDenied,
      airAllowed,airHits,deniedVoid,startedVoid,cinematicSeen,voidHits,
      finalHealth,heavyHits,startedBarrage,barrageHits,startedWave,waveHits,energyAfterWave};
@@ -99,7 +99,8 @@ const assert=require("node:assert/strict");
    "flashRush","risingBreaker","skyPursuit","spiritCyclone","spiritVoid","meteorFinish","rapidBarrage","spiritWave"]);
   assert.equal(result.atlasFrames,64,"all 64 new cel poses built in real Chromium");
   assert.deepEqual(result.atlasSize,[4096,4096]);
-  assert.ok(result.drew>=1,"game draws reference premium art atlas for live Yusuke");
+  assert.equal(result.exactFrames,16,"Yusuke uses the 16-pose user image for ALL move visuals");
+  assert.ok(result.drew>=1,"game draws the submitted exact Yusuke sprite sheet during flash rush");
   assert.equal(result.flashed,true);
   assert.equal(result.immediate,"flashRush");
   assert.equal(result.flash.hits,5,"all five flash-step damage beats must connect");
@@ -122,7 +123,7 @@ const assert=require("node:assert/strict");
   assert.equal(result.waveHits,3,"three wave contacts in live browser fight");
   assert.ok(result.energyAfterWave<100,"wave costs Spirit Energy");
   assert.equal(errors.length,0,errors.join("\n"));
-  console.log("PASS: eight unbound Yusuke reference moves live in Chromium, atlas renders, flash rush, aerial gate and Spirit Void deal real hits.");
+  console.log("PASS: eight unbound Yusuke moves with original game physics now render the uploaded exact 16-pose character while their collision timing remains intact.");
   console.log(result);
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1);});
