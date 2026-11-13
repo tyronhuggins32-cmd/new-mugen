@@ -70,6 +70,34 @@ const assert=require('node:assert/strict');
    if(ctx.getImageData(0,0,1,1).data[3]!==0)
      throw Error('Atlas corner is opaque; transparency regression');
    game.render(performance.now());
+   // A renderAlpha of 0 is a 60Hz interpolation fraction, NOT an opacity.
+   // Previously it multiplied Canvas globalAlpha and erased Thorfinn on
+   // some frames. Test actual displayed alpha, not just PNG corner pixels.
+   game.player.setState('idle');
+   game.player.grounded=true;
+   game.player.x=400;
+   game.player.y=600;
+   game.player.stateTime=.1;
+   const scratch=document.createElement('canvas');
+   scratch.width=800;
+   scratch.height=700;
+   const spriteCtx=scratch.getContext('2d',{willReadFrequently:true});
+   const visibleCounts=[];
+   for(const interpolation of [0,.02,.25,.5,1]) {
+     spriteCtx.clearRect(0,0,800,700);
+     game.player.drawThorfinnSprite(spriteCtx,performance.now(),interpolation);
+     const pixels=spriteCtx.getImageData(0,0,800,700).data;
+     let fullyOpaque=0;
+     for(let p=3;p<pixels.length;p+=4) if(pixels[p]>=245) fullyOpaque++;
+     visibleCounts.push(fullyOpaque);
+     if(fullyOpaque<1000) throw Error(
+       'Thorfinn faded in battle at renderAlpha '+interpolation+
+       ': only '+fullyOpaque+' opaque pixels');
+     if(spriteCtx.getImageData(0,0,1,1).data[3]!==0)
+       throw Error('Transparent atlas background became opaque');
+   }
+   if(Math.max(...visibleCounts)-Math.min(...visibleCounts)>250)
+     throw Error('Thorfinn visibility varies with simulation interpolation');
    return {health:game.player.health,energy:game.player.energy,fighter:game.player.name};
   });
   assert.equal(result.fighter,'Thorfinn');
