@@ -3328,7 +3328,13 @@
           const frame = sprite.frames[index] || sprite.frames[0];
           const scale = sprite.scale || 1;
           context.save();
-          context.globalAlpha *= alpha;
+          // The draw() alpha argument is the fixed-step interpolation
+          // fraction (0..1), NOT the fighter's opacity. Multiplying it into
+          // globalAlpha made Thorfinn disappear whenever the accumulator
+          // neared zero, even though the atlas has fully opaque body pixels.
+          // Main fighter art must always draw at full visibility; genuine
+          // transparency is supplied solely by the sprite's RGBA atlas.
+          context.globalAlpha = 1;
           context.fillStyle = "rgba(7,11,15,.3)";
           context.beginPath();
           context.ellipse(this.x, arena.floor + 7, 48, 10, 0, 0, Math.PI * 2);
