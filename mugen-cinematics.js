@@ -164,11 +164,9 @@ window.MugenCinematics = (() => {
         ctx.lineWidth = i % 3 ? 2 : 4;
         ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(hero.x + Math.cos(a) * radius * .54, cy + Math.sin(a) * radius * .54); ctx.stroke();
       }
-      const portrait = document.querySelector("#character-art");
-      if (portrait && portrait.complete && portrait.naturalWidth > 0) {
-        ctx.save(); ctx.globalAlpha = Math.min(.53, t * 1.6);
-        ctx.drawImage(portrait, Math.max(0, w - 560), 95, 500, 525); ctx.restore();
-      }
+      // No 500x525 character portrait is ever drawn over combat.
+      // Super remains cinematic through lighting, energy and camera work,
+      // while Yusuke keeps his normal world-space fighter size.
     } else {
       const blastTime = t - .77;
       const out = hero.facing > 0 ? w + 140 : -140;
