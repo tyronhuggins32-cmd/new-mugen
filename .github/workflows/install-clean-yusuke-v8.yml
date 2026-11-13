@@ -22,6 +22,19 @@ jobs:
           node tests/premium-v6.cjs
           node tests/yusuke-sprites.cjs
           node tests/air-and-vfx-v8.cjs
+      - name: Inspect alpha transparency in final texture files
+        run: |
+          python3 - <<'PY'
+          import json
+          from PIL import Image
+          d=json.load(open("characters/yusuke/premium-atlas.json"))
+          assert d["version"]==4
+          for name in ("combat","movement"):
+            image=Image.open(d[name]["src"]).convert("RGBA")
+            assert image.getpixel((0,0))[3]==0
+            assert image.getchannel("A").getextrema()==(0,255)
+            print("Verified alpha, frame pivots and V8 reference:",name,image.size)
+          PY
       - name: Commit cleaned production assets atomically
         run: |
           git config user.name "github-actions[bot]"
