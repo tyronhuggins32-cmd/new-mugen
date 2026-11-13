@@ -1833,6 +1833,10 @@
       let thorfinnReady = false;
       const thorfinnSpriteSheet = new Image();
       thorfinnSpriteSheet.decoding = "async";
+      // Dedicated creator-authored combat poses are a separate atlas.
+      // Movement art and Yusuke remain unchanged.
+      const thorfinnCombatSpriteSheet = new Image();
+      thorfinnCombatSpriteSheet.decoding = "async";
 
       const items = [...document.querySelectorAll(".menu-item")];
       const modeTitle = document.querySelector("#mode-title");
@@ -2386,7 +2390,30 @@
             if (!character.combat.attacks[attack])
               throw Error("Missing Thorfinn attack: " + attack);
           }
-          await loadSpriteAsset(thorfinnSpriteSheet, sheet, "Thorfinn sprite atlas");
+          const combatSheet = character.combatSpriteSheet;
+          if (!combatSheet || !combatSheet.src ||
+              combatSheet.width !== 3072 || combatSheet.height !== 1600 ||
+              !Array.isArray(combatSheet.frames) || combatSheet.frames.length !== 36)
+            throw Error("Thorfinn authored combat atlas missing or invalid");
+          for (const frame of combatSheet.frames) {
+            if (![frame.x,frame.y,frame.w,frame.h,frame.ax].every(Number.isFinite) ||
+                frame.x < 0 || frame.y < 0 || frame.w <= 0 || frame.h <= 0 ||
+                frame.x + frame.w > combatSheet.width ||
+                frame.y + frame.h > combatSheet.height)
+              throw Error("Thorfinn combat frame outside atlas");
+          }
+          for (const name of ["hit","light","cross","body","upper",
+            "heavyUppercut","heavyKick","airAttack","airCombo","daggerLunge","whirlwind"]) {
+            const animation = combatSheet.animations?.[name];
+            const ids = animation?.frames || animation?.keyframes?.map(key=>key.frame);
+            if (!ids?.length || ids.some(id=>
+                !Number.isInteger(id) || id < 0 || id >= combatSheet.frames.length))
+              throw Error("Thorfinn authored animation invalid: " + name);
+          }
+          await Promise.all([
+            loadSpriteAsset(thorfinnSpriteSheet, sheet, "Thorfinn movement atlas"),
+            loadSpriteAsset(thorfinnCombatSpriteSheet, combatSheet, "Thorfinn authored combat atlas")
+          ]);
           thorfinnDefinition = character;
           thorfinnReady = true;
           thorfinnRoster.disabled = false;
@@ -3331,7 +3358,7 @@
           else if (attack) {
             animName = attack.animation || "light";
             if (attackName === "heavy") animName = attack.animations?.[this.attackVariant] || "heavyUppercut";
-            if (attackName === "shotgun") animName = "spiritGun";
+            if (attackName === "shotgun") animName = "whirlwind";
             if (!this.grounded) animName = attack.airAnimation || "airKick";
           } else if (this.state === "block") animName = "guard";
           else if (this.state === "crouchWalk") animName = "crouchWalk";
@@ -3339,7 +3366,17 @@
             animName = this.vy < 0 ? "jumpRise" : "jumpFall";
           else if (this.dashTimer > 0) animName = "sprint";
           else if (this.state === "walk") animName = "walk";
-          const chosen = sprite.animations[animName] || sprite.animations.idle;
+          // Damage reactions and attacks now use the real authored blade
+          // cels; the original 56 movement frames are kept for locomotion.
+          const combatSprite = definition.combatSpriteSheet;
+          const usesCombatArt = Boolean(
+            combatSprite && (this.state === "hit" || attack) &&
+            combatSprite.animations?.[animName] &&
+            thorfinnCombatSpriteSheet.naturalWidth === combatSprite.width
+          );
+          const poseSheet = usesCombatArt ? combatSprite : sprite;
+          const poseImage = usesCombatArt ? thorfinnCombatSpriteSheet : thorfinnSpriteSheet;
+          const chosen = poseSheet.animations[animName] || sprite.animations.idle;
           // Falling starts midway through flight; restart the fall sequence
           // at that transition instead of jumping straight to its last cel.
           const apexSeconds = Math.abs(yusukeCombat.movement.jumpVelocity /
@@ -3347,10 +3384,13 @@
           const poseSeconds = animName === "jumpFall"
             ? Math.max(0, this.stateTime - apexSeconds)
             : this.stateTime;
-          let index = animationFrameFrom(chosen, poseSeconds, progress);
-          // Sprint uses the uploaded frames rather than the old placeholder frame 22.
-          const frame = sprite.frames[index] || sprite.frames[0];
-          const scale = sprite.scale || 1;
+          const poseProgress = this.state === "hit"
+            ? Math.min(1, this.stateTime /
+                (yusukeCombat.effects.hitAnimationDuration || .3))
+            : progress;
+          const index = animationFrameFrom(chosen, poseSeconds, poseProgress);
+          const frame = poseSheet.frames[index] || poseSheet.frames[0];
+          const scale = poseSheet.scale || 1;
           context.save();
           // The draw() alpha argument is simulation interpolation, not an
           // opacity channel. Keep the separate Thorfinn character visible
@@ -3366,10 +3406,12 @@
           // Smooth only Thorfinn; Yusuke's existing rendering is unchanged.
           context.imageSmoothingEnabled = true;
           context.imageSmoothingQuality = "high";
-          context.drawImage(thorfinnSpriteSheet,frame.x,frame.y,frame.w,frame.h,
+          context.drawImage(poseImage,frame.x,frame.y,frame.w,frame.h,
             -(frame.ax || frame.w/2)*scale,-frame.h*scale,
             frame.w*scale,frame.h*scale);
-          if (attack && !attack.projectile &&
+          // The user's new sprites already contain hand-drawn slash arcs.
+          // Do not superimpose the old generic white ring on those frames.
+          if (attack && !attack.projectile && !usesCombatArt &&
               this.stateTime >= attack.activeStart && this.stateTime <= attack.activeEnd) {
             context.globalAlpha *= .8;
             context.beginPath();

@@ -2,9 +2,9 @@
 
 ## Thorfinn fighter foundation (November 2026)
 
-The second roster fighter, **Thorfinn**, now uses the creator's uploaded sprite sheets: an alpha-clean 56-frame WebP atlas with idle, walk, sprint, crouch-walk, guard, 8-frame jumping and landing poses. He keeps his playable melee move set, full 5,000 HP, and keyboard/DualSense switching. Dedicated drawn dagger-attack poses were not included in the uploaded sheets, so those actions temporarily use available poses and engine strike arcs.
+The second roster fighter, **Thorfinn**, now uses **92 creator-authored frames**: a 56-frame motion atlas (idle, walk, sprint, crouch-walk, guard, jump and landing) and a new **36-frame dagger combat atlas** covering Square attacks, aerial combos, Dagger Lunge, Whirlwind Blades, and injury reactions. He retains 5000 HP and keyboard/DualSense controls.
 
-**Art status:** The uploaded source art is committed as `characters/thorfinn/user-sprites.webp`, `source-jump-8frames.png`, `source-crouch-walk-8frames.png` and `user-portrait.webp`. The runtime now loads `thorfinn-atlas-v3.webp` with 56 transparent cels, mapped in `thorfinn.json`. The synthetic SVG placeholder is no longer used. See `characters/thorfinn/README.md` for frame assignments and remaining combat-art limitations.
+**Art status:** All previously supplied source art is preserved in `characters/thorfinn/`. The game loads `thorfinn-atlas-v3.webp` (56 motion frames) and `thorfinn-combat-v4.webp` (36 original attack/hurt frames), with animations selected by `thorfinn.json`. White JPEG backdrops are removed from the combat art without removing painted blade trails. See `characters/thorfinn/README.md` for frame assignments and reproducible extraction steps.
 
 
 ## Rebirth 0011: full arcade front-end rebuild (November 2026)
@@ -18,7 +18,7 @@ The menu system has been **structurally rebuilt**, not just recolored. The previ
 - **Preserved mechanics:** all existing game screen IDs and character data hooks, the PS5 DualSense D-pad/stick, Cross/confirm and Circle/back behavior, fighting controls and combat engine.
 - **Regression:** `node tests/neon-ui.cjs` now tests the new Rebirth screen structures and input hooks. GitHub Actions runs it alongside the gamepad, sprite, fighter engine and VFX suites. These automated checks do not replace physical iPhone/DualSense visual QA.
 
-The fighter roster now includes **two selectable characters: Yusuke and Thorfinn**, with six slots remaining. Thorfinn's motion sprites now come from the player's five uploaded sheets; specialized dagger attack and super animations remain future work.
+The fighter roster now includes **two selectable characters: Yusuke and Thorfinn**, with six empty slots. Thorfinn uses the player's original motion and combat sprite sheets; a separate character-specific cinematic super remains future work.
 
 A browser fighting-game prototype featuring Yusuke versus the CPU Demon Scout. Run `python3 -m http.server 8000` in this folder, then visit http://localhost:8000. `index.html` opens the game build.
 

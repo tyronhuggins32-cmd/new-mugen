@@ -35,6 +35,56 @@ assert.equal(atlas.toString('ascii',0,4),'RIFF','atlas is WebP');
 assert.equal(atlas.toString('ascii',8,12),'WEBP','atlas is WebP');
 assert.equal(portrait.toString('ascii',8,12),'WEBP','portrait is WebP');
 assert.equal(character.portrait,'characters/thorfinn/user-portrait.webp');
+
+const combat=character.combatSpriteSheet;
+assert.equal(combat.src,'characters/thorfinn/thorfinn-combat-v4.webp');
+assert.equal(combat.width,3072);
+assert.equal(combat.height,1600);
+assert.equal(combat.frames.length,36);
+for(const frame of combat.frames) {
+  assert.ok([frame.x,frame.y,frame.w,frame.h,frame.ax].every(Number.isFinite));
+  assert.ok(frame.x>=0&&frame.y>=0&&frame.w===384&&frame.h===320);
+  assert.ok(frame.x+frame.w<=3072&&frame.y+frame.h<=1600);
+}
+const mapped=new Set();
+for(const [name,animation] of Object.entries(combat.animations)){
+  const ids=animation.frames||animation.keyframes?.map(x=>x.frame);
+  assert.ok(ids?.length,'Missing combat timeline: '+name);
+  for(const id of ids) {
+    assert.ok(Number.isInteger(id)&&id>=0&&id<36, 'Invalid combat pose '+name+': '+id);
+    mapped.add(id);
+  }
+}
+assert.equal(mapped.size,36,'Every uploaded combat pose must be referenced');
+for(const [name,start,end] of [
+ ['airAttack',0,3],['hit',4,7],['airCombo',8,13],['groundCombo',14,25],['rapidBlades',26,35]
+]){
+  const seq=combat.animations[name];
+  const ids=seq.frames||seq.keyframes.map(x=>x.frame);
+  for(const id of ids)assert.ok(id>=start&&id<=end,'Wrong pose family for '+name);
+}
+for(const name of ['source-air-attack.jpg','source-hurt.jpg','source-air-combo.jpg',
+                   'source-ground-combo.jpg','source-blade-barrage.jpg']){
+  const bytes=fs.readFileSync(path.join(root,'characters/thorfinn',name));
+  assert.ok(bytes.length>200000,'Original uploaded sheet missing: '+name);
+  assert.equal(bytes.toString('hex',0,2),'ffd8','Uploaded original must be JPEG: '+name);
+}
+const combatBytes=fs.readFileSync(path.join(root,combat.src));
+assert.ok(combatBytes.length>500000,'Combat atlas missing');
+assert.equal(combatBytes.toString('ascii',0,4),'RIFF');
+assert.equal(combatBytes.toString('ascii',8,12),'WEBP');
+for(const name of ['airAttack','airCombo','hit','light','cross','body',
+                   'upper','heavyUppercut','heavyKick','daggerLunge','whirlwind']){
+  assert.ok(combat.animations[name],'Missing playable authored pose '+name);
+}
+assert.equal(character.combat.attacks.gun.animation,'daggerLunge');
+assert.equal(character.combat.attacks.shotgun.animation,'whirlwind');
+assert.equal(character.combat.attacks.light.airAnimation,'airAttack');
+assert.equal(character.combat.attacks.cross.airAnimation,'airCombo');
+assert.match(html,/const thorfinnCombatSpriteSheet = new Image\(\)/);
+assert.ok(html.includes('context.drawImage(poseImage,frame.x'),'Renderer uses dedicated art source');
+assert.ok(html.includes('!usesCombatArt'),'Duplicate painted sword arcs disabled');
+
 const jump=fs.readFileSync(path.join(root,'characters/thorfinn/source-jump-8frames.png'));
 const crouch=fs.readFileSync(path.join(root,'characters/thorfinn/source-crouch-walk-8frames.png'));
 assert.equal(jump.toString('hex',0,8),'89504e470d0a1a0a','original jump sheet is PNG');
@@ -54,4 +104,4 @@ assert.ok(html.includes('function loadThorfinnDefinition()'));
 assert.ok(html.includes('drawThorfinnSprite(context, time, alpha'));
 assert.ok(html.includes('const playable = rosterCards.filter(card=>!card.disabled)'));
 assert.ok(html.includes('if (!isThorfinnSelected() && playerInput.ultimatePressed'),'Yusuke super must not play for Thorfinn');
-console.log('PASS: Thorfinn roster, DualSense selection, 56-frame uploaded artwork and dedicated melee attacks');
+console.log('PASS: Thorfinn 56 movement + 36 authored combat cels, 5 original combat sheets, real dagger/air/hurt timelines and game integration');
