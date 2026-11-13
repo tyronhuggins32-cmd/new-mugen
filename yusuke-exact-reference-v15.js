@@ -69,7 +69,7 @@
   function frameAt(seq,p){
     return seq[Math.min(seq.length-1,Math.floor(clamp(p)*seq.length))];
   }
-  function pose(fighter,atlas){
+  function pose(fighter,atlas,attackDuration){
     if(!fighter||!atlas?.image)return null;
     const attack=fighter.currentAttack?.()||null;
     const t=Math.max(0,Number(fighter.stateTime)||0);
@@ -82,8 +82,8 @@
       clip=attack;
       const seq=attackClips[attack]||attackClips.light;
       // Use the existing attack timing and hitbox windows; only poses change.
-      const duration=Math.max(.07,Number(fighter.attackDuration)||
-        Number(fighter._attackDuration)||0.33);
+      const duration=Math.max(.07,Number(attackDuration)||
+        Number(fighter.attackDuration)||Number(fighter._attackDuration)||0.33);
       const p=clamp(t/duration);
       progress=p;
       index=frameAt(seq,p);
@@ -122,8 +122,8 @@
     return {image:atlas.image,frame,index,clip,scale,part:"exact",source:"user-reference",
       progress,frameCount:atlas.frameCount};
   }
-  function draw(fighter,ctx,time,_alpha,atlas){
-    const selected=pose(fighter,atlas);
+  function draw(fighter,ctx,time,_alpha,atlas,attackDuration){
+    const selected=pose(fighter,atlas,attackDuration);
     if(!selected||!ctx?.drawImage)return false;
     const {frame,scale,clip,progress}=selected;
     const face=fighter.facing<0?-1:1;
