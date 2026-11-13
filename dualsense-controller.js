@@ -94,7 +94,8 @@
         gun: down("circle"),
         dash: down("r1"),
         charge: down("l2"),
-        ultimate: down("r2")
+        ultimate: down("r2"),
+        counter: down("l3")
       } : {};
 
       for (const control of [...activeControls]) {
