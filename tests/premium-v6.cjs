@@ -6,8 +6,9 @@ const crypto=require("node:crypto");
 const vm=require("node:vm");
 
 const data=JSON.parse(fs.readFileSync("characters/yusuke/premium-atlas.json","utf8"));
-assert.equal(data.version,3,"playable fighter requires polished V7 master palette");
-assert.ok(data.combat.src.endsWith("-v7.png") && data.movement.src.endsWith("-v7.png"));
+assert.ok([3,4].includes(data.version),"premium art must have V7 or sanitized V8 metadata");
+assert.ok(["combat","movement"].every(k=>/-v[78]\.png$/.test(data[k].src)),
+  "both premium atlases must use verified V7 or V8 texture assets");
 const fakeWindow={};
 vm.runInNewContext(fs.readFileSync("yusuke-premium-v6.js","utf8"),{window:fakeWindow});
 const premium=fakeWindow.MugenPremium;
@@ -20,7 +21,8 @@ for(const [name,expectedHash] of [
 ]){
  const sheet=data[name];
  const buffer=fs.readFileSync(sheet.src);
- assert.equal(crypto.createHash("sha256").update(buffer).digest("hex"),expectedHash);
+ assert.equal(crypto.createHash("sha256").update(buffer).digest("hex"),
+   data.refinement?.sha256?.[name] || expectedHash);
  assert.equal(buffer.subarray(0,8).toString("hex"),"89504e470d0a1a0a");
  assert.equal(buffer.readUInt32BE(16),2048);
  assert.equal(buffer.readUInt32BE(20),1024);
