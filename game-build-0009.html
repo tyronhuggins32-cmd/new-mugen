@@ -1785,7 +1785,7 @@
   <script src="mugen-fluid-v3.js?v=2"></script>
   <script src="mugen-combat-v5.js?v=1"></script>
   <script src="mugen-spiritgun-v5.js?v=1"></script>
-  <script src="mugen-vfx-v8.js?v=1"></script>
+  <script src="mugen-vfx-v8.js?v=2"></script>
   <script src="mugen-combo-fx-v9.js?v=1"></script>
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
@@ -3619,7 +3619,7 @@
                 energyGain: projectile.energyGain,
                 heavyImpact: projectile.heavyImpact,
                 color,
-                phase: Math.random() * Math.PI * 2,
+                phase: 0,
                 age: 0,
                 kind: "spiritShotgun",
                 volleyId
@@ -3653,7 +3653,7 @@
             energyGain: projectile.energyGain,
                 heavyImpact: projectile.heavyImpact,
             color,
-            phase: Math.random() * Math.PI * 2,
+            phase: 0,
             age: 0,
             kind: "spiritGun"
           });
@@ -3762,13 +3762,13 @@
           if (visualEffectsAllowed && !blocked && heavyHit && !attack.projectile)
             this.cinematicImpact = { x: impactX, y: impactY, life: .12, maxLife: .12 };
           if (visualEffectsAllowed) {
-            const impactCount = blocked ? 8 : heavyHit ? 27 : 17;
-            this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", impactCount);
-            window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
-            window.MugenFluid?.onHit(this, attacker, defender, blocked, heavyHit, impactX, impactY);
-            if (!window.MugenVfxV8?.ready())
+            // Exactly one impact vocabulary: sprite-authored effect when the
+            // transparent V8 atlas is loaded, restrained fallback otherwise.
+            // Do not overlay random dust, rings and legacy impact bursts.
+            if (window.MugenVfxV8?.ready())
+              window.MugenVfxV8.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
+            else
               window.MugenCinematicFX?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
-            window.MugenVfxV8?.onHit(this, attacker, defender, attack, blocked, impactX, impactY);
           }
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
@@ -3778,19 +3778,17 @@
             if (!window.MugenSFX) playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
         }
 
-        addImpact(x, y, color, count) {
-          for (let index = 0; index < count; index += 1) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 90 + Math.random() * 360;
+        addImpact(x, y, color, count, direction = 1) {
+          // Safe legacy fallback: short, bounded fan aligned to punch direction.
+          const total = Math.max(0, Math.min(12, count));
+          for (let i = 0; i < total; i++) {
+            const angle = (total > 1 ? (i/(total-1)*2-1) : 0)*.62;
+            const speed = 130 + (i%3)*23;
+            const life = .18 + (i%3)*.018;
             this.impacts.push({
-              x,
-              y,
-              vx: Math.cos(angle) * speed,
-              vy: Math.sin(angle) * speed,
-              life: .24 + Math.random() * .35,
-              maxLife: .59,
-              size: 2 + Math.random() * 5,
-              color
+              x, y, vx: Math.cos(angle)*speed*Math.sign(direction||1),
+              vy: Math.sin(angle)*speed, life, maxLife:life,
+              size:2.5+(i%2), color
             });
           }
         }
@@ -3806,7 +3804,7 @@
             kind,
             life: duration,
             maxLife: duration,
-            phase: Math.random() * Math.PI * 2
+            phase: 0
           });
         }
 
@@ -4107,7 +4105,8 @@
           window.MugenFluid?.drawBehind(this, context, time);
           window.MugenVfxV8?.drawBehind(this, context, time);
           window.MugenDirectional?.drawBehind(this, context, time);
-          window.MugenCinematicFX?.drawBehind(this, context, time);
+          if (!window.MugenVfxV8?.ready())
+            window.MugenCinematicFX?.drawBehind(this, context, time);
           window.MugenShotgun?.drawFan(this, context, time);
 
           for (const projectile of this.projectiles) this.drawSpiritProjectile(context, projectile, time);
