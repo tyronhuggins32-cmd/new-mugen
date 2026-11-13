@@ -3986,6 +3986,7 @@
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
           window.MugenFluid?.drawBehind(this, context, time);
+          window.MugenDirectional?.drawBehind(this, context, time);
           window.MugenCinematicFX?.drawBehind(this, context, time);
           window.MugenShotgun?.drawFan(this, context, time);
 
@@ -4008,6 +4009,7 @@
           window.MugenShotgun?.drawImpacts(this, context, time);
           window.MugenSpiritGun?.drawImpact(this, context, time);
           window.MugenFluid?.drawFront(this, context, time);
+          window.MugenDirectional?.drawFront(this, context, time);
           window.MugenCinematicFX?.drawFront(this, context, time);
           context.restore();
           window.MugenSpiritGun?.drawOverlay(this, context, arena);
