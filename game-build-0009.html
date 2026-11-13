@@ -3585,6 +3585,10 @@
           if (!blocked) defender.resetCombo();
           attacker.energy = Math.min(100, attacker.energy + (attack.energyGain ?? 5));
           const heavyHit = Boolean(attack.heavyImpact);
+          // Uppercuts and Power Kicks briefly hold the camera on contact,
+          // without an over-tight zoom that would hide either fighter.
+          if (!blocked && heavyHit && !attack.projectile)
+            this.cinematicImpact = { x: impactX, y: impactY, life: .12, maxLife: .12 };
           const impactCount = blocked ? 8 : heavyHit ? 27 : 17;
           this.addImpact(impactX, impactY, blocked ? "#dffcff" : attacker.cpu ? "#ff355d" : "#5ae7ff", impactCount);
           window.MugenVisuals?.onHit(this, attacker, defender, damage, blocked, heavyHit, impactX, impactY);
