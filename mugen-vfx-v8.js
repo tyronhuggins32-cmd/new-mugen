@@ -33,6 +33,7 @@
   }
   function onHit(game,attacker,defender,attack,blocked,x,y){
     if(!game||!attacker)return;
+    if(root.MugenComboFX && !root.MugenComboFX.allows(attacker))return;
     const heavy=!!attack?.heavyImpact;
     const kind=heavy?"blast":blocked?"ring":"punch";
     append(game,kind,x,y,{direction:attacker.facing,cpu:attacker.cpu,scale:heavy?1.25:1});
