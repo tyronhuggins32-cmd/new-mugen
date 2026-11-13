@@ -1782,7 +1782,7 @@
   <script src="mugen-spiritgun-v5.js?v=1"></script>
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
-  <script src="mugen-combat-sfx-v8.js?v=1"></script>
+  <script src="mugen-sfx-v8.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=1"></script>
   <script src="yusuke-directional-v8.js?v=1"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
@@ -1932,13 +1932,19 @@
         }
       }
 
-      function playCombatSfx(name, intensity = .7) {
-        // Use the existing sound option and Web Audio context. On muted or
-        // restricted browsers the game remains fully playable without sound.
-        if (!soundOn || !window.MugenCombatSFX?.play) return false;
+      function playCombatSfx(name, intensity = .7, pan = 0) {
+        // Sound option applies to movement, attack cues and confirmed hits.
+        // The original short noise/tone synthesis is reused, never loaded
+        // from external files. Audio hardware is optional.
+        if (!soundOn || !window.MugenSFX?.play) return false;
         try {
           audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
-          return window.MugenCombatSFX.play(audioContext, name, intensity);
+          if (audioContext.state === "suspended") audioContext.resume?.().catch?.(() => {});
+          const clip = name === "hit" ? "impact-light" :
+            name === "heavy" ? "impact-heavy" : name;
+          return window.MugenSFX.play(audioContext, clip, {
+            strength: intensity, pan: Math.max(-.6, Math.min(.6, pan))
+          });
         } catch (_) { return false; }
       }
 
@@ -2636,7 +2642,7 @@
           // after collision so a whiff never produces a false contact cue.
           if (["light", "cross", "body", "upper", "powerKick"].includes(type)) {
             if (!playCombatSfx("swing", type === "powerKick" ? .82 : .52))
-              if (!window.MugenCombatSFX) playTone(punchPitch[type] ?? 115, .06);
+              if (!window.MugenSFX) playTone(punchPitch[type] ?? 115, .06);
           } else {
             playTone(punchPitch[type] ?? (type === "shotgun" ? 410 : 480),
               attack.projectile ? .12 : .06);
@@ -3697,7 +3703,7 @@
           this.shake = blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light;
           const impactSound = blocked ? "block" : heavyHit ? "heavy" : "hit";
           if (!playCombatSfx(impactSound, blocked ? .4 : heavyHit ? .88 : .6))
-            if (!window.MugenCombatSFX) playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
+            if (!window.MugenSFX) playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
         }
 
         addImpact(x, y, color, count) {
