@@ -49,5 +49,15 @@ vm.runInContext(`
  assert.equal(g.superSequence,null,'cinematic completes');assert.equal(g.player.energy,0,'MAX drains energy');assert.equal(g.player.comboHits,0,'MAX Spirit Gun does not bypass the three-Square combo gate');assert.ok(g.cpu.health<680,'beam damages opponent');
  g.reset();g.state='play';g.player.energy=0;g.player.update(1/60,{charge:true},g.cpu,g);assert.ok(g.player.energy>0,'hold-to-charge refills energy');
  g.reset();g.state='play';const dashX=g.player.x;g.player.update(1/60,{dashPressed:true},g.cpu,g);assert.ok(g.player.x>dashX+10,'dash crosses space');
+ g.reset();g.state='play';
+ g.damageFighter(g.player,g.cpu,{damage:10,knockback:135,hitstun:.2,heavyImpact:false},g.cpu.x,g.cpu.y-105);
+ assert.equal(g.cpu.state,'hit');assert.equal(g.cpu.hitReaction,'stagger');
+ g.reset();g.state='play';
+ g.damageFighter(g.player,g.cpu,{damage:45,knockback:510,hitstun:.4,heavyImpact:true},g.cpu.x,g.cpu.y-105);
+ assert.equal(g.cpu.state,'hit');assert.equal(g.cpu.hitReaction,'knockback');
+ const recoilX=g.cpu.x;
+ g.cpu.update(1/60,neutral,g.player,g);
+ assert.ok(g.cpu.x>recoilX,'a powerful strike moves the defender backward');
+ assert.ok(g.cpu.y<arena.floor,'strong hit creates visible lift');
  console.log('PASS: fighter engine, hit timing, MAX Spirit Gun (8 hits), spirit charge, spirit dash, and fixed-step cadence.');
 `,context);

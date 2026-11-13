@@ -63,13 +63,16 @@ const path = require("node:path");
     g.render(1990); // The collision splash must render without browser errors.
     const state={first,second,before,after,shotgunProjectileCount,shotgunVisualFragments,
       shotgunImpacts,shotgunDamage,atlasFrameCount:window.MugenMotion.clips.run.count,
+      motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
       kickReady:window.testEngine.kickReady,lowAction,highAction,
       playerHealth:g.player.health,gamepadConnected:!!window.MugenGamepad};
     return state;
   });
   assert.notEqual(result.first,result.second,"movement should modify actual rendered pixels continuously");
   assert.ok(result.after<result.before,"fight camera should ease out to show point-blank combat");
-  assert.equal(result.atlasFrameCount,32,"run uses the expanded 60 Hz virtual motion timeline");
+  assert.equal(result.atlasFrameCount,24,"running uses 24 samples on a 40 FPS animation timeline");
+  assert.equal(result.motionFPS,40,"Yusuke's movement animation runs at 40 FPS");
+  assert.equal(result.derivedSpriteCount,28,"twelve new stagger/recoil/recovery sprites join the original 16");
   assert.equal(result.playerHealth,1000);
   assert.equal(result.kickReady,true,"the eight-frame kick PNG must load into the browser");
   assert.equal(result.lowAction,"powerKick","at 50 Spirit Triangle becomes Power Kick");

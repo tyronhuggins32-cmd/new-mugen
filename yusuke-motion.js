@@ -1,26 +1,33 @@
-/* Yusuke motion v4: compact, source-derived animation cels.
- * Build sixteen genuinely distinct, foot-aligned raster poses from the
- * canonical 24-frame sheet, not a second differently colored drawing.
- * All derived pixels come from sprites.png; there is no recoloring or scaling.
- * One 1024x1024 optional atlas replaces the old huge ghost-frame cache.
- * A 60 Hz animation timeline and fluid rendering remain independent of physics.
+/* Yusuke motion v5: 40 FPS animation clips, source-accurate reaction cels.
+ * Twenty-eight supplemental transparent cels (16 existing idle/run plus
+ * 12 stagger/knockback/recovery) are drawn using only canonical source pixels.
+ * No new palette, no rescaled anatomy, and no 60Hz combat/physics changes.
+ * Render-time deformation remains independent from the animation sampling.
  */
 (function (root) {
   "use strict";
 
-  const FPS = 60;
+  const FPS = 40;
   const CELL = 256;
-  const SOURCES = Object.freeze([0,1,2,3,2,1,0,1, 6,7,8,9,6,7,8,9]);
+  // 8 idle + 8 run + 4 stagger + 4 knockback + 4 recovery.
+  // This preserves the existing sixteen cels at the same indices (24..39).
+  const SOURCES = Object.freeze([
+    0,1,2,3,2,1,0,1, 6,7,8,9,6,7,8,9,
+    21,10,17,12, 21,16,14,15, 5,4,13,0
+  ]);
   const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
   const specs = Object.freeze({
-    idle:      Object.freeze({ keys: [24,25,26,27,28,29,30,31,30,29,27,25], count: 72, loop: true }),
-    idleFocus: Object.freeze({ keys: [25,26,27,28,29,30,29,27], count: 60, loop: true }),
-    run:       Object.freeze({ keys: [32,33,34,35,36,37,38,39], count: 32, loop: true }),
-    walkStart: Object.freeze({ keys: [0,24,6,32,33], count: 12, loop: false }),
-    walkStop:  Object.freeze({ keys: [36,39,8,6,24,0], count: 12, loop: false }),
-    jumpRise:  Object.freeze({ keys: [0,18,19], count: 14, loop: false }),
-    jumpFall:  Object.freeze({ keys: [19,18], count: 14, loop: false }),
-    landing:   Object.freeze({ keys: [18,4,24,0], count: 12, loop: false })
+    idle:      Object.freeze({ keys: [24,25,26,27,28,29,30,31,30,29,27,25], count: 48, loop: true }),
+    idleFocus: Object.freeze({ keys: [25,26,27,28,29,30,29,27], count: 40, loop: true }),
+    run:       Object.freeze({ keys: [32,33,34,35,36,37,38,39], count: 24, loop: true }),
+    walkStart: Object.freeze({ keys: [0,24,6,32,33], count: 8, loop: false }),
+    walkStop:  Object.freeze({ keys: [36,39,8,6,24,0], count: 8, loop: false }),
+    jumpRise:  Object.freeze({ keys: [0,18,19], count: 10, loop: false }),
+    jumpFall:  Object.freeze({ keys: [19,18], count: 10, loop: false }),
+    landing:   Object.freeze({ keys: [18,4,24,0], count: 8, loop: false }),
+    stagger:   Object.freeze({ keys: [40,41,42,43,41,40], count: 9, loop: false }),
+    knockback: Object.freeze({ keys: [44,45,46,47,47], count: 14, loop: false }),
+    recovery:  Object.freeze({ keys: [48,49,50,51,24,0], count: 9, loop: false })
   });
 
   function sampleKeys(spec, index) {
@@ -32,17 +39,16 @@
     return { from: spec.keys[from], to: spec.keys[to], mix: clamp(pos - from) };
   }
 
-  // Make an actual compact transparent sprite atlas, keeping the original
-  // artwork's 1:1 pixel size, costume colors, ankle baseline and center pivot.
-  // Only upper-body strips move by one or two source pixels to create breaths,
-  // shoulder settles, wind-up and recoil in between original hand-drawn poses.
-  // Feet remain anchored, avoiding the 'growing/shrinking Yusuke' artifact.
+  // Composite a compact 4x7 RGBA atlas using source image pixels, preserving
+  // the original costume, face, alpha, pivot and 1:1 drawing scale. The extra
+  // twelve cels add distinct recoil silhouettes, not duplicate transparent
+  // ghosts. The final strip (feet) is always planted on the same baseline.
   function createSupplement(image, sourceFrames) {
     if (typeof document === "undefined" || !document.createElement) return null;
     try {
       const sheet = document.createElement("canvas");
       sheet.width = CELL * 4;
-      sheet.height = CELL * 4;
+      sheet.height = CELL * 7;
       const ctx = sheet.getContext("2d", { alpha: true });
       if (!ctx) return null;
       ctx.imageSmoothingEnabled = false;
@@ -53,9 +59,15 @@
             base.w - base.ax > CELL / 2) return null;
         const left = (i % 4) * CELL, top = Math.floor(i / 4) * CELL;
         const x = left + CELL / 2 - base.ax, y = top + CELL - base.h;
-        const stride = i >= 8 ? 1.5 : .8;
-        const breathing = i >= 8 ? (i % 2 ? -2 : 2) : (i % 3 - 1);
-        const shoulder = i >= 8 ? (i % 4 < 2 ? 2 : -2) : (i % 2 ? 1 : -1);
+        const reaction = i >= 16 && i < 24;
+        const recovery = i >= 24;
+        const stride = reaction ? 0 : i >= 8 && !recovery ? 1.5 : .8;
+        const breathing = i >= 8 && i < 16 ? (i % 2 ? -2 : 2) : (i % 3 - 1);
+        const shoulder = i >= 8 && i < 16 ? (i % 4 < 2 ? 2 : -2) : (i % 2 ? 1 : -1);
+        // Recoil silhouette leans away from the opponent, with feet fixed.
+        // Amount is varied by hit phase; recovery gradually unwinds.
+        const recoil = i < 16 ? 0 : reaction ? -4 - ((i - 16) % 4) * (i >= 20 ? 4 : 2)
+          : 5 - (i - 24) * 2;
         const strips = 8;
         for (let part = 0; part < strips; part++) {
           const y0 = Math.floor(base.h * part / strips);
@@ -63,7 +75,8 @@
           const normalized = (part + .5) / strips;
           const head = Math.pow(1 - normalized, 1.8);
           const torso = Math.sin(Math.PI * normalized);
-          const offset = Math.round(breathing * head * stride + shoulder * torso);
+          const offset = Math.round(breathing * head * stride + shoulder * torso +
+            recoil * (head * .8 + torso * .5));
           const lift = part < 4 && i < 8 && i % 2 ? 1 : 0;
           // One source-pixel overlap masks seams without averaging the palette.
           ctx.drawImage(image, base.x, base.y + y0, base.w, y1 - y0,
@@ -139,13 +152,18 @@
 
     const elapsed = Math.max(0, fighter.stateTime || 0);
     let name, clipTime = elapsed;
-    if (!fighter.grounded || state === "jump") {
+    // A hit reaction takes priority over aerial poses. Strong hits cause
+    // visible backward recoil even when they launch Yusuke into the air.
+    if (state === "hit") {
+      name = fighter.hitReaction === "knockback" ? "knockback" : "stagger";
+    } else if (!fighter.grounded || state === "jump") {
       name = fighter.vy < 0 ? "jumpRise" : "jumpFall";
     } else if (state === "walk") {
       name = elapsed < .2 ? "walkStart" : "run";
       if (name === "run") clipTime = elapsed - .2;
     } else if (state === "idle") {
-      if (elapsed < .2 && memory.previousState === "walk") name = "walkStop";
+      if (elapsed < .2 && memory.previousState === "hit") name = "recovery";
+      else if (elapsed < .2 && memory.previousState === "walk") name = "walkStop";
       else if (elapsed < .2 && memory.previousState === "jump") name = "landing";
       else if (elapsed > 2.4 && (elapsed - 2.4) % 5 < 1) {
         name = "idleFocus";
