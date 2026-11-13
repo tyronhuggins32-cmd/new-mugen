@@ -24,6 +24,8 @@ jobs:
         run: node tests/yusuke-square-v10.cjs
       - name: Doubled Square sprites and seamless 60Hz handoffs
         run: node tests/yusuke-square-v12.cjs
+      - name: Unbound cinematic reference moves, chase and aerial combat
+        run: node tests/yusuke-reference-v13.cjs
       - name: Small original combat sound cues and sound-off safety
         run: node tests/combat-sfx-v8.cjs
       - name: Cinematic attack effects and sprite-safe cleanup

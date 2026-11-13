@@ -383,3 +383,54 @@ quality.
 
 Tests: `node tests/yusuke-square-v12.cjs`, the existing Square and directional
 regression tests, and Chromium's `tests/browser-fluid.cjs` combat renderer.
+
+
+## V13 combat revamp: uploaded 71-second MUGEN reference
+
+After examining the uploaded side-view tournament clip, Yusuke now has an
+**unbound six-move combat library** centered on the reference's key pacing:
+close-range fire/energy exchanges (~5–15s), a dark-screen cinematic sequence
+(~20–27s), rapid dash launches and aerial pursuits (~30–48s), and the closing
+multi-hit barrage and K.O. (~52–65s). We use Yusuke's blue spirit-energy
+language instead of copying the reference fighter's fire or character artwork.
+
+Each move uses **eight new derived, complete premium-source cels**, totaling
+48 optional cels (3072 × 4096 atlas) in addition to Yusuke's existing
+movement, Square and combat poses. These are **one-piece transformed source
+sprites, not 48 individually hand-painted illustrations**. The atlas is
+alpha-cleaned, carries original pixel palette, and falls back to normal
+Yusuke sprites on low-memory GPUs.
+
+New Yusuke-specific moves (none bound to controls yet):
+
+- `flashRush`: five rapid contact-checked dash strikes, with clear chase
+  distance and directional speed trails
+- `risingBreaker`: one heavy rising launcher, opening an air juggle
+- `skyPursuit`: four aerial follow-up contacts, airborne only
+- `spiritCyclone`: four close-range rotating spirit-assisted strikes
+- `spiritVoid`: 65-energy cinematic that darkens the arena, builds blue
+  energy and confirms **15 individual strikes** followed by a large finisher
+- `meteorFinish`: a descending heavy strike with huge controlled knockback
+
+The game resolves attack damage at authored fixed-step times and checks
+direction, range and altitude on every contact. Rush movement stops before
+overlapping the defender. The V8 authored sprite VFX handle contacts; no
+random damage-generating particles are introduced. The 15-hit counter
+reflects registered hits, not cosmetic effects. The new sequences do not
+override Square combos, COMBO 5 restrictions, Triangle energy gating,
+Spirit Gun, DualSense controls, Thorfinn, 5000 HP, or menu music.
+
+**Move previews / controls pending:** open
+`yusuke-attack-lab-v13.html` to see every animation and description.
+During a running Yusuke fight, developers can preview a registered move
+without binding any button using
+`window.YusukeAttackLab.play("flashRush")`.
+`window.YusukeAttackLab.moves()` lists available names.
+Only the game's current buttons remain assigned until the creator decides
+which controls each move should use. This is a reference-inspired cinematic
+choreography pass, not a claim of frame-perfect reproduction of the
+uploaded video.
+
+Verification: `node tests/yusuke-reference-v13.cjs` and
+`node tests/browser-reference-v13.cjs`, alongside existing Chromium and
+combat regression workflows.

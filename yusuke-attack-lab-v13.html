@@ -1,0 +1,98 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Yusuke Combat Reference Lab | New Mugen</title>
+<style>
+:root{color-scheme:dark;background:#08141b;color:#e9fff8;font:16px/1.5 system-ui}
+*{box-sizing:border-box}body{max-width:1180px;margin:auto;padding:20px}
+a{color:#86edff}h1{font-size:clamp(28px,5vw,48px);margin:8px 0}
+header p{max-width:790px;color:#a1c6cc}
+.layout{display:grid;grid-template-columns:minmax(260px,1fr) minmax(300px,1.5fr);gap:16px}
+@media(max-width:780px){.layout{grid-template-columns:1fr}}
+.actions{display:grid;gap:9px;align-content:start}button{color:inherit;background:#13303c;border:1px solid #477b85;border-radius:8px;padding:13px;text-align:left;cursor:pointer;font:inherit}
+button[aria-pressed=true]{border-color:#7efec8;background:#234a45}button:focus-visible{outline:3px solid #b4ff8a;outline-offset:2px}
+button strong{display:block}button small{color:#a7cbd2}.panel{border:1px solid #4b8491;border-radius:10px;padding:14px;background:#0e2934}
+#stage{max-width:100%;display:block;margin:auto;background:radial-gradient(ellipse at 50% 85%,#264853,#0e1a2a 72%);border:1px solid #427480;image-rendering:pixelated}
+#timeline{display:flex;gap:4px;margin:10px 0}#timeline span{height:9px;border-radius:3px;flex:1;background:#315262}#timeline span.current{background:#70f5d4}
+#title{margin:10px 0 0}#status{color:#b1e7de}#notes{color:#b5cad3}
+.note{font-size:13px;color:#9fc5c8}
+</style></head><body>
+<header><small>NEW MUGEN / UNBOUND YUSUKE MOVE PREVIEWS</small>
+<h1>Yusuke Combat Lab</h1>
+<p>Six playable-engine attack sequences based on the uploaded tournament video's chase, launcher, barrage, and dramatic finishing rhythm. <strong>No controller or keyboard attacks are assigned yet.</strong> Select a move to view its eight sprite poses before choosing your controls.</p>
+<a href="./index.html">Return to game</a> · <a href="./yusuke-sprite-studio.html">Sprite exporter</a>
+</header>
+<div class="layout"><nav class="actions" aria-label="Unassigned reference attacks">
+<button data-move="flashRush" aria-pressed="true"><strong>Spirit Flash Rush</strong><small>Five quick strikes, forward chase</small></button>
+<button data-move="risingBreaker" aria-pressed="false"><strong>Rising Breaker</strong><small>Rising launch and aerial opportunity</small></button>
+<button data-move="skyPursuit" aria-pressed="false"><strong>Sky Pursuit</strong><small>Four airborne follow-up strikes</small></button>
+<button data-move="spiritCyclone" aria-pressed="false"><strong>Spirit Cyclone</strong><small>Four compact energy-assisted impacts</small></button>
+<button data-move="spiritVoid" aria-pressed="false"><strong>Spirit Void</strong><small>Darkened arena, charged fifteen-hit finish</small></button>
+<button data-move="meteorFinish" aria-pressed="false"><strong>Meteor Finish</strong><small>Descending knockback finisher</small></button>
+</nav>
+<section class="panel"><canvas id="stage" width="640" height="340" aria-label="Yusuke pose preview"></canvas>
+<div id="timeline" aria-label="Eight keyed frames"></div>
+<h2 id="title">Loading fighter art</h2><p id="notes">Each move has eight intact premium-sourced animation poses.</p>
+<p id="status" role="status">Loading original alpha-cleaned sprites…</p>
+<p class="note">Preview controls are for reviewing animation only. They do not bind moves to Square, Triangle, Circle, R1, keyboard keys, or controller combinations. This asset previews the new visuals; actual damage is handled in the fighting engine.</p>
+</section></div>
+<script src="./yusuke-premium-v6.js?v=2"></script>
+<script src="./yusuke-alpha-v9.js?v=1"></script>
+<script src="./mugen-yusuke-palette-v11.js?v=1"></script>
+<script src="./mugen-yusuke-reference-v13.js?v=1"></script>
+<script>
+(async()=>{
+ const show=document.querySelector("#status"),
+   title=document.querySelector("#title"),notes=document.querySelector("#notes"),
+   canvas=document.querySelector("#stage"),ctx=canvas.getContext("2d"),
+   ticks=document.querySelector("#timeline"),ref=window.MugenReferenceV13;
+ const meta=window.MugenPremium.validate(await(await fetch("./characters/yusuke/premium-atlas.json",{cache:"no-store"})).json());
+ const load=part=>new Promise((resolve,reject)=>{
+  const im=new Image();im.onload=()=>resolve(im);
+  im.onerror=()=>reject(Error("Missing "+part+" premium sprite image"));
+  im.src="./"+meta[part].src;
+ });
+ try{
+  const [combat,movement]=await Promise.all([load("combat"),load("movement")]);
+  const clean=part=>{const img=part==="combat"?combat:movement;
+   const alpha=window.MugenAlphaMatte.prepare(img,meta[part].frames)||img;
+   return window.MugenYusukePalette.prepare(alpha,meta[part].frames)||alpha;
+  };
+  const atlas=ref.build(meta,{combat:clean("combat"),movement:clean("movement")});
+  if(!atlas)throw Error("The preview sprite atlas could not be allocated.");
+  let current="flashRush",start=performance.now();
+  const buttons=[...document.querySelectorAll("[data-move]")];
+  for(let i=0;i<8;i++){const chip=document.createElement("span");ticks.append(chip);}
+  function select(id){
+   current=id;start=performance.now();
+   buttons.forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.move===id)));
+   title.textContent=ref.moves[id].title;
+   notes.textContent=ref.moves[id].description+" • Unassigned attack";
+  }
+  buttons.forEach(b=>b.addEventListener("click",()=>select(b.dataset.move)));
+  show.textContent="Ready: six unassigned moves • 48 new source-derived combat cels • 60 Hz preview";
+  function draw(now){
+   const elapsed=(now-start)/1000,move=ref.moves[current],progress=(elapsed% (move.duration+.3))/move.duration;
+   ctx.clearRect(0,0,640,340);
+   const p=Math.max(0,Math.min(1,progress));
+   const sprite=ref.choosePose({state:"attack-"+current,stateTime:elapsed},current,atlas,p);
+   ctx.fillStyle="#183a48";ctx.fillRect(0,307,640,33);
+   ctx.fillStyle="#9ed2cf";ctx.font="bold 15px system-ui";
+   ctx.fillText("PREVIEW / "+move.title.toUpperCase(),18,26);
+   if(sprite){
+    const f=sprite.frame;
+    ctx.save();ctx.translate(320,302);
+    const motion=sprite.motion;
+    ctx.translate(0,motion.lift*.5);
+    ctx.rotate(motion.tilt);
+    ctx.scale(.64*motion.stretchX,.64*motion.stretchY);
+    ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(sprite.image,f.x,f.y,f.w,f.h,-f.ax,-f.h,f.w,f.h);
+    ctx.restore();
+   }
+   [...ticks.children].forEach((c,i)=>c.classList.toggle("current",i===Math.min(7,Math.floor(p*8))));
+   requestAnimationFrame(draw);
+  }
+  select("flashRush");requestAnimationFrame(draw);
+ }catch(err){show.textContent="Preview unavailable: "+err.message;console.error(err);}
+})().catch(err=>document.querySelector("#status").textContent="Preview unavailable: "+err.message);
+</script></body></html>
