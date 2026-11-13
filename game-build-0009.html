@@ -1778,7 +1778,7 @@
   <script src="mugen-cinematics.js?v=1"></script>
   <script src="mugen-visuals-v2.js?v=2"></script>
   <script src="mugen-fluid-v3.js?v=1"></script>
-  <script src="yusuke-motion.js?v=3"></script>
+  <script src="yusuke-motion.js?v=4"></script>
   <script src="dualsense-controller.js?v=1"></script>
   <script>
     (() => {
@@ -2207,8 +2207,8 @@
             }
           }
 
-          // Sample 60 Hz virtual movement poses directly from the original 24 sprites.
-          // A canvas/context failure must not prevent combat or controller input.
+          // Build up to 16 source-derived, pixel-consistent idle and run cels
+          // in one 1024x1024 atlas; fall back to original sprite keys if needed.
           try {
             yusukeMotionAtlas = window.MugenMotion?.createAtlas(
               yusukeSpriteSheet, character.spriteSheet.frames, character.spriteSheet.scale || 1
@@ -2221,8 +2221,8 @@
           // Warm CPU palette textures once on the character-selection load.
           // Avoid a GPU filter/upload hitch when the first enemy attack begins.
           if (window.MugenFluid?.tintForCpu) {
-            [yusukeSpriteSheet, yusukeCombatSheet, yusukeSpiritGunSheet, yusukeKickSheet]
-              .filter(image => image.naturalWidth > 0)
+            [yusukeSpriteSheet, yusukeCombatSheet, yusukeSpiritGunSheet, yusukeKickSheet, yusukeMotionAtlas?.derivedImage]
+              .filter(image => image && (image.naturalWidth || image.width) > 0)
               .forEach(image => window.MugenFluid.tintForCpu(image, true));
           }
 
@@ -2789,8 +2789,9 @@
           const motionPose = window.MugenMotion?.selectPose(
             this, yusukeMotionAtlas, !usesFiringAnimation && !combatPose && !attackType
           );
-          let renderSheet = usesFiringAnimation
+          const rawSheet = usesFiringAnimation
             ? yusukeSpiritGunSheet : combatPose ? combatPose.image || yusukeCombatSheet : motionPose?.image || yusukeSpriteSheet;
+          let renderSheet = rawSheet;
           // CPU palette is cached once instead of applying a costly per-frame
           // canvas filter to every stripe, trail and interpolated pose.
           if (this.cpu) renderSheet = window.MugenFluid?.tintForCpu(renderSheet, true) || renderSheet;
@@ -2934,26 +2935,34 @@
           // stacking translucent full-body poses into a slideshow.
           const baseAlpha = context.globalAlpha;
           const chosenFrame = tween?.mix >= .68 && nextFrame ? nextFrame : frame;
-          const paintFrame = (sprite, opacity = 1, asGhost = ghost) => {
+          const paintFrame = (sprite, opacity = 1, asGhost = ghost, source = renderSheet) => {
             if (!sprite || opacity <= 0) return;
             context.globalAlpha = baseAlpha * opacity;
             const ox = -sprite.ax * scale;
             const oy = -sprite.h * scale + (drawY + frame.h * scale);
             if (!window.MugenFluid?.drawCel(
-              context, renderSheet, sprite, ox, oy,
+              context, source, sprite, ox, oy,
               sprite.w * scale, sprite.h * scale, this, time, asGhost
             )) {
-              context.drawImage(renderSheet, sprite.x, sprite.y, sprite.w, sprite.h,
+              context.drawImage(source, sprite.x, sprite.y, sprite.w, sprite.h,
                 ox, oy, sprite.w * scale, sprite.h * scale);
             }
           };
           if (motionPose?.transitionFrame && motionPose.transitionMix < .96) {
-            // A short 67 ms hand-off, not prolonged ghost silhouettes.
-            paintFrame(motionPose.transitionFrame, 1 - motionPose.transitionMix, true);
+            // Each transition frame must be read from its own source texture.
+            // This includes movement returning from punches and projectiles.
+            const previousRaw = motionPose.transitionImage || rawSheet;
+            const previousSheet = this.cpu
+              ? window.MugenFluid?.tintForCpu(previousRaw, true) || previousRaw
+              : previousRaw;
+            paintFrame(motionPose.transitionFrame, 1 - motionPose.transitionMix, true, previousSheet);
             paintFrame(chosenFrame, motionPose.transitionMix);
           } else {
             paintFrame(chosenFrame);
           }
+          // Save the raw image, never the CPU-tinted copy, to avoid re-tinting
+          // old frames on the following animation handoff.
+          if (!ghost) window.MugenMotion?.rememberPose(this, chosenFrame, rawSheet);
           context.globalAlpha = baseAlpha;
           context.filter = "none";
           if (!ghost) window.MugenVisuals?.drawCpuAccent(context,this,time);

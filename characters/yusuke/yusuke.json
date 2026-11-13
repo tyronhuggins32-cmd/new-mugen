@@ -1432,21 +1432,52 @@
   },
   "movementSprites": {
     "source": "spriteSheet",
-    "generation": "virtual-60hz-timeline-with-continuous-pose-deformation",
+    "generation": "16-canonical-pixel-derived-256x256-cels-with-60hz-state-timeline",
     "renderer": "yusuke-motion.js + mugen-fluid-v3.js",
     "fps": 60,
-    "timelineFrames": 133,
-    "additionalTexturePixels": 0,
+    "timelineFrames": 228,
+    "generatedFrames": 16,
+    "atlasDimensions": [
+      1024,
+      1024
+    ],
+    "maxAdditionalTexturePixels": 1048576,
     "animations": {
-      "idle": 54,
-      "run": 28,
-      "walkStart": 8,
-      "walkStop": 9,
-      "jumpRise": 12,
-      "jumpFall": 12,
-      "landing": 10
+      "idle": 72,
+      "idleFocus": 60,
+      "run": 32,
+      "walkStart": 12,
+      "walkStop": 12,
+      "jumpRise": 14,
+      "jumpFall": 14,
+      "landing": 12
     },
-    "note": "133 virtual animation samples, not 133 newly drawn frames. Art is warped in render time at device refresh rate without expensive pre-rendering."
+    "consistency": {
+      "canonicalSource": "characters/yusuke/sprites.png",
+      "renderScale": 1.1,
+      "footPivot": "cell bottom; source pixels 1:1",
+      "recoloring": false,
+      "generatedSourceFrames": [
+        0,
+        1,
+        2,
+        3,
+        2,
+        1,
+        0,
+        1,
+        6,
+        7,
+        8,
+        9,
+        6,
+        7,
+        8,
+        9
+      ],
+      "fallback": "24 canonical sprites when canvas allocation fails"
+    },
+    "note": "Adds 16 real precomposed source-derived RGBA sprite cels in one small optional canvas atlas. Palette and proportions are inherited from the original, not redrawn. 228 animation timeline samples are not 228 unique illustrated sprites; motion rendering remains smooth at display refresh rate."
   },
   "powerKickSpriteSheet": {
     "src": "characters/yusuke/yusuke-power-kick.png",

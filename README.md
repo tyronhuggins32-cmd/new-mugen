@@ -179,3 +179,13 @@ The fighting experience has been reworked to address slideshow-like motion and m
 - **Tests:** run \`node tests/engine.cjs\`, \`node tests/yusuke-motion.cjs\` and \`node tests/fluid-v3.cjs\`. The GitHub Actions browser smoke suite uses Playwright to enter Arcade, fight, pause, shoot, restart, then check actual changing canvas pixels and camera easing.
 
 **Art limitation:** The 60 Hz animation timeline is *not* 60 unique hand-drawn frames per second. These still use the original sprite poses with procedural in-between deformation. Fully new anatomy-correct frame-by-frame motions would require additional art authored pose-by-pose.
+
+## Yusuke movement and idle cels: source-matched motion upgrade (13 November 2026)
+
+The v4 motion layer adds **16 compact transparent sprite cels**, eight for idle/breathing and eight for walking/running. All pixels are taken from the canonical `characters/yusuke/sprites.png` sheet at **1:1 source resolution**, using subtle upper-body, shoulder and hair shifts while preserving the feet baseline, horizontal pivot, yellow-shirt/navy-trouser palette and the existing 1.1 in-game character scale. There are no alternate character drawings to drift in face, color or height.
+
+The game generates these once into **one optional 1024 × 1024 RGBA atlas** (roughly 4 MiB of uncompressed pixels), instead of the retired 2400 × 2880 ghost atlas. Movement uses **228 samples on a 60 Hz timeline**: 72 idle, 60 focused-idle, 32 running, 12 acceleration, 12 braking, 14 jump-rise, 14 fall and 12 landing samples. These are timeline cels, not 228 individually hand-illustrated frames. Existing render-time body deformation fills gaps at the display refresh rate while 60 Hz combat simulation, hitboxes and PS5 controls stay untouched.
+
+Idle now occasionally shifts into an attentive focus stance, running includes a compact acceleration and braking sequence, and jumping flows back into a planted landing. Sprite transitions remember both the previous frame **and its source texture**, including transitions back from attacks, so combat and movement art cannot accidentally blend against the wrong atlas. The canonical 24-frame sheet remains the fallback when a browser cannot allocate the supplementary canvas. The CPU's darker palette is cached once for the derived atlas as well.
+
+To verify: `node tests/yusuke-motion.cjs` checks the derived frame count, 1024² budget, source-image pixel provenance, 256px pivots, 60 Hz timing, idle/running usage, cross-sheet transitions and low-memory fallback. Follow with the other GitHub Actions regression tests. Screenshot review and real PS5/iPhone performance still require device QA.
