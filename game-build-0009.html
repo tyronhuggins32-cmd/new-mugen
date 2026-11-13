@@ -1783,6 +1783,7 @@
   <script src="mugen-rooftop-v6.js?v=1"></script>
   <script src="mugen-cinematic-fx-v6.js?v=1"></script>
   <script src="yusuke-premium-v6.js?v=1"></script>
+  <script src="yusuke-directional-v8.js?v=1"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=1"></script>
@@ -1835,6 +1836,7 @@
       premiumMotionSheet.decoding = "async";
       let premiumArt = null;
       let premiumReady = false;
+      let directionalAtlas = null;
       const yusukeKickSheet = new Image();
       yusukeKickSheet.decoding = "async";
       const yusukeSpiritGunSheet = new Image();
@@ -2236,9 +2238,15 @@
             ]);
             premiumArt = metadata;
             premiumReady = true;
+            // Source-matched 12-direction + 12-combat transparent cels. Optional
+            // runtime atlases, sourced only from the paired V7 fighter artwork.
+            // If canvas allocation fails, the same premium PNG poses remain.
+            directionalAtlas = window.MugenDirectional?.build(metadata,
+              {combat:premiumCombatSheet,movement:premiumMotionSheet}) || null;
           } catch (error) {
             premiumReady = false;
             premiumArt = null;
+            directionalAtlas = null;
             console.warn("Premium character art unavailable; using all original sprites.",error);
           }
 
@@ -2257,7 +2265,9 @@
           // Avoid a GPU filter/upload hitch when the first enemy attack begins.
           if (window.MugenFluid?.tintForCpu) {
             [yusukeSpriteSheet, yusukeCombatSheet, yusukeSpiritGunSheet, yusukeKickSheet,
-              premiumCombatSheet, premiumMotionSheet, yusukeMotionAtlas?.derivedImage]
+              premiumCombatSheet, premiumMotionSheet,
+              directionalAtlas?.combat?.image, directionalAtlas?.movement?.image,
+              yusukeMotionAtlas?.derivedImage]
               .filter(image => image && (image.naturalWidth || image.width) > 0)
               .forEach(image => window.MugenFluid.tintForCpu(image, true));
           }
@@ -2822,10 +2832,13 @@
             ? animationFrameFrom(firingSheet.fighterAnimation, this.stateTime, attackProgress)
             : -1;
           // New hit sprites take priority when the derived atlas is loaded.
-          const premiumPose = premiumReady ? window.MugenPremium?.choosePose(
-            this, attackType, premiumArt,
-            {combat:premiumCombatSheet,movement:premiumMotionSheet},
-            attackProgress) : null;
+          const premiumPose = premiumReady
+            ? (window.MugenDirectional?.choosePose(this, attackType,
+                directionalAtlas, attackProgress)
+              || window.MugenPremium?.choosePose(this, attackType, premiumArt,
+                {combat:premiumCombatSheet,movement:premiumMotionSheet},
+                attackProgress))
+            : null;
           const combatPose = premiumPose ||
             (usesFiringAnimation || (this.state === "hit" && yusukeMotionAtlas?.generated)
               ? null : selectYusukeCombatPose(this, attackType, attackProgress));
@@ -2974,7 +2987,7 @@
           // Premium poses own their entire source atlas and frame timeline.
           // Never interpolate legacy frame indices against a premium PNG:
           // those coordinates point at unrelated art and cause flashing limbs.
-          const sourceFrames = premiumPose ? premiumArt[premiumPose.part].frames
+          const sourceFrames = premiumPose ? premiumPose.frames || premiumArt[premiumPose.part].frames
             : usesFiringAnimation ? firingSheet.fighterFrames
             : combatPose?.frames || motionPose?.frames || yusukeSpriteFrames;
           const progressForFrames = this.state === "hit"
@@ -3000,15 +3013,17 @@
                 ox, oy, sprite.w * scale, sprite.h * scale);
             }
           };
-          if (motionPose?.transitionFrame && motionPose.transitionMix < .96) {
-            // Each transition frame must be read from its own source texture.
-            // This includes movement returning from punches and projectiles.
-            const previousRaw = motionPose.transitionImage || rawSheet;
+          const handoff = premiumPose?.transitionFrame ? premiumPose : motionPose;
+          if (handoff?.transitionFrame && handoff.transitionMix < .96) {
+            // Crossfade on animation *state* boundaries, preserving the right
+            // source texture for old and new frames rather than flashing atlas
+            // coordinates from different sprite sheets.
+            const previousRaw = handoff.transitionImage || rawSheet;
             const previousSheet = this.cpu
               ? window.MugenFluid?.tintForCpu(previousRaw, true) || previousRaw
               : previousRaw;
-            paintFrame(motionPose.transitionFrame, 1 - motionPose.transitionMix, true, previousSheet);
-            paintFrame(chosenFrame, motionPose.transitionMix);
+            paintFrame(handoff.transitionFrame, 1 - handoff.transitionMix, true, previousSheet);
+            paintFrame(chosenFrame, handoff.transitionMix);
           } else {
             paintFrame(chosenFrame);
           }
@@ -3971,6 +3986,7 @@
           else if (window.MugenCinematics?.drawArena) window.MugenCinematics.drawArena(context, time, arena);
           else this.drawArena(context, time);
           window.MugenFluid?.drawBehind(this, context, time);
+          window.MugenDirectional?.drawBehind(this, context, time);
           window.MugenCinematicFX?.drawBehind(this, context, time);
           window.MugenShotgun?.drawFan(this, context, time);
 
@@ -3993,6 +4009,7 @@
           window.MugenShotgun?.drawImpacts(this, context, time);
           window.MugenSpiritGun?.drawImpact(this, context, time);
           window.MugenFluid?.drawFront(this, context, time);
+          window.MugenDirectional?.drawFront(this, context, time);
           window.MugenCinematicFX?.drawFront(this, context, time);
           context.restore();
           window.MugenSpiritGun?.drawOverlay(this, context, arena);

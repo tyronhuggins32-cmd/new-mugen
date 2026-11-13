@@ -14,7 +14,7 @@ const path = require("node:path");
   await page.route("**/game-build-0009.html",route=>route.fulfill({
     contentType:"text/html",
     body:html.replace("      function beginFight() {",
-      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, get premiumArt() { return premiumArt; }, get premiumImages() { return {combat:premiumCombatSheet,movement:premiumMotionSheet}; }, arena }; \n      function beginFight() {")
+      "      window.testEngine = { get game() { return arcadeGame; }, get kickReady() { return kickAtlasReady; }, get premiumReady() { return premiumReady; }, get directionalAtlas() { return directionalAtlas; }, get premiumWidths() { return [premiumCombatSheet.naturalWidth, premiumMotionSheet.naturalWidth]; }, get premiumArt() { return premiumArt; }, get premiumImages() { return {combat:premiumCombatSheet,movement:premiumMotionSheet}; }, arena }; \n      function beginFight() {")
   }));
   await page.goto("http://127.0.0.1:8000/");
   await page.locator('button.menu-item[data-mode="arcade"]').click();
@@ -39,6 +39,15 @@ const path = require("node:path");
     const first=sample();
     g.render(1042);
     const second=sample();
+    const extra=window.testEngine.directionalAtlas;
+    const fake=(vx,state="walk",grounded=true,attack=null)=>{
+      const sample={state,grounded,vx,vy:-180,facing:1,stateTime:.18,dashTimer:0};
+      return window.MugenDirectional?.choosePose(sample,attack,extra,.5);
+    };
+    const forwardClip=fake(360)?.clip,backwardClip=fake(-220)?.clip;
+    const airClip=fake(260,"jump",false)?.clip;
+    const crossClip=fake(0,"attack-cross",true,"cross")?.clip;
+    const atlasCounts=extra?[extra.movement.frames.length,extra.combat.frames.length]:[];
     const before=window.MugenFluid.getStats(g).zoom;
     g.player.x=605;g.cpu.x=705;
     for(let i=0;i<25;i++)g.render(1058+i*16);
@@ -69,7 +78,7 @@ const path = require("node:path");
         window.testEngine.premiumImages,.5);
       return pose && pose.part==="combat" && pose.frame?.w>0;
     });
-    const state={first,second,before,after,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
+    const state={first,second,before,after,forwardClip,backwardClip,airClip,crossClip,atlasCounts,premiumSources,premiumAttackPoses,shotgunProjectileCount,shotgunVisualFragments,
       shotgunImpacts,shotgunDamage,atlasFrameCount:window.MugenMotion.clips.run.count,
       motionFPS:window.MugenMotion.fps,derivedSpriteCount:window.MugenMotion.sources.length,
       kickReady:window.testEngine.kickReady,
@@ -80,6 +89,11 @@ const path = require("node:path");
     return state;
   });
   assert.notEqual(result.first,result.second,"movement should modify actual rendered pixels continuously");
+  assert.deepEqual(result.atlasCounts,[12,12],"premium fighter builds 24 source-derived cels");
+  assert.equal(result.forwardClip,"advance","forward directional artwork is active in Chromium");
+  assert.equal(result.backwardClip,"retreat","backward footwork has distinct art");
+  assert.equal(result.airClip,"aerialForward","diagonal air direction art is active");
+  assert.equal(result.crossClip,"cross","cross uses new combo transition cels");
   assert.ok(result.after<result.before,"fight camera should ease out to show point-blank combat");
   assert.equal(result.atlasFrameCount,24,"running uses 24 samples on a 40 FPS animation timeline");
   assert.equal(result.motionFPS,40,"Yusuke's movement animation runs at 40 FPS");

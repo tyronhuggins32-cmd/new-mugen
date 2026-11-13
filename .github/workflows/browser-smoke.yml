@@ -6,6 +6,8 @@ on:
       - "game-build-0009.html"
       - "mugen-fluid-v3.js"
       - "yusuke-motion.js"
+      - "yusuke-directional-v8.js"
+      - "tests/yusuke-directional-v8.cjs"
       - "mugen-visuals-v2.js"
       - "tests/combat.cjs"
       - "tests/browser-fluid.cjs"
