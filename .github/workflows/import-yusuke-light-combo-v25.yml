@@ -1,0 +1,51 @@
+name: Import Yusuke 18-frame light combo atlas V25
+on:
+  push:
+    paths:
+      - '.github/workflows/import-yusuke-light-combo-v25.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-verified-combat-art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch authored transparent attack atlas
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p characters/yusuke
+          curl --fail --location --silent --show-error --retry 3 --max-time 120 \
+            'https://d2ol7oe51mr4n9.cloudfront.net/user_3J3FsehSSM8aaRaK5HcNwjYb3e6/14738c95-b816-446d-9100-818822abe8bf.png' \
+            -o characters/yusuke/yusuke_light_combo_18frames.png
+          echo '556efcfbf4e51e367f3f5cf338a8dd6f406377c1178c3c359ec62e329edd184e  characters/yusuke/yusuke_light_combo_18frames.png' | sha256sum -c -
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct
+          p=Path('characters/yusuke/yusuke_light_combo_18frames.png')
+          b=p.read_bytes()
+          assert b[:8]==bytes.fromhex('89504e470d0a1a0a')
+          assert struct.unpack('>II',b[16:24])==(1536,768), 'Expected 6 columns x 3 rows'
+          assert b[25]==6, 'RGBA required'
+          assert len(b)>500000, 'The original full-resolution artwork must be retained'
+          print('Verified full 18-frame transparent PNG atlas')
+          PY
+      - name: Commit verified animation sprites
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke_light_combo_18frames.png
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Add detailed 18-frame Yusuke jab cross body-hook atlas"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
