@@ -64,5 +64,5 @@ const old=fallback.MugenExactYusuke.build(oldSheet);
 assert.equal(fallback.MugenExactYusuke.pose(actor,old,.19).image,oldSheet,
  "older browsers without Image must retain the existing sprites");
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.ok(html.includes('yusuke-exact-reference-v15.js?v=1&walkIdle=16'));
+assert.ok(html.includes('yusuke-exact-reference-v15.js?v=20&walkIdle=16'));
 console.log("PASS: new 8+8 transparent Yusuke idle/walk cels selected at runtime; 1 fighter per frame; combat intact");
