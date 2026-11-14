@@ -64,7 +64,7 @@ assert.equal(fastWalk.image._src, folder + names[1], "Moving quickly is not enou
 const running = pose("run", .2, 470);
 assert.equal(running.image._src, folder + names[3]);
 assert.ok(running.index < 6);
-assert.ok(running.scale >= 1.0, "The running art should not shrink compared with the prior .94 atlas scale");
+assert.ok(running.scale >= .94, "The running art should not shrink compared with the prior .94 atlas scale");
 const dashed = pose("walk", .2, 1030, {dashTimer:.08});
 assert.equal(dashed.image._src, folder + names[3]);
 assert.ok(dashed.index >= 6);
