@@ -3802,7 +3802,7 @@
           this.player.sprintEnabled = !this.player.sprintEnabled;
           const indicator = document.querySelector("#run-mode-indicator");
           if (indicator) {
-            indicator.dataset.active = String(this.player.sprintEnabled);
+            if (indicator.dataset) indicator.dataset.active = String(this.player.sprintEnabled);
             indicator.textContent = this.player.sprintEnabled ? "L3 RUN ON" : "L3 RUN OFF";
           }
           showToast(this.player.sprintEnabled ? "L3 RUN: ON · MOVE TO SPRINT" : "L3 RUN: OFF · WALK MODE");
@@ -3820,7 +3820,7 @@
           clearFightInput();
           const indicator = document.querySelector("#run-mode-indicator");
           if (indicator) {
-            indicator.dataset.active = "false";
+            if (indicator.dataset) indicator.dataset.active = "false";
             indicator.textContent = "L3 RUN OFF";
           }
           this.player = new Fighter({
