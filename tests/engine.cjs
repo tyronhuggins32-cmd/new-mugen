@@ -82,6 +82,30 @@ vm.runInContext(`
  assert.equal(g.superSequence,null,'cinematic completes');assert.equal(g.player.energy,0,'MAX drains energy');assert.equal(g.player.comboHits,0,'MAX Spirit Gun does not bypass the three-Square combo gate');assert.ok(g.cpu.health<g.cpu.maxHealth-320,'beam damages opponent');
  g.reset();g.state='play';g.player.energy=0;g.player.update(1/60,{charge:true},g.cpu,g);assert.ok(g.player.energy>0,'hold-to-charge refills energy');
  g.reset();g.state='play';const dashX=g.player.x;g.player.update(1/60,{dashPressed:true},g.cpu,g);assert.ok(g.player.x>dashX+10,'dash crosses space');
+ // L3-enabled running must enter its own looping state, independent of R1 dash.
+ g.reset();g.state='play';g.player.sprintEnabled=false;
+ g.player.update(1/60,{...neutral,right:true},g.cpu,g);
+ const walkSpeed=g.player.vx;
+ assert.equal(g.player.state,'walk');
+ g.player.sprintEnabled=true;
+ g.player.update(1/60,{...neutral,right:true},g.cpu,g);
+ assert.equal(g.player.state,'run','L3 toggled running must select RUN state');
+ assert.ok(g.player.vx>walkSpeed,'run speed exceeds normal walking');
+ g.player.update(1/60,{...neutral,right:true,dashPressed:true},g.cpu,g);
+ assert.equal(g.player.state,'dash','R1 must override the run state, not pretend to walk');
+ assert.ok(g.player.dashTimer>0 && g.player.dashDuration>=.25);
+ const dashElapsed=g.player.dashElapsed;
+ g.player.update(1/60,neutral,g.cpu,g);
+ assert.equal(g.player.state,'dash','dash continues when R1 is released');
+ assert.ok(g.player.dashElapsed>dashElapsed,'dash animation time must advance');
+ assert.equal(g.player.sprintEnabled,true,'R1 dash must not turn off L3 run mode');
+ for(let i=0;i<22;i++)g.player.update(1/60,neutral,g.cpu,g);
+ g.player.update(1/60,{...neutral,right:true},g.cpu,g);
+ assert.equal(g.player.state,'run','sprint mode survives dash and resumes on movement');
+ g.player.sprintEnabled=false;
+ g.player.update(1/60,{...neutral,right:true},g.cpu,g);
+ assert.equal(g.player.state,'walk','second L3 toggle returns to walking');
+
  // Retreat + jump must take priority over nearby attacks and preserve air control.
  g.reset();g.state='play';g.player.x=520;g.cpu.x=690;g.cpu.beginAttack('light');
  g.player.update(1/60,{...neutral,left:true,jumpPressed:true},g.cpu,g);
