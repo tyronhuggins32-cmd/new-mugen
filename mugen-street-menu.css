@@ -57,14 +57,20 @@ body:not([data-screen="fight"]):not([data-screen="arcade"]) .scanlines {display:
 #main-menu-screen.sf4-menu > * {box-sizing:border-box;}
 .sf4-menu .sf4-paint {
   position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:#34120f url("assets/menu/ink-sunset.svg") center center/cover no-repeat;
+  /* User-supplied lava eruption replaces the old fighter hero art. */
+  background-color:#170905;
+  background-image:linear-gradient(90deg,rgba(7,4,5,.83) 0%,rgba(13,7,6,.63) 34%,rgba(10,6,7,.18) 67%,rgba(8,5,6,.34) 100%),url("https://d2ol7oe51mr4n9.cloudfront.net/user_3J3FsehSSM8aaRaK5HcNwjYb3e6/542ac1ca-14ec-40fa-9c0a-571ea7645527.jpg");
+  background-position:center,center 51%;
+  background-size:cover,cover;
+  background-repeat:no-repeat;
 }
 .sf4-menu .sf4-paint::after {
   content:"";position:absolute;inset:0;
-  background:radial-gradient(ellipse at 57% 24%,#ffde8650,transparent 40%),
-             linear-gradient(90deg,#100b0c79 0%,transparent 48% 85%,#1a090d3d 100%);
+  background:radial-gradient(ellipse at 72% 52%,#ff8e1f12,transparent 48%),
+             linear-gradient(0deg,#0705089e 0%,transparent 27% 83%,#08050768 100%);
 }
 .sf4-menu .sf4-fighter {
+  display:none!important; /* No character overlays on the main menu. */
   position:absolute;z-index:2;pointer-events:none;
   top:-7%;right:-4%;bottom:-9%;left:34%;
   margin:0;
@@ -95,12 +101,12 @@ body:not([data-screen="fight"]):not([data-screen="arcade"]) .scanlines {display:
   filter:drop-shadow(4px 4px 2px #13090852);
 }
 .sf4-menu .sf4-strike-top {
-  top:6%;height:20%;transform:rotate(-5deg);opacity:.88;
+  top:6%;height:20%;transform:rotate(-5deg);opacity:.30;
   background:linear-gradient(94deg,transparent 0%,#b71d11a3 19%,#e82718e6 50%,#aa100ccc 82%,transparent 100%);
   clip-path:polygon(0 44%,13% 33%,23% 36%,38% 26%,54% 37%,76% 11%,91% 23%,100% 15%,96% 61%,74% 67%,55% 80%,34% 67%,12% 75%,0 63%);
 }
 .sf4-menu .sf4-strike-low {
-  top:46%;height:18%;transform:rotate(-9deg);opacity:.66;
+  top:46%;height:18%;transform:rotate(-9deg);opacity:.24;
   background:linear-gradient(100deg,#130c0c 8%,#991712 24%,#bd2014 48%,#160b0b00 90%);
   clip-path:polygon(0 38%,18% 18%,34% 39%,49% 12%,75% 27%,100% 1%,96% 64%,68% 58%,46% 93%,23% 71%,0 90%);
 }
@@ -301,7 +307,7 @@ body:not([data-screen="fight"]):not([data-screen="arcade"]) .scanlines {display:
 }
 @media(max-width:640px) {
   #main-menu-screen.sf4-menu {height:auto;min-height:max(740px,100dvh);}
-  .sf4-menu .sf4-paint {background-position:60% center;}
+  .sf4-menu .sf4-paint {background-size:cover,auto 132%;background-position:center,center 53%;}
   .sf4-menu .sf4-fighter {top:5%;bottom:12%;left:5%;right:-53%;opacity:.68;}
   .sf4-menu .sf4-heading {top:3.7%;right:4%;width:87%;transform:rotate(-2deg);}
   .sf4-menu .sf4-heading h1 {font-size:clamp(48px,12.7vw,80px);}
