@@ -33,6 +33,24 @@
   // legacy source sprites as a fallback if artwork hasn't been deployed yet.
   const V17_BACK_TURN_SRC = "characters/yusuke/yusuke_walk_backward_turn_12frames.png";
   const V17_RUN_DASH_SRC = "characters/yusuke/yusuke_run_dash_12frames.png";
+  // V24: 18 hand-authored dash poses, independent from the L3 run cycle.
+  // Grid is 6 × 3 on the original 1774 × 887 transparent source.
+  const V24_DASH_SRC = "characters/yusuke/yusuke_dash_v24_18frames.png";
+  let dashV24=null,dashV24Status="unrequested";
+  function loadV24Dash(){
+    if(dashV24Status!=="unrequested" || typeof root.Image!=="function")return;
+    dashV24Status="loading";
+    const picture=new root.Image();
+    picture.decoding="async";
+    picture.onload=()=>{
+      if((picture.naturalWidth||picture.width)===1774 &&
+         (picture.naturalHeight||picture.height)===887){
+        dashV24=picture;dashV24Status="ready";
+      }else dashV24Status="invalid";
+    };
+    picture.onerror=()=>{dashV24Status="missing";};
+    picture.src=V24_DASH_SRC;
+  }
   const V17_IDLE_SRC = "characters/yusuke/yusuke_idle_12frames.png";
   const V17_WALK_SRC = "characters/yusuke/yusuke_walk_forward_12frames.png";
   // V21: extended 24-frame authored forward walk (6×4, 256px cells).
@@ -134,7 +152,11 @@
     }else if(clip==="turn"){
       image=backTurnV17;rate=10;number=6;loop=false;
     }else if(clip==="rush"){
-      image=dashOnlyV20||runDashV17;rate=24;number=dashOnlyV20?0:6;loop=false;
+      image=dashV24||dashOnlyV20||runDashV17;
+      rate=dashV24?60:24;
+      number=dashV24?0:(dashOnlyV20?0:6);
+      count=dashV24?18:6;
+      loop=false;
     }else if(clip==="sprint"){
       image=runOnlyV20||runDashV17;rate=12;loop=true;
     }
@@ -147,15 +169,22 @@
       ? Math.floor(((Math.max(0,fighter.walkCycleDistance)%240)/240)*count)
       : null;
     const step=dashProgress!==null
-      ? Math.min(count-1,Math.floor(dashProgress*count))
+      // Render exactly one original pose per fixed 60Hz tick on the
+      // 0.30-second R1 burst. The epsilon keeps the first pose visible.
+      ? Math.min(count-1,Math.floor(Math.max(0,dashProgress-0.000001)*count))
       : distancePhase!==null?distancePhase:Math.floor(Math.max(0,t)*rate);
     const index=number+(loop?step%count:Math.min(count-1,step));
-    const frame={x:(index%6)*256,y:Math.floor(index/6)*256,
-      w:256,h:256,ax:128,key:index};
+    const dashOriginal=image===dashV24;
+    const col=index%6,row=Math.floor(index/6);
+    const x0=dashOriginal?Math.round(col*1774/6):col*256;
+    const x1=dashOriginal?Math.round((col+1)*1774/6):x0+256;
+    const y0=dashOriginal?Math.round(row*887/3):row*256;
+    const y1=dashOriginal?Math.round((row+1)*887/3):y0+256;
+    const frame={x:x0,y:y0,w:x1-x0,h:y1-y0,ax:(x1-x0)/2,key:index};
     // Keep the illustrated body approximately the same height through walking,
     // sprinting and dashing. Previous .94 scaling made the run disproportionately small.
-    const scale=Math.min(.96,MAX_RENDER_HEIGHT/220);
-    const source=image===walkV22?"movement-v22":
+    const scale=dashOriginal?.815:Math.min(.96,MAX_RENDER_HEIGHT/220);
+    const source=dashOriginal?"movement-v24":image===walkV22?"movement-v22":
       image===walkV21?"movement-v21":
       image===walkSynthesizedV22?"movement-v22-generated":"movement-v17";
     return {image,frame,index,clip,scale,
@@ -392,6 +421,7 @@
     fighter._exactPreviousClip=clip;
     // Never overlay a second fighter. Select ONE texture for this frame only.
     loadV17Movement();
+    if(clip==="rush")loadV24Dash();
     if(clip==="forward"){loadV21Walk();loadV22Walk();}
     if(clip==="crouch" || clip==="crouchWalk")loadV18Crouch();
     if(clip==="jumpRise" || clip==="jumpFall" || clip==="landing")loadV19Jump();
@@ -433,7 +463,8 @@
       Math.sin(t*15)*1.15:0;
     const tilt=clip==="knockback" ? -.09 :
       clip==="stagger" ? -.04 :
-      clip==="rush" ? .028 : clip==="backdash" ? -.035:0;
+      clip==="rush" && selected.source!=="movement-v24" ? .028 :
+      clip==="backdash" ? -.035:0;
     const dx=(Number(fighter.x)||0)+face*lunge;
     // Every V17 cel has a 12px transparent gutter below its foot pivot.
     // Offset once at draw time rather than shifting world physics / hitboxes.
@@ -445,7 +476,7 @@
     ctx.scale(face,1);
     if(tilt)ctx.rotate(tilt);
     ctx.imageSmoothingEnabled=!["movement-v17","movement-v21",
-      "movement-v22","movement-v22-generated"].includes(selected.source);
+      "movement-v22","movement-v22-generated","movement-v24"].includes(selected.source);
     if("imageSmoothingQuality" in ctx && ctx.imageSmoothingEnabled)ctx.imageSmoothingQuality="high";
     // This is the ONLY full-body Yusuke draw for each game frame.
     ctx.drawImage(image,frame.x,frame.y,frame.w,frame.h,
