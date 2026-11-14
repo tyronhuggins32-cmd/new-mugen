@@ -1774,7 +1774,7 @@
   <script src="yusuke-directional-v8.js?v=5"></script>
   <script src="mugen-yusuke-reference-v13.js?v=2"></script>
   <script src="yusuke-walk-polish-v22.js?v=22"></script>
-  <script src="yusuke-exact-reference-v15.js?v=22&walkIdle=16&runDash=20&walk24=22&crouch=18&jump=19&guard=23"></script>
+  <script src="yusuke-exact-reference-v15.js?v=22&walkIdle=16&runDash=20&walk24=22&crouch=18&jump=19&guard=23&dash18=24"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=20"></script>
@@ -3021,7 +3021,12 @@
             this.dashTimer = Math.max(0, this.dashTimer - dt);
             this.dashElapsed = Math.min(this.dashDuration, this.dashElapsed + dt);
             const backstep = this.dashDirection !== this.facing;
-            this.vx = this.dashDirection * (backstep ? 730 : 860);
+            // Preserve the backdash, but give the forward burst anticipation,
+            // accelerating mid-flight and braking on its recovery poses.
+            const phase = Math.max(0, Math.min(1,
+              this.dashElapsed / Math.max(.001,this.dashDuration)));
+            const dashCurve = .76 + .44 * Math.sin(Math.PI * phase);
+            this.vx = this.dashDirection * (backstep ? 730 : 700*dashCurve);
             // Dash is an independent one-shot state, never a disguised walk.
             this.setState("dash");
             this.applyPhysics(dt);
@@ -3031,11 +3036,11 @@
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             const stick = Number(Boolean(input.right)) - Number(Boolean(input.left));
             this.dashDirection = stick || this.facing;
-            this.dashDuration = this.dashDirection === this.facing ? .25 : .26;
+            this.dashDuration = this.dashDirection === this.facing ? .30 : .26;
             this.dashElapsed = 0;
             this.dashTimer = this.dashDuration;
             this.dashCooldown = .52;
-            this.vx = this.dashDirection * (this.dashDirection === this.facing ? 860 : 730);
+            this.vx = this.dashDirection * (this.dashDirection === this.facing ? 700 : 730);
             this.setState("dash");
             this.applyPhysics(dt);
             window.MugenPlayCombatSfx?.("dash", .55);
