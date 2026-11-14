@@ -1,0 +1,70 @@
+{
+  "formatVersion": 1,
+  "character": "Yusuke Urameshi",
+  "animation": "light-combo-v25",
+  "sheet": "characters/yusuke/yusuke_light_combo_18frames.png",
+  "atlas": {
+    "width": 1536,
+    "height": 768,
+    "columns": 6,
+    "rows": 3,
+    "cellWidth": 256,
+    "cellHeight": 256,
+    "frameCount": 18,
+    "alpha": "RGBA",
+    "sha256": "556efcfbf4e51e367f3f5cf338a8dd6f406377c1178c3c359ec62e329edd184e"
+  },
+  "facing": "right",
+  "anchor": {
+    "x": 128,
+    "y": 240
+  },
+  "clips": {
+    "light": {
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "attack": "first Square",
+      "motion": "jab",
+      "loop": false
+    },
+    "cross": {
+      "frames": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "attack": "second Square",
+      "motion": "rear cross",
+      "loop": false
+    },
+    "body": {
+      "frames": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "attack": "third Square",
+      "motion": "body hook",
+      "loop": false
+    }
+  },
+  "runtime": {
+    "frameSelection": "floor(clamp(stateTime / attackDuration, 0, 1) * 6), clamped to 0-5",
+    "groundedOnly": true,
+    "preserve": "existing combat hitboxes, chain window, hitstop, damage scaling and Square x3 combo threshold",
+    "vfx": "no VFX baked in, use existing game system",
+    "fallback": "existing Yusuke reference combat poses if image unavailable"
+  }
+}
