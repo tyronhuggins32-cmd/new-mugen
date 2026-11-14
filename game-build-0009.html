@@ -3051,7 +3051,8 @@
               this.applyPhysics(dt);
               return;
             }
-            this._crouchVisual = !this.cpu && !isThorfinnSelected() && Boolean(input.crouch);
+            // D-pad down crouches, L1 remains high guard for both fighters.
+            this._crouchVisual = !this.cpu && Boolean(input.crouch);
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             this.setState("block");
             this.vx *= Math.max(0, 1 - dt * movement.groundFriction);
@@ -3478,13 +3479,15 @@
             if (attackName === "heavy") animName = attack.animations?.[this.attackVariant] || "heavyUppercut";
             if (attackName === "shotgun") animName = "whirlwind";
             if (!this.grounded) animName = attack.airAnimation || "airKick";
-          } else if (this.state === "block") animName = "guard";
+          } else if (this.state === "block")
+            animName = this._crouchVisual ? "crouch" : "guard";
           else if (this.state === "crouchWalk") animName = "crouchWalk";
           else if (this.state === "landing") animName = "landing";
           else if (!this.grounded || this.state === "jump")
             animName = this.vy < 0 ? "jumpRise" : "jumpFall";
           else if (this.dashTimer > 0) animName = "dodge";
           else if (this.state === "walk") animName = "walk";
+          else if (this.state === "run") animName = "run";
           // Damage reactions and attacks now use the real authored blade
           // cels; the original 56 movement frames are kept for locomotion.
           const combatSprite = definition.combatSpriteSheet;
