@@ -219,7 +219,8 @@
       index=seq[Math.floor(t*15)%seq.length];
     }else if((state==="walk" || state==="run") && Math.abs(relative)>18){
       clip=relative<0?"retreat":state==="run"?"sprint":"forward";
-      const seq=movementClips[clip];
+      // The high-speed sprint clip is selected from V17 art, not legacy keys.
+      const seq=movementClips[clip]||movementClips.forward;
       index=seq[Math.floor(t*11)%seq.length];
     }else if((fighter.turnTimer||0)>0 && Math.abs(relative)<18){
       clip="turn";index=0;
