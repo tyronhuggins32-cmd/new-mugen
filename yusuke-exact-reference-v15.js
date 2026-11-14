@@ -52,7 +52,7 @@
     load(V17_IDLE_SRC,image=>{idleV17=image;});
     load(V17_WALK_SRC,image=>{walkV17=image;});
   }
-  function v17Pose(clip,relative,t){
+  function v17Pose(clip,relative,t,fighter){
     let image,number=0,rate=12,loop=true,count=6;
     if(clip==="idle"){
       image=idleV17;count=12;
@@ -63,18 +63,22 @@
     }else if(clip==="turn"){
       image=backTurnV17;rate=10;number=6;loop=false;
     }else if(clip==="rush"){
-      image=runDashV17;rate=20;number=6;loop=false;
+      image=runDashV17;rate=24;number=6;loop=false;
     }else if(clip==="sprint"){
-      image=runDashV17;rate=16;
+      image=runDashV17;rate=12;loop=true;
     }
     if(!image)return null;
-    const step=Math.floor(Math.max(0,t)*rate);
+    const dashProgress=clip==="rush" && (fighter?.dashDuration||0)>0
+      ? Math.max(0,Math.min(1,(fighter.dashElapsed||0)/fighter.dashDuration))
+      : null;
+    const step=dashProgress===null ? Math.floor(Math.max(0,t)*rate)
+      : Math.min(count-1,Math.floor(dashProgress*count));
     const index=number+(loop?step%count:Math.min(count-1,step));
     const frame={x:(index%6)*256,y:Math.floor(index/6)*256,
       w:256,h:256,ax:128,key:index};
     // Keep the illustrated body approximately the same height through walking,
     // sprinting and dashing. Previous .94 scaling made the run disproportionately small.
-    const scale=Math.min(1.16,MAX_RENDER_HEIGHT/(clip==="sprint"||clip==="rush"?200:205));
+    const scale=Math.min(.96,MAX_RENDER_HEIGHT/220);
     return {image,frame,index,clip,scale,
       part:"movement-v17",source:"movement-v17",progress:0,frameCount:12};
   }
@@ -276,7 +280,7 @@
     if(clip==="crouch" || clip==="crouchWalk")loadV18Crouch();
     if(clip==="jumpRise" || clip==="jumpFall" || clip==="landing")loadV19Jump();
     const expanded=v19JumpPose(clip,t,Number(fighter.vy)||0)||
-      v18CrouchPose(clip,t)||v17Pose(clip,relative,t);
+      v18CrouchPose(clip,t)||v17Pose(clip,relative,t,fighter);
     if(expanded)return expanded;
     if(walkIdleImage && (clip==="idle" || clip==="forward" || clip==="retreat")){
       const seq=clip==="idle"?IDLE_CYCLE:clip==="retreat"?BACKWALK_CYCLE:WALK_CYCLE;
