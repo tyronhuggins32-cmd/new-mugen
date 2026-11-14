@@ -1219,6 +1219,12 @@
     }
 
     .result-button.primary { border-color: var(--cold); color: #031014; background: var(--cold); }
+    .run-mode-indicator { display:inline-flex; align-items:center; padding:5px 9px;
+      border:1px solid rgba(140,165,180,.45); border-radius:3px;
+      color:#c4d2da; background:rgba(7,18,24,.86); font-weight:800;
+      font-size:9px; letter-spacing:.08em; }
+    .run-mode-indicator[data-active="true"] { color:#65ffb8;
+      border-color:rgba(91,249,174,.75); box-shadow:0 0 12px rgba(91,249,174,.17); }
 
     .touch-controls {
       position: absolute;
@@ -1681,6 +1687,7 @@
           <button class="battle-back" id="battle-back" type="button">‹ Character Select</button>
           <button class="battle-back" id="pause-fight" type="button">Pause (P)</button>
           <span id="match-score" aria-live="polite">Rounds 0 – 0 · First to 2</span>
+          <span id="run-mode-indicator" class="run-mode-indicator" data-active="false" aria-live="polite">L3 RUN OFF</span>
         </div>
 
         <div class="triangle-action" id="triangle-action" aria-live="polite">△ TRIANGLE · SPIRIT SHOTGUN / POWER KICK</div>
@@ -1711,8 +1718,8 @@
         <span><span class="key">○ / Esc</span> Back</span>
       </div>
       <div class="controls" id="fight-controls" hidden>
-        <span><span class="key">PS5</span> Stick / D-pad: Move · ×: Jump · L1: Block · □: Punch ×3 for Combo · △: Shotgun >50% Spirit / Power Kick ≤50% · ○: Spirit Gun · R1: Dash (hold away to backdash) · L2: Charge · R2: MAX · Options: Pause</span>
-        <span><span class="key">Keyboard fallback</span> A/D + W/S · J: Combo · K: Shotgun/Kick · L: Spirit Gun · E Dash · I Charge · U MAX</span>
+        <span><span class="key">PS5</span> Stick / D-pad: Move · ×: Jump · L1: Block · □: Punch ×3 for Combo · △: Shotgun >50% Spirit / Power Kick ≤50% · ○: Spirit Gun · L3: Toggle Run · R1: Dash (hold away to backdash) · L2: Charge · R2: MAX · Options: Pause</span>
+        <span><span class="key">Keyboard fallback</span> A/D + W/S · J: Combo · K: Shotgun/Kick · L: Spirit Gun · E Dash · R Toggle Run · I Charge · U MAX</span>
       </div>
       <div class="copyright">New Mugen // Prototype</div>
     </footer>
@@ -2787,6 +2794,8 @@
           this.comboBonusDamage = 0;
           this.knockbackDrag = 5.2;
           this.dashTimer = 0;
+          this.dashDuration = 0;
+          this.dashElapsed = 0;
           this.dashDirection = facing;
           this.dashCooldown = 0;
           this.jumpBuffer = 0;
@@ -3003,9 +3012,11 @@
           // releasing the stick/button mid-dash cannot reverse direction.
           if (this.dashTimer > 0 && this.grounded) {
             this.dashTimer = Math.max(0, this.dashTimer - dt);
+            this.dashElapsed = Math.min(this.dashDuration, this.dashElapsed + dt);
             const backstep = this.dashDirection !== this.facing;
-            this.vx = this.dashDirection * (backstep ? 815 : 1030);
-            this.setState("walk");
+            this.vx = this.dashDirection * (backstep ? 730 : 860);
+            // Dash is an independent one-shot state, never a disguised walk.
+            this.setState("dash");
             this.applyPhysics(dt);
             return;
           }
@@ -3013,10 +3024,12 @@
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             const stick = Number(Boolean(input.right)) - Number(Boolean(input.left));
             this.dashDirection = stick || this.facing;
-            this.dashTimer = this.dashDirection === this.facing ? .145 : .17;
-            this.dashCooldown = .48;
-            this.vx = this.dashDirection * (this.dashDirection === this.facing ? 1030 : 815);
-            this.setState("walk");
+            this.dashDuration = this.dashDirection === this.facing ? .25 : .26;
+            this.dashElapsed = 0;
+            this.dashTimer = this.dashDuration;
+            this.dashCooldown = .52;
+            this.vx = this.dashDirection * (this.dashDirection === this.facing ? 860 : 730);
+            this.setState("dash");
             this.applyPhysics(dt);
             window.MugenPlayCombatSfx?.("dash", .55);
             return;
@@ -3787,7 +3800,12 @@
         toggleRun() {
           if (this.paused || this.state !== "play" || !this.player) return false;
           this.player.sprintEnabled = !this.player.sprintEnabled;
-          showToast(this.player.sprintEnabled ? "L3 RUN: ON" : "L3 RUN: OFF");
+          const indicator = document.querySelector("#run-mode-indicator");
+          if (indicator) {
+            indicator.dataset.active = String(this.player.sprintEnabled);
+            indicator.textContent = this.player.sprintEnabled ? "L3 RUN ON" : "L3 RUN OFF";
+          }
+          showToast(this.player.sprintEnabled ? "L3 RUN: ON · MOVE TO SPRINT" : "L3 RUN: OFF · WALK MODE");
           return this.player.sprintEnabled;
         }
 
@@ -3800,6 +3818,11 @@
           this.accumulator = 0;
           document.querySelector("#pause-fight").textContent = "Pause (P)";
           clearFightInput();
+          const indicator = document.querySelector("#run-mode-indicator");
+          if (indicator) {
+            indicator.dataset.active = "false";
+            indicator.textContent = "L3 RUN OFF";
+          }
           this.player = new Fighter({
             name: isThorfinnSelected() ? selectedFighterDefinition.shortName : activeCharacterDefinition.shortName,
             x: arena.width / 2 - 300,
@@ -4797,7 +4820,7 @@
         release: releaseFightControl,
         onConnection: (connected, pad) => {
           const sony = /(DualSense|Wireless Controller|Sony|PlayStation)/i.test(pad?.id || "");
-          controllerStatus.textContent = connected ? (sony ? "DUALSENSE CONNECTED" : "GAMEPAD CONNECTED")
+          controllerStatus.textContent = connected ? (sony ? "DUALSENSE CONNECTED · L3 RUN" : "GAMEPAD CONNECTED · L3 RUN")
             : "PS5 CONTROLLER: PRESS A BUTTON";
           controllerStatus.classList.toggle("connected", connected);
         },
