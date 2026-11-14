@@ -1774,7 +1774,7 @@
   <script src="yusuke-directional-v8.js?v=5"></script>
   <script src="mugen-yusuke-reference-v13.js?v=2"></script>
   <script src="yusuke-walk-polish-v22.js?v=22"></script>
-  <script src="yusuke-exact-reference-v15.js?v=22&walkIdle=16&runDash=20&walk24=22&crouch=18&jump=19&guard=23&dash18=24&dodge=24&lightCombo=25"></script>
+  <script src="yusuke-exact-reference-v15.js?v=22&walkIdle=16&runDash=20&walk24=22&crouch=18&jump=19&guard=23&dash18=24&dodge=24&lightCombo=25&heavyCombo=26"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=20"></script>
@@ -2849,11 +2849,9 @@
         beginAttack(type, energyAtPress = this.energy) {
           // Square punches create a real chain. The first two are normal;
           // only the THIRD valid Square press unlocks the combo multiplier.
-          // Triangle is evaluated at activation time, not at button mapping:
-          // >50 Spirit = fist-fired shotgun; <=50 = launching power kick.
-          if (type === "heavy" && !this.cpu) {
-            type = energyAtPress > 50 ? "shotgun" : "powerKick";
-          }
+          // Triangle now directly executes the authored heavy combo,
+          // regardless of Spirit energy. Shotgun and powerKick remain
+          // separate special moves, but are no longer mapped to Triangle.
           if (type === "light" && !this.cpu && this.grounded) {
             if (this.punchWindow <= 0) this.resetCombo();
             type = ["light", "cross", "body", "upper"][this.punchStep];
