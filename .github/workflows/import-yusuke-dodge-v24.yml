@@ -1,0 +1,51 @@
+name: Import Yusuke dodge sprite atlas V24
+on:
+  push:
+    paths:
+      - '.github/workflows/import-yusuke-dodge-v24.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-dodge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and validate real transparent dodge atlas
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p characters/yusuke
+          curl --fail --location --silent --show-error --retry 3 --max-time 120 \
+            'https://at.adobe.com/fKQHKbdLCmK9f68g' \
+            -o characters/yusuke/yusuke_dodge_quickstep_8frames.png
+          echo '2944c7ddd12de5bf9f9f835d1c20f62d6100b5dc71fc0b3a6f8d543fc428edc6  characters/yusuke/yusuke_dodge_quickstep_8frames.png' | sha256sum -c -
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct
+          p=Path('characters/yusuke/yusuke_dodge_quickstep_8frames.png')
+          b=p.read_bytes()
+          assert b[:8]==bytes.fromhex('89504e470d0a1a0a'), 'Not a PNG'
+          assert struct.unpack('>II',b[16:24])==(1024,512), 'Expected eight 256px cells'
+          assert b[25]==6, 'Transparent RGBA required'
+          assert len(b)>280000, 'Unexpectedly small artwork'
+          print('PASS: 8 authentic dodge/quick-step cels; 1024×512 RGBA')
+          PY
+      - name: Commit without replacing parallel game changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke_dodge_quickstep_8frames.png
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Add eight-frame transparent Yusuke dodge sprite atlas"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
