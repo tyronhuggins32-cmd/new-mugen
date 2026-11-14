@@ -2,7 +2,8 @@
  * PS5 layout (standard mapping):
  * Left stick / D-pad = move; X / up = jump; L1 / down = block;
  * Square = light; Triangle = heavy; Circle = Spirit Gun;
- * R1 = dash; L2 = charge; R2 = MAX Spirit Gun; Options = pause.
+ * R1 = dash; L3 (left-stick click) = toggle sustained run;
+ * L2 = charge; R2 = MAX Spirit Gun; Options = pause.
  * Menu: D-pad / left stick vertical = select, X = confirm, O = back.
  * Gamepads only become available to Safari/Chromium after a physical button press.
  */
@@ -11,6 +12,7 @@
   const BUTTON = Object.freeze({
     cross: 0, circle: 1, square: 2, triangle: 3,
     l1: 4, r1: 5, l2: 6, r2: 7, share: 8, options: 9,
+    l3: 10, r3: 11,
     up: 12, down: 13, left: 14, right: 15
   });
   const DEADZONE = .30;
@@ -83,6 +85,9 @@
       if (justPressed("options") && screen === "fight" && !callbacks.isResultOpen?.()) {
         callbacks.pause?.();
       }
+      // L3 is an edge-triggered toggle, never an auto-repeat or held action.
+      // Ignore it while paused or in menus, and re-arm only after release.
+      if (justPressed("l3") && acceptingFightInput) callbacks.toggleRun?.();
 
       const mapping = acceptingFightInput && !callbacks.isPaused?.() ? {
         left: down("left") || axisX < -DEADZONE,
