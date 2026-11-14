@@ -1,0 +1,49 @@
+name: Import Yusuke guard sprite atlas V23
+on:
+  push:
+    paths:
+      - '.github/workflows/import-yusuke-guard-v23.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the creator-approved transparent guard artwork
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p characters/yusuke
+          curl --fail --location --silent --show-error --retry 3 --max-time 120 \
+            'https://d2ol7oe51mr4n9.cloudfront.net/user_3J3FsehSSM8aaRaK5HcNwjYb3e6/88589056-94e3-4bb5-aa86-34b1e3182072.png' \
+            -o characters/yusuke/yusuke_guard_hold_hit_8frames.png
+          echo 'a91b1cae6709e05dd867fd1d489a5be956192ac7660e5ef49fb360955de51360  characters/yusuke/yusuke_guard_hold_hit_8frames.png' | sha256sum -c -
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct
+          p=Path('characters/yusuke/yusuke_guard_hold_hit_8frames.png')
+          b=p.read_bytes()
+          assert b[:8]==bytes.fromhex('89504e470d0a1a0a')
+          assert struct.unpack('>II',b[16:24])==(1024,512)
+          assert b[25]==6, 'RGBA with transparency required'
+          assert len(b)>200000
+          print('Verified 8 guard poses on 1024 x 512 transparent PNG')
+          PY
+      - name: Commit artwork without discarding concurrent edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke_guard_hold_hit_8frames.png
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Add authored eight-frame Yusuke guard and block-hit atlas"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
