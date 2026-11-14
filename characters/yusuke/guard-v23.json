@@ -1,0 +1,67 @@
+{
+  "formatVersion": 1,
+  "character": "Yusuke Urameshi",
+  "animation": "guard-hold-hit-v23",
+  "spriteSheet": "characters/yusuke/yusuke_guard_hold_hit_8frames.png",
+  "atlas": {
+    "width": 1024,
+    "height": 512,
+    "columns": 4,
+    "rows": 2,
+    "frameWidth": 256,
+    "frameHeight": 256,
+    "frameCount": 8,
+    "alpha": "RGBA",
+    "sha256": "a91b1cae6709e05dd867fd1d489a5be956192ac7660e5ef49fb360955de51360"
+  },
+  "render": {
+    "croppedFootlineY": 244,
+    "sourceFacing": "right",
+    "scale": 0.96,
+    "footPivotX": 128,
+    "effects": "Not baked into art; existing combat engine keeps impact VFX"
+  },
+  "clips": {
+    "guardEnter": {
+      "frames": [
+        0,
+        1,
+        2
+      ],
+      "loop": false
+    },
+    "guardHold": {
+      "frames": [
+        2,
+        3
+      ],
+      "loop": true
+    },
+    "guardHitLight": {
+      "frames": [
+        4
+      ],
+      "loop": false
+    },
+    "guardHitHeavy": {
+      "frames": [
+        5
+      ],
+      "loop": false
+    },
+    "guardRecover": {
+      "frames": [
+        6,
+        7
+      ],
+      "loop": false
+    }
+  },
+  "runtime": {
+    "mode": "visual-only",
+    "onGuardImpact": "Triggered by actual blocked damage from Arena.damageFighter",
+    "impactDurationSeconds": 0.18,
+    "input": "Existing L1 high guard unchanged, D-pad down low guard uses separate V18 crouch atlas",
+    "fallback": "Original guard art if new PNG missing or wrong dimensions"
+  }
+}
