@@ -33,7 +33,9 @@
   // legacy source sprites as a fallback if artwork hasn't been deployed yet.
   const V17_BACK_TURN_SRC = "characters/yusuke/yusuke_walk_backward_turn_12frames.png";
   const V17_RUN_DASH_SRC = "characters/yusuke/yusuke_run_dash_12frames.png";
-  let backTurnV17=null, runDashV17=null, v17Requested=false;
+  const V17_IDLE_SRC = "characters/yusuke/yusuke_idle_12frames.png";
+  const V17_WALK_SRC = "characters/yusuke/yusuke_walk_forward_12frames.png";
+  let backTurnV17=null, runDashV17=null, idleV17=null, walkV17=null, v17Requested=false;
   function loadV17Movement(){
     if(v17Requested || typeof root.Image !== "function")return;
     v17Requested=true;
@@ -47,21 +49,27 @@
     }
     load(V17_BACK_TURN_SRC,image=>{backTurnV17=image;});
     load(V17_RUN_DASH_SRC,image=>{runDashV17=image;});
+    load(V17_IDLE_SRC,image=>{idleV17=image;});
+    load(V17_WALK_SRC,image=>{walkV17=image;});
   }
   function v17Pose(clip,relative,t){
-    let image,number,rate,loop;
-    if(clip==="retreat" || clip==="backdash"){
-      image=backTurnV17;rate=clip==="backdash"?20:12;number=0;loop=true;
+    let image,number=0,rate=12,loop=true,count=6;
+    if(clip==="idle"){
+      image=idleV17;count=12;
+    }else if(clip==="forward" && relative<=300){
+      image=walkV17;rate=13;count=12;
+    }else if(clip==="retreat" || clip==="backdash"){
+      image=backTurnV17;rate=clip==="backdash"?20:12;
     }else if(clip==="turn"){
       image=backTurnV17;rate=10;number=6;loop=false;
     }else if(clip==="rush"){
       image=runDashV17;rate=20;number=6;loop=false;
     }else if(clip==="forward" && relative>300){
-      image=runDashV17;rate=16;number=0;loop=true;
+      image=runDashV17;rate=16;
     }
     if(!image)return null;
     const step=Math.floor(Math.max(0,t)*rate);
-    const index=number+(loop?step%6:Math.min(5,step));
+    const index=number+(loop?step%count:Math.min(count-1,step));
     const frame={x:(index%6)*256,y:Math.floor(index/6)*256,
       w:256,h:256,ax:128,key:index};
     return {image,frame,index,clip,scale:Math.min(.94,MAX_RENDER_HEIGHT/220),
@@ -137,7 +145,7 @@
     if(!image || (image.naturalWidth||image.width)!==WIDTH ||
       (image.naturalHeight||image.height)!==HEIGHT)return null;
     loadWalkIdle();
-    loadV17Movement();
+    // V17 is requested lazily on first rendered pose to preserve V16 boot behavior.
     return Object.freeze({image,frames:FRAMES,scale:1,source:"user-reference",
       frameCount:16,width:WIDTH,height:HEIGHT,maximumHeight:MAX_RENDER_HEIGHT});
   }
@@ -195,6 +203,7 @@
     }
     fighter._exactPreviousClip=clip;
     // Never overlay a second fighter. Select ONE texture for this frame only.
+    loadV17Movement();
     const expanded=v17Pose(clip,relative,t);
     if(expanded)return expanded;
     if(walkIdleImage && (clip==="idle" || clip==="forward" || clip==="retreat")){
