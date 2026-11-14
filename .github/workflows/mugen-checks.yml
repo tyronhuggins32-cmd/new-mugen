@@ -54,6 +54,8 @@ jobs:
         run: node tests/air-and-vfx-v8.cjs
       - name: Visual effects and sprite interpolation checks
         run: node tests/visuals.cjs
+      - name: Thorfinn optional sprite import and damage states
+        run: node tests/thorfinn-extra-pack.cjs
       - name: DualSense controller checks
         run: node tests/gamepad.cjs
       - name: Neon arcade home and character select checks
