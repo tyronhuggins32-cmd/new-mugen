@@ -2612,6 +2612,10 @@
           left: heldControls.has("left"),
           right: heldControls.has("right"),
           block: heldControls.has("block"),
+          // Down/S and D-pad down are crouch modifiers; L1/Shift stays guard.
+          crouch: heldControls.has("crouch") ||
+            Boolean(controlSources.get("block")?.has("ArrowDown") ||
+                    controlSources.get("block")?.has("KeyS")),
           jumpPressed: consumeTap("jump"),
           lightPressed: consumeTap("light"),
           heavyPressed: consumeTap("heavy"),
@@ -3039,7 +3043,7 @@
             // Down + direction crouch-walks for both playable fighters.
             // Moving low uses its own short hurtbox, never block immunity.
             // Without horizontal input, normal defensive block still applies.
-            if (!this.cpu && direction) {
+            if (!this.cpu && direction && (isThorfinnSelected() || input.crouch)) {
               this._crouchVisual = false;
               this.setFacing(direction);
               this.setState("crouchWalk");
@@ -3047,7 +3051,7 @@
               this.applyPhysics(dt);
               return;
             }
-            this._crouchVisual = !this.cpu && !isThorfinnSelected();
+            this._crouchVisual = !this.cpu && !isThorfinnSelected() && Boolean(input.crouch);
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             this.setState("block");
             this.vx *= Math.max(0, 1 - dt * movement.groundFriction);
