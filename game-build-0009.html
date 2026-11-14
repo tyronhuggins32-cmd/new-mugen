@@ -3051,8 +3051,10 @@
               this.applyPhysics(dt);
               return;
             }
-            // D-pad down crouches, L1 remains high guard for both fighters.
-            this._crouchVisual = !this.cpu && Boolean(input.crouch);
+            // Preserve Yusuke's V18 crouch contract while giving Thorfinn
+            // the same dedicated D-pad-down pose. L1 remains high guard.
+            this._crouchVisual = !this.cpu && !isThorfinnSelected() && Boolean(input.crouch);
+            if (!this.cpu && isThorfinnSelected() && input.crouch) this._crouchVisual = true;
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             this.setState("block");
             this.vx *= Math.max(0, 1 - dt * movement.groundFriction);
