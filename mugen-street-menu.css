@@ -307,7 +307,7 @@ body:not([data-screen="fight"]):not([data-screen="arcade"]) .scanlines {display:
 }
 @media(max-width:640px) {
   #main-menu-screen.sf4-menu {height:auto;min-height:max(740px,100dvh);}
-  .sf4-menu .sf4-paint {background-size:cover,auto 132%;background-position:center,center 53%;}
+  .sf4-menu .sf4-paint {background-size:cover,auto 105%;background-position:center,center 51%;}
   .sf4-menu .sf4-fighter {top:5%;bottom:12%;left:5%;right:-53%;opacity:.68;}
   .sf4-menu .sf4-heading {top:3.7%;right:4%;width:87%;transform:rotate(-2deg);}
   .sf4-menu .sf4-heading h1 {font-size:clamp(48px,12.7vw,80px);}
