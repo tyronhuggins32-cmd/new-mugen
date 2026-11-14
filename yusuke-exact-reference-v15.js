@@ -102,6 +102,41 @@
       scale:Math.min(.85,MAX_RENDER_HEIGHT/frame.h),
       part:"movement-v18",source:"movement-v18",progress:0,frameCount:10};
   }
+  // V19: true-alpha 14-pose jump atlas. Crops are measured from the
+  // 256x256 normalized frame cels; the game physics owns world Y motion.
+  const V19_JUMP_SRC="characters/yusuke/yusuke_jump_landing_14frames.png";
+  const V19_JUMP_BOUNDS=Object.freeze([
+    [62,42,195,242],[75,85,181,242],[71,62,185,242],[66,37,190,242],
+    [70,50,187,242],[80,74,177,242],[78,92,177,242],[60,61,197,242],
+    [70,50,187,242],[70,42,187,242],[64,50,191,242],[74,76,183,242],
+    [70,99,186,242],[58,43,197,242]
+  ]);
+  let jumpV19=null, jumpRequestedV19=false;
+  function loadV19Jump(){
+    if(jumpRequestedV19 || typeof root.Image!=="function")return;
+    jumpRequestedV19=true;
+    const image=new root.Image();image.decoding="async";
+    image.onload=()=>{if((image.naturalWidth||image.width)===1024 &&
+      (image.naturalHeight||image.height)===1024) jumpV19=image;};
+    image.onerror=()=>{}; // Missing optional artwork keeps the legacy jump.
+    image.src=V19_JUMP_SRC;
+  }
+  function v19JumpPose(clip,t,vy){
+    if(!jumpV19 || !["jumpRise","jumpFall","landing"].includes(clip))return null;
+    let index=0;
+    if(clip==="landing") index=t<.085?12:13;
+    else if(clip==="jumpRise"){
+      if(t<.13) index=Math.min(3,Math.floor(t*31));
+      else if(vy > -170) index=8;
+      else index=Math.min(7,4+Math.floor((t-.13)*13));
+    }else{
+      index=8+Math.min(3,Math.floor(clamp(Math.max(0,vy)/1120)*4));
+    }
+    const b=V19_JUMP_BOUNDS[index],cx=(index%4)*256,cy=Math.floor(index/4)*256;
+    const frame={x:cx+b[0],y:cy+b[1],w:b[2]-b[0],h:b[3]-b[1],ax:128-b[0],key:index};
+    return {image:jumpV19,frame,index,clip,scale:1,
+      part:"jump-landing-v19",source:"jump-landing-v19",progress:0,frameCount:14};
+  }
   const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
   const WALK_IDLE_BOUNDS = Object.freeze([[128,14,262,247],[128,8,262,247],[128,6,262,247],[128,1,265,247],[128,6,265,246],[129,12,263,246],[129,15,262,246],[129,17,262,246],[113,20,255,247],[126,19,255,242],[118,19,273,240],[101,23,264,240],[140,25,256,246],[137,21,257,243],[112,21,279,243],[122,23,257,246]]);
   const WALK_IDLE_FRAMES = Object.freeze(WALK_IDLE_BOUNDS.map((b,i)=>Object.freeze({
@@ -224,6 +259,11 @@
       index=seq[Math.floor(t*11)%seq.length];
     }else if((fighter.turnTimer||0)>0 && Math.abs(relative)<18){
       clip="turn";index=0;
+    }else if(state==="idle"&&t<.17 &&
+      ["jumpRise","jumpFall","landing"].includes(fighter._exactPreviousClip)){
+      // State changes from jump to idle on ground contact. Show impact/recovery
+      // without touching movement timing, controller input, or collision physics.
+      clip="landing";index=0;
     }else if(state==="idle"&&t<.13 &&
       (fighter._exactPreviousClip==="knockback"||fighter._exactPreviousClip==="stagger")){
       clip="recovery";index=15;
@@ -234,7 +274,9 @@
     // Never overlay a second fighter. Select ONE texture for this frame only.
     loadV17Movement();
     if(clip==="crouch" || clip==="crouchWalk")loadV18Crouch();
-    const expanded=v18CrouchPose(clip,t)||v17Pose(clip,relative,t);
+    if(clip==="jumpRise" || clip==="jumpFall" || clip==="landing")loadV19Jump();
+    const expanded=v19JumpPose(clip,t,Number(fighter.vy)||0)||
+      v18CrouchPose(clip,t)||v17Pose(clip,relative,t);
     if(expanded)return expanded;
     if(walkIdleImage && (clip==="idle" || clip==="forward" || clip==="retreat")){
       const seq=clip==="idle"?IDLE_CYCLE:clip==="retreat"?BACKWALK_CYCLE:WALK_CYCLE;
