@@ -220,6 +220,39 @@
     return {image:jumpV19,frame,index,clip,scale:1,
       part:"jump-landing-v19",source:"jump-landing-v19",progress:0,frameCount:14};
   }
+  // V23: full-body high guard, actual guard impacts, and planted recovery.
+  // 4 columns x 2 rows, RGBA, 256px cells. Does not affect combat collision.
+  const V23_GUARD_SRC="characters/yusuke/yusuke_guard_hold_hit_8frames.png";
+  let guardV23=null,guardRequestedV23=false;
+  function loadV23Guard(){
+    if(guardRequestedV23 || typeof root.Image!=="function")return;
+    guardRequestedV23=true;
+    const image=new root.Image();image.decoding="async";
+    image.onload=()=>{if((image.naturalWidth||image.width)===1024 &&
+      (image.naturalHeight||image.height)===512)guardV23=image;};
+    image.onerror=()=>{}; // Retain the reference sheet if this atlas is unavailable.
+    image.src=V23_GUARD_SRC;
+  }
+  function v23GuardPose(clip,t,fighter){
+    if(!guardV23 || (clip!=="guard" && clip!=="guardRecover"))return null;
+    let index=0;
+    if(clip==="guardRecover"){
+      index=t<.085?6:7;
+    }else if((fighter?._guardImpactTimer||0)>0){
+      index=fighter?._guardImpactHeavy?5:4;
+    }else if(t<.075){
+      index=0;
+    }else if(t<.155){
+      index=1;
+    }else{
+      index=Math.floor(t*8)%2?2:3;
+    }
+    // Crop through foot line 244, leaving a 2px floor gap, not 12px hover.
+    const frame={x:(index%4)*256,y:Math.floor(index/4)*256,
+      w:256,h:244,ax:128,key:index};
+    return {image:guardV23,frame,index,clip,scale:.96,
+      part:"guard-v23",source:"guard-v23",progress:0,frameCount:8};
+  }
   const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
   const WALK_IDLE_BOUNDS = Object.freeze([[128,14,262,247],[128,8,262,247],[128,6,262,247],[128,1,265,247],[128,6,265,246],[129,12,263,246],[129,15,262,246],[129,17,262,246],[113,20,255,247],[126,19,255,242],[118,19,273,240],[101,23,264,240],[140,25,256,246],[137,21,257,243],[112,21,279,243],[122,23,257,246]]);
   const WALK_IDLE_FRAMES = Object.freeze(WALK_IDLE_BOUNDS.map((b,i)=>Object.freeze({
@@ -347,6 +380,9 @@
       // State changes from jump to idle on ground contact. Show impact/recovery
       // without touching movement timing, controller input, or collision physics.
       clip="landing";index=0;
+    }else if(state==="idle"&&t<.17 &&
+      ["guard","guardRecover"].includes(fighter._exactPreviousClip)){
+      clip="guardRecover";index=0;
     }else if(state==="idle"&&t<.13 &&
       (fighter._exactPreviousClip==="knockback"||fighter._exactPreviousClip==="stagger")){
       clip="recovery";index=15;
@@ -359,7 +395,9 @@
     if(clip==="forward"){loadV21Walk();loadV22Walk();}
     if(clip==="crouch" || clip==="crouchWalk")loadV18Crouch();
     if(clip==="jumpRise" || clip==="jumpFall" || clip==="landing")loadV19Jump();
-    const expanded=v19JumpPose(clip,t,Number(fighter.vy)||0)||
+    if(clip==="guard" || clip==="guardRecover")loadV23Guard();
+    const expanded=v23GuardPose(clip,t,fighter)||
+      v19JumpPose(clip,t,Number(fighter.vy)||0)||
       v18CrouchPose(clip,t)||v17Pose(clip,relative,t,fighter);
     if(expanded)return expanded;
     if(walkIdleImage && (clip==="idle" || clip==="forward" || clip==="retreat")){
