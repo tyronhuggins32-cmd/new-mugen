@@ -1773,7 +1773,8 @@
   <script src="mugen-yusuke-palette-v11.js?v=1"></script>
   <script src="yusuke-directional-v8.js?v=5"></script>
   <script src="mugen-yusuke-reference-v13.js?v=2"></script>
-  <script src="yusuke-exact-reference-v15.js?v=21&walkIdle=16&runDash=20&walk24=21&crouch=18&jump=19"></script>
+  <script src="yusuke-walk-polish-v22.js?v=22"></script>
+  <script src="yusuke-exact-reference-v15.js?v=22&walkIdle=16&runDash=20&walk24=22&crouch=18&jump=19"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=20"></script>
@@ -2767,6 +2768,9 @@
           this.vx = 0;
           this.vy = 0;
           this.sprintEnabled = false; // L3 toggles sustained running; R1 remains a separate dash.
+          // Footstep phase advances with WORLD DISTANCE rather than frame time:
+          // standing against a wall cannot cause treadmill sliding.
+          this.walkCycleDistance = 0;
           this._crouchVisual = false; // Stationary low-guard pose without changing block mechanics.
           this.maxHealth = yusukeCombat?.maxHealth ?? 1000;
           this.health = this.maxHealth;
@@ -3110,10 +3114,15 @@
         applyPhysics(dt) {
           const startedAirborne = this.y < arena.floor - .5;
           const landingSpeed = this.vy;
+          const walkStartX = this.x;
           if (!this.grounded || this.vy < 0) this.vy += yusukeCombat.movement.gravity * dt;
           this.x += this.vx * dt;
           this.y += this.vy * dt;
           this.x = Math.max(arena.left, Math.min(arena.right, this.x));
+          if (!startedAirborne && this.state === "walk") {
+            this.walkCycleDistance =
+              (this.walkCycleDistance + Math.abs(this.x - walkStartX)) % 240;
+          }
           if (this.y >= arena.floor) {
             this.y = arena.floor;
             this.vy = 0;
