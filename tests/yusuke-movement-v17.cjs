@@ -65,6 +65,20 @@ const running = pose("run", .2, 470);
 assert.equal(running.image._src, folder + names[3]);
 assert.ok(running.index < 6);
 assert.ok(running.scale >= .94, "The running art should not shrink compared with the prior .94 atlas scale");
+// A sustained run stays on its own six-cel loop, while dash covers six
+// different cels in one burst even when the world runs at 60 FPS.
+assert.ok(running.scale<=1.0 && running.scale>=.94,
+  "Running and walking should keep comparable full-body scale");
+assert.match(code,/splitRunDashV20\(image\)/,
+  "The live combined texture must split into distinct RUN and DASH surfaces");
+const dashIndices = [0,.05,.1,.15,.2,.249].map(elapsed =>
+  pose("dash", elapsed, 860, {
+    dashTimer: .25 - elapsed, dashDuration: .25, dashElapsed: elapsed
+  }).index);
+assert.equal(new Set(dashIndices).size,6,
+  "Full R1 burst should play all six distinct dash poses");
+assert.equal(dashIndices[0],6);
+assert.equal(dashIndices[5],11);
 const dashed = pose("walk", .2, 1030, {dashTimer:.08});
 assert.equal(dashed.image._src, folder + names[3]);
 assert.ok(dashed.index >= 6);
