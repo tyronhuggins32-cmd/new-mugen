@@ -144,7 +144,7 @@
       : null;
     const distancePhase=clip==="forward" &&
       Number.isFinite(fighter?.walkCycleDistance)
-      ? Math.floor(Math.max(0,fighter.walkCycleDistance)/240*count)
+      ? Math.floor(((Math.max(0,fighter.walkCycleDistance)%240)/240)*count)
       : null;
     const step=dashProgress!==null
       ? Math.min(count-1,Math.floor(dashProgress*count))
