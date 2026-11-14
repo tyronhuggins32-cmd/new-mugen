@@ -40,6 +40,8 @@ jobs:
         run: node tests/yusuke-walk-idle-v16.cjs
       - name: All 48 Yusuke V17 movement frames and transparency
         run: node tests/yusuke-movement-v17.cjs
+      - name: Yusuke V22 24-frame walk interpolation and foot distance
+        run: node tests/yusuke-walk-polish-v22.cjs
       - name: New Yusuke crouch and low walk sprites V18
         run: node tests/yusuke-crouch-v18.cjs
       - name: Fourteen-frame Yusuke jump ascent and landing V19
