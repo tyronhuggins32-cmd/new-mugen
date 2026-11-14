@@ -282,6 +282,36 @@
     return {image:guardV23,frame,index,clip,scale:.96,
       part:"guard-v23",source:"guard-v23",progress:0,frameCount:8};
   }
+  // V24: Backward R1 quick-step uses its own eight real alpha cels.
+  // This is visual-only. Existing dash vector, cooldown, damage and i-frames
+  // remain authoritative; forward dash and L3 sprint are left untouched.
+  const V24_DODGE_SRC="characters/yusuke/yusuke_dodge_quickstep_8frames.png";
+  let dodgeV24=null,dodgeRequestedV24=false;
+  function loadV24Dodge(){
+    if(dodgeRequestedV24 || typeof root.Image!=="function")return;
+    dodgeRequestedV24=true;
+    const image=new root.Image(); image.decoding="async";
+    image.onload=()=>{
+      if((image.naturalWidth||image.width)===1024 &&
+         (image.naturalHeight||image.height)===512)dodgeV24=image;
+    };
+    image.onerror=()=>{}; // Safe fallback to the V17 backdash poses.
+    image.src=V24_DODGE_SRC;
+  }
+  function v24DodgePose(clip,fighter){
+    if(!dodgeV24 || clip!=="backdash" || !fighter)return null;
+    if(!(fighter.dashDuration>0 && fighter.dashDirection!==fighter.facing))return null;
+    // Use latched dash progress, not wall-clock time, so all eight cels
+    // finish in sync with the real backward R1 movement.
+    const p=Math.min(.9999,Math.max(0,
+      (Number(fighter.dashElapsed)||0)/Math.max(.08,Number(fighter.dashDuration)||.26)));
+    const index=Math.min(7,Math.floor(p*8));
+    // Shared crop preserves pose-to-pose proportions and the foot anchor.
+    const frame={x:(index%4)*256+24,y:Math.floor(index/4)*256+28,
+      w:192,h:217,ax:104,key:index};
+    return {image:dodgeV24,frame,index,clip,scale:Math.min(.95,MAX_RENDER_HEIGHT/217),
+      part:"dodge-v24",source:"dodge-v24",progress:p,frameCount:8};
+  }
   const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
   const WALK_IDLE_BOUNDS = Object.freeze([[128,14,262,247],[128,8,262,247],[128,6,262,247],[128,1,265,247],[128,6,265,246],[129,12,263,246],[129,15,262,246],[129,17,262,246],[113,20,255,247],[126,19,255,242],[118,19,273,240],[101,23,264,240],[140,25,256,246],[137,21,257,243],[112,21,279,243],[122,23,257,246]]);
   const WALK_IDLE_FRAMES = Object.freeze(WALK_IDLE_BOUNDS.map((b,i)=>Object.freeze({
@@ -426,7 +456,9 @@
     if(clip==="crouch" || clip==="crouchWalk")loadV18Crouch();
     if(clip==="jumpRise" || clip==="jumpFall" || clip==="landing")loadV19Jump();
     if(clip==="guard" || clip==="guardRecover")loadV23Guard();
-    const expanded=v23GuardPose(clip,t,fighter)||
+    if(clip==="backdash" && (fighter?.dashDuration||0)>0)loadV24Dodge();
+    const expanded=v24DodgePose(clip,fighter)||
+      v23GuardPose(clip,t,fighter)||
       v19JumpPose(clip,t,Number(fighter.vy)||0)||
       v18CrouchPose(clip,t)||v17Pose(clip,relative,t,fighter);
     if(expanded)return expanded;
