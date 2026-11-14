@@ -342,6 +342,30 @@
       part:"light-combo-v25",source:"light-combo-v25",
       progress,frameCount:18};
   }
+  // V26: dedicated 16-cel Triangle heavy animation.
+  const V26_HEAVY_SRC="characters/yusuke/yusuke_heavy_combo_triangle_16frames.png";
+  let heavyV26=null,heavyRequestedV26=false;
+  function loadV26Heavy(){
+    if(heavyRequestedV26 || typeof root.Image!=="function")return;
+    heavyRequestedV26=true;
+    const image=new root.Image();image.decoding="async";
+    image.onload=()=>{
+      if((image.naturalWidth||image.width)===1024 &&
+        (image.naturalHeight||image.height)===1024)heavyV26=image;
+    };
+    image.onerror=()=>{}; // Preserve legacy heavy pose on upload failure.
+    image.src=V26_HEAVY_SRC;
+  }
+  function v26HeavyPose(clip,progress,fighter){
+    if(clip!=="heavy" || !heavyV26 || !fighter?.grounded)return null;
+    const index=Math.min(15,Math.floor(clamp(progress)*16));
+    const frame={x:(index%4)*256,y:Math.floor(index/4)*256,
+      w:256,h:245,ax:128,key:index};
+    return {image:heavyV26,frame,index,clip,
+      scale:Math.min(.91,MAX_RENDER_HEIGHT/245),
+      part:"heavy-triangle-v26",source:"heavy-triangle-v26",
+      progress,frameCount:16};
+  }
   const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
   const WALK_IDLE_BOUNDS = Object.freeze([[128,14,262,247],[128,8,262,247],[128,6,262,247],[128,1,265,247],[128,6,265,246],[129,12,263,246],[129,15,262,246],[129,17,262,246],[113,20,255,247],[126,19,255,242],[118,19,273,240],[101,23,264,240],[140,25,256,246],[137,21,257,243],[112,21,279,243],[122,23,257,246]]);
   const WALK_IDLE_FRAMES = Object.freeze(WALK_IDLE_BOUNDS.map((b,i)=>Object.freeze({
@@ -489,7 +513,9 @@
     if(clip==="backdash" && (fighter?.dashDuration||0)>0)loadV24Dodge();
     if(fighter.grounded && Object.prototype.hasOwnProperty.call(V25_ATTACK_ROWS,clip))
       loadV25LightCombo();
-    const expanded=v25LightComboPose(clip,progress,fighter)||
+    if(clip==="heavy" && fighter.grounded)loadV26Heavy();
+    const expanded=v26HeavyPose(clip,progress,fighter)||
+      v25LightComboPose(clip,progress,fighter)||
       v24DodgePose(clip,fighter)||
       v23GuardPose(clip,t,fighter)||
       v19JumpPose(clip,t,Number(fighter.vy)||0)||
