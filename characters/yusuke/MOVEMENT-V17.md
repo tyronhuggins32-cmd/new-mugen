@@ -1,23 +1,24 @@
-# Yusuke movement expansion V17
+# Yusuke: authored movement atlases (V17)
 
-This update supports **two separate RGBA sprite atlases**, with 12 individual 256×256 cels per atlas in a 6-column × 2-row layout. All frames use the same bottom-center foot pivot (128,244), navy pants, yellow top, green wristbands, black-and-teal hair, and pixel-art rendering.
+Four separate **RGBA 1536×512** sprite atlases are committed under `characters/yusuke/`.
+Each atlas contains **12 full-body 256×256 cels** laid out in six columns and two rows, for 48 movement frames total. All cels were checked for transparency and SHA256 integrity at import.
 
-## Assets to upload
+| Source | Frame range | Game use | Playback |
+| --- | --- | --- | --- |
+| `yusuke_idle_12frames.png` | 0–11 | Breathing idle | 12 FPS loop |
+| `yusuke_walk_forward_12frames.png` | 0–11 | Forward walk | 13 FPS loop |
+| `yusuke_walk_backward_turn_12frames.png` | 0–5 | Guarded retreat | 12 FPS loop |
+| `yusuke_walk_backward_turn_12frames.png` | 6–11 | Facing turn | 10 FPS one shot |
+| `yusuke_run_dash_12frames.png` | 0–5 | Faster forward run | 16 FPS loop, forward speed >300 |
+| `yusuke_run_dash_12frames.png` | 6–11 | Burst dash | 20 FPS one shot |
+| `yusuke_walk_backward_turn_12frames.png` | 0–5 | Backdash | 20 FPS |
 
-The generated binary PNGs are distributed in the accompanying ZIP (outside GitHub). Upload the **actual PNG files** to exactly these paths:
+## Integration
 
-- `characters/yusuke/yusuke_walk_backward_turn_12frames.png`
-- `characters/yusuke/yusuke_run_dash_12frames.png`
+`yusuke-exact-reference-v15.js` loads these textures asynchronously on first rendered pose and selects the appropriate illustration for each grounded movement state. It preserves the old V16 movement atlas as a fallback if a new texture is unavailable, and keeps the original attack, guard, hit, jumping and special-art paths unmodified. Frame sampling is render-only; hitboxes, controller mapping, and 60-Hz combat physics remain unchanged.
 
-Both images must be 1536×512 and **RGBA with real transparency**. Do not upload the checkerboard JPG preview as a sprite texture.
+`game-build-0009.html` bumps the render-script URL query with `movement=17` to refresh browser caches.
 
-## Runtime animation mapping
+Run `node tests/yusuke-movement-v17.cjs` to verify PNG RGBA dimensions, clip routing, all 12 idle/forward frames, backwards/turn and running/dash selection and legacy fallback. `node tests/yusuke-walk-idle-v16.cjs` verifies the previous art is still available if V17 art fails.
 
-- Backward walk: atlas 1, frames 0–5, 12 FPS, loop.
-- Turn: atlas 1, frames 6–11, 10 FPS, one-shot on `fighter.turnTimer`.
-- Run: atlas 2, frames 0–5, 16 FPS, loop when forward velocity exceeds 300.
-- Dash/rush: atlas 2, frames 6–11, 20 FPS, one-shot.
-- Backdash: reuse backward-walk row at 20 FPS (preserves guard stance).
-- Existing V16 forward walk and idle remain untouched; attacks, hit reactions, specials, hitboxes, 60-Hz physics, and DualSense controls remain unchanged.
-
-`yusuke-exact-reference-v15.js` requests the above images when Yusuke's reference renderer is initialized. On missing/unloadable files, it safely falls back to the previous movement artwork. This commit installs **the renderer hooks only**, not the binary textures; assets must be uploaded to the two paths above to activate them. Run existing game tests after uploading and verify backward walk, quick turn, run, dash, walk-to-idle, and controller transitions in a browser.
+Browser and controller visual QA is still advised for frame-to-frame transition smoothness, quick turns, and dash control. No combat sprites were replaced by this movement update.
