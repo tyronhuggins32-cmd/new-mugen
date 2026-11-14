@@ -312,6 +312,36 @@
     return {image:dodgeV24,frame,index,clip,scale:Math.min(.95,MAX_RENDER_HEIGHT/217),
       part:"dodge-v24",source:"dodge-v24",progress:p,frameCount:8};
   }
+  // V25: three authored six-frame punch animations, reserved for grounded
+  // Square light / cross / body. Existing hitboxes, cancel timing, and VFX
+  // thresholds are intentionally unchanged.
+  const V25_LIGHT_COMBO_SRC="characters/yusuke/yusuke_light_combo_18frames.png";
+  const V25_ATTACK_ROWS=Object.freeze({light:0,cross:1,body:2});
+  let lightComboV25=null,lightComboRequestedV25=false;
+  function loadV25LightCombo(){
+    if(lightComboRequestedV25 || typeof root.Image!=="function")return;
+    lightComboRequestedV25=true;
+    const image=new root.Image();
+    image.decoding="async";
+    image.onload=()=>{
+      if((image.naturalWidth||image.width)===1536 &&
+         (image.naturalHeight||image.height)===768)lightComboV25=image;
+    };
+    image.onerror=()=>{}; // Missing optional art falls back to prior attack sprites.
+    image.src=V25_LIGHT_COMBO_SRC;
+  }
+  function v25LightComboPose(clip,progress,fighter){
+    if(!lightComboV25 || !fighter?.grounded ||
+       !Object.prototype.hasOwnProperty.call(V25_ATTACK_ROWS,clip))return null;
+    const local=Math.min(5,Math.floor(clamp(progress)*6));
+    const index=V25_ATTACK_ROWS[clip]*6+local;
+    const frame={x:(index%6)*256,y:Math.floor(index/6)*256,
+      w:256,h:240,ax:128,key:index};
+    return {image:lightComboV25,frame,index,clip,
+      scale:Math.min(.9,MAX_RENDER_HEIGHT/240),
+      part:"light-combo-v25",source:"light-combo-v25",
+      progress,frameCount:18};
+  }
   const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
   const WALK_IDLE_BOUNDS = Object.freeze([[128,14,262,247],[128,8,262,247],[128,6,262,247],[128,1,265,247],[128,6,265,246],[129,12,263,246],[129,15,262,246],[129,17,262,246],[113,20,255,247],[126,19,255,242],[118,19,273,240],[101,23,264,240],[140,25,256,246],[137,21,257,243],[112,21,279,243],[122,23,257,246]]);
   const WALK_IDLE_FRAMES = Object.freeze(WALK_IDLE_BOUNDS.map((b,i)=>Object.freeze({
@@ -457,7 +487,10 @@
     if(clip==="jumpRise" || clip==="jumpFall" || clip==="landing")loadV19Jump();
     if(clip==="guard" || clip==="guardRecover")loadV23Guard();
     if(clip==="backdash" && (fighter?.dashDuration||0)>0)loadV24Dodge();
-    const expanded=v24DodgePose(clip,fighter)||
+    if(fighter.grounded && Object.prototype.hasOwnProperty.call(V25_ATTACK_ROWS,clip))
+      loadV25LightCombo();
+    const expanded=v25LightComboPose(clip,progress,fighter)||
+      v24DodgePose(clip,fighter)||
       v23GuardPose(clip,t,fighter)||
       v19JumpPose(clip,t,Number(fighter.vy)||0)||
       v18CrouchPose(clip,t)||v17Pose(clip,relative,t,fighter);
