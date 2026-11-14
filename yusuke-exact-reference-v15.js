@@ -36,6 +36,34 @@
   const V17_IDLE_SRC = "characters/yusuke/yusuke_idle_12frames.png";
   const V17_WALK_SRC = "characters/yusuke/yusuke_walk_forward_12frames.png";
   let backTurnV17=null, runDashV17=null, idleV17=null, walkV17=null, v17Requested=false;
+  let runOnlyV20=null, dashOnlyV20=null;
+  // Split the already-deployed combined texture into two cached render targets:
+  // RUN loops row 0; DASH plays row 1 exactly once. Never mix their frames.
+  function splitRunDashV20(atlas) {
+    if(!root.document?.createElement)return;
+    try {
+      const surfaces=[];
+      for(let row=0;row<2;row++){
+        const canvas=root.document.createElement("canvas");
+        canvas.width=1536;canvas.height=256;
+        const context=canvas.getContext("2d",{willReadFrequently:true});
+        if(!context)return;
+        context.imageSmoothingEnabled=false;
+        context.drawImage(atlas,0,row*256,1536,256,0,0,1536,256);
+        const pixels=context.getImageData(0,0,1536,256);
+        const data=pixels.data;
+        // Remove desaturated white checkerboard/halo pixels from cel edges.
+        for(let p=0;p<data.length;p+=4){
+          const r=data[p],g=data[p+1],b=data[p+2];
+          if(r>185 && g>185 && b>185 &&
+             Math.max(r,g,b)-Math.min(r,g,b)<24)data[p+3]=0;
+        }
+        context.putImageData(pixels,0,0);
+        surfaces.push(canvas);
+      }
+      runOnlyV20=surfaces[0];dashOnlyV20=surfaces[1];
+    }catch(_){/* Keep the already-deployed combined atlas as fallback. */}
+  }
   function loadV17Movement(){
     if(v17Requested || typeof root.Image !== "function")return;
     v17Requested=true;
@@ -48,7 +76,7 @@
       image.src=src;
     }
     load(V17_BACK_TURN_SRC,image=>{backTurnV17=image;});
-    load(V17_RUN_DASH_SRC,image=>{runDashV17=image;});
+    load(V17_RUN_DASH_SRC,image=>{runDashV17=image;splitRunDashV20(image);});
     load(V17_IDLE_SRC,image=>{idleV17=image;});
     load(V17_WALK_SRC,image=>{walkV17=image;});
   }
@@ -63,9 +91,9 @@
     }else if(clip==="turn"){
       image=backTurnV17;rate=10;number=6;loop=false;
     }else if(clip==="rush"){
-      image=runDashV17;rate=24;number=6;loop=false;
+      image=dashOnlyV20||runDashV17;rate=24;number=dashOnlyV20?0:6;loop=false;
     }else if(clip==="sprint"){
-      image=runDashV17;rate=12;loop=true;
+      image=runOnlyV20||runDashV17;rate=12;loop=true;
     }
     if(!image)return null;
     const dashProgress=clip==="rush" && (fighter?.dashDuration||0)>0
