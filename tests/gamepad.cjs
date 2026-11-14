@@ -16,6 +16,7 @@ const pad = {
 };
 let screen = "menu";
 let paused = false;
+let runToggles = 0;
 const events = [];
 const controls = new Set();
 const input = scope.window.MugenGamepad.create({
@@ -29,6 +30,7 @@ const input = scope.window.MugenGamepad.create({
   confirm: () => events.push("confirm"),
   back: () => events.push("back"),
   pause: () => { paused = !paused; events.push("pause:" + paused); },
+  toggleRun: () => {runToggles++;events.push("L3 run toggle");},
   onConnection: active => events.push("connection:" + active),
   onDisconnect: () => events.push("disconnect")
 });
@@ -54,6 +56,15 @@ assert.equal(events.filter(x => x === "confirm").length, 1);
 button(0, false);
 input.update(425);
 screen = "fight";
+// L3 must be an edge-triggered toggle, not one toggle per animation frame.
+button(10,true);
+input.update(426);
+input.update(427);
+assert.equal(runToggles,1);
+button(10,false);input.update(428);
+button(10,true);input.update(429);
+assert.equal(runToggles,2);
+button(10,false);input.update(430);
 pad.axes[0] = -.9;
 button(2, true); // Square
 button(6, true); // L2
@@ -90,4 +101,4 @@ assert.equal(input.connected, false);
 assert.equal(controls.size, 0);
 assert.ok(events.includes("disconnect"));
 
-console.log("PASS: DualSense mapping, stick/D-pad, X confirm, menu repeat, attack buttons, pause/resume, disconnect cleanup.");
+console.log("PASS: DualSense L3 edge-triggered run toggle, R1 dash, stick/D-pad, X confirm, menu repeat, attacks, pause/resume and disconnect cleanup.");
