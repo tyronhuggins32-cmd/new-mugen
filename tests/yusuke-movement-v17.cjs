@@ -88,6 +88,39 @@ const idleFrames = new Set(Array.from({length:12}, (_,i) => pose("idle",i/12).in
 const walkFrames = new Set(Array.from({length:12}, (_,i) => pose("walk",i/13,160).index));
 assert.equal(idleFrames.size,12, "All 12 idle frames must be reachable");
 assert.equal(walkFrames.size,12, "All 12 walk frames must be reachable");
+// The 24-frame V21 forward walk is optional. If present at 1536×1024,
+// all 24 distinct cells must play smoothly while run/dash remain independent.
+class FakeImageV21 {
+  set src(value) {
+    this._src=value;this.naturalWidth=1536;
+    this.naturalHeight=/(-v16|v21_24frames)[.]png$/.test(value)?1024:512;
+    this.onload();
+  }
+  get src(){return this._src;}
+}
+const root21={Image:FakeImageV21};
+vm.runInNewContext(code,{window:root21,Math});
+const exact21=root21.MugenExactYusuke, atlas21=exact21.build(oldArt);
+const f21={...fighter,state:"walk",stateTime:0,vx:160,dashTimer:0,
+  turnTimer:0,hitstun:0,grounded:true};
+const frames21=Array.from({length:24},(_,i)=>{
+  f21.stateTime=i/24;
+  return exact21.pose(f21,atlas21,.2);
+});
+assert.equal(frames21[0].source,"movement-v21",
+  "Use the longer forward-walk atlas when it exists");
+assert.equal(frames21[0].frameCount,24);
+assert.equal(frames21[0].image._src,
+  folder+"yusuke_walk_forward_v21_24frames.png");
+assert.equal(new Set(frames21.map(x=>x.index)).size,24,
+  "Every frame of 24-cell authored animation must be addressable");
+assert.equal(frames21[23].frame.y,768,"The fourth atlas row must be read");
+f21.stateTime=1;
+assert.equal(exact21.pose(f21,atlas21,.2).index,0,
+  "Final walk pose must loop to frame zero");
+f21.state="run";f21.vx=460;
+assert.equal(exact21.pose(f21,atlas21,.2).source,"movement-v17",
+  "L3 run must still use independent runner sheet");
 const noImage={};vm.runInNewContext(code,{window:noImage,Math});
 const old = noImage.MugenExactYusuke.build(oldArt);
 assert.equal(noImage.MugenExactYusuke.pose(fighter,old,.2).image,oldArt,
