@@ -1766,10 +1766,10 @@
   <script src="mugen-yusuke-palette-v11.js?v=1"></script>
   <script src="yusuke-directional-v8.js?v=5"></script>
   <script src="mugen-yusuke-reference-v13.js?v=2"></script>
-  <script src="yusuke-exact-reference-v15.js?v=1&walkIdle=16&movement=17"></script>
+  <script src="yusuke-exact-reference-v15.js?v=1&walkIdle=16&movement=18"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
-  <script src="dualsense-controller.js?v=1"></script>
+  <script src="dualsense-controller.js?v=2"></script>
   <script src="mugen-menu-music.js?v=5"></script>
   <script>
     (() => {
@@ -2573,6 +2573,7 @@
         KeyK: "heavy",
         KeyL: "gun",
         KeyE: "dash",
+        KeyR: "runToggle",
         KeyI: "charge",
         KeyU: "ultimate"
       });
@@ -2616,6 +2617,7 @@
           heavyPressed: consumeTap("heavy"),
           gunPressed: consumeTap("gun"),
           dashPressed: consumeTap("dash"),
+          runTogglePressed: consumeTap("runToggle"),
           charge: heldControls.has("charge"),
           ultimatePressed: consumeTap("ultimate")
         };
@@ -2753,6 +2755,7 @@
           this.height = body?.height || (cpu ? 178 : 194);
           this.vx = 0;
           this.vy = 0;
+          this.sprintEnabled = false; // L3 toggles sustained running; R1 remains a separate dash.
           this.maxHealth = yusukeCombat?.maxHealth ?? 1000;
           this.health = this.maxHealth;
           this.energy = cpu ? 70 : (yusukeCombat?.startEnergy ?? 70);
@@ -3066,8 +3069,13 @@
           }
 
           if (direction) {
-            this.vx = direction * (this.grounded ? movement.groundSpeed : movement.airSpeed);
-            this.setState(this.grounded ? "walk" : "jump");
+            const sprinting = !this.cpu && this.sprintEnabled && this.grounded;
+            // Sustained sprint is faster than walk but never overrides R1 burst dash.
+            const sprintSpeed = Math.max(movement.groundSpeed + 90,
+              Math.min(560, movement.groundSpeed * 1.55));
+            this.vx = direction * (this.grounded
+              ? (sprinting ? sprintSpeed : movement.groundSpeed) : movement.airSpeed);
+            this.setState(this.grounded ? (sprinting ? "run" : "walk") : "jump");
           } else {
             this.vx *= Math.max(0, 1 - dt * (this.grounded ? movement.groundFriction : movement.airFriction));
             if (this.grounded) this.setState("idle");
@@ -3122,7 +3130,7 @@
             return animationFrame(this.vy < 0 ? "jumpRise" : "jumpFall", this.stateTime);
           }
           if (this.state === "block") return animationFrame("guard", this.stateTime);
-          if (this.state === "walk") return animationFrame("run", this.stateTime);
+          if (this.state === "walk" || this.state === "run") return animationFrame("run", this.stateTime);
           return animationFrame("idle", this.stateTime);
         }
 
@@ -3755,6 +3763,13 @@
           this.reset();
         }
 
+        toggleRun() {
+          if (this.paused || this.state !== "play" || !this.player) return false;
+          this.player.sprintEnabled = !this.player.sprintEnabled;
+          showToast(this.player.sprintEnabled ? "L3 RUN: ON" : "L3 RUN: OFF");
+          return this.player.sprintEnabled;
+        }
+
         reset(newMatch = true) {
           if (newMatch) {
             this.roundWins = [0, 0];
@@ -3903,6 +3918,7 @@
 
           this.timer = Math.max(0, this.timer - dt);
           const playerInput = humanInput();
+          if (playerInput.runTogglePressed) this.toggleRun();
           if (!isThorfinnSelected() && playerInput.ultimatePressed && window.MugenCinematics?.begin(this)) {
             playTone(660, .25);
             this.updateHud();
@@ -4810,7 +4826,8 @@
           else if (activeScreen === "arcade") returnToMenu();
           else if (activeScreen === "fight" && arcadeGame?.paused) exitFightToSelect();
         },
-        pause: () => { if (activeScreen === "fight") arcadeGame?.setPaused(!arcadeGame.paused); }
+        pause: () => { if (activeScreen === "fight") arcadeGame?.setPaused(!arcadeGame.paused); },
+        toggleRun: () => { if (activeScreen === "fight") arcadeGame?.toggleRun(); }
       });
 
       const sparks = Array.from({ length: 42 }, () => ({
