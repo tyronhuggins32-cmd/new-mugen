@@ -58,5 +58,5 @@ assert.equal(oldRoot.MugenExactYusuke.pose(f,oldAtlas,.2).image,fallbackArt,
   "no Image support should fall back safely");
 const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.ok(html.includes('this.setState("crouchWalk")'));
-assert.ok(html.includes("this._crouchVisual = !this.cpu && !isThorfinnSelected();"));
+assert.ok(html.includes("this._crouchVisual = !this.cpu && !isThorfinnSelected() && Boolean(input.crouch);"));
 console.log("PASS: 10 RGBA crouch/crouch-walk frames, low-walk state and legacy guard/attack fallbacks.");
