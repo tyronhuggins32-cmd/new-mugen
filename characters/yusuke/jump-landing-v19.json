@@ -1,0 +1,196 @@
+{
+  "formatVersion": 1,
+  "character": "Yusuke Urameshi",
+  "animation": "jump-landing-v19",
+  "src": "characters/yusuke/yusuke_jump_landing_14frames.png",
+  "atlas": {
+    "width": 1024,
+    "height": 1024,
+    "columns": 4,
+    "rows": 4,
+    "cellWidth": 256,
+    "cellHeight": 256,
+    "frameCount": 14,
+    "alpha": "RGBA",
+    "sourceSha256": "c71e0a66cb8bca7434fa9482bf33371d281bf1004f148b727bb8cc4aac6c8842"
+  },
+  "render": {
+    "scale": 1,
+    "pivot": "bottom center",
+    "authoredFootY": 242,
+    "drawMaxHeight": 208,
+    "physics": "unchanged 60 Hz jump Y-position"
+  },
+  "clips": {
+    "jumpTakeoff": {
+      "indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "jumpRise": {
+      "indices": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "loop": false
+    },
+    "jumpApex": {
+      "indices": [
+        7,
+        8
+      ],
+      "loop": false
+    },
+    "jumpFall": {
+      "indices": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "loop": false
+    },
+    "landing": {
+      "indices": [
+        12,
+        13
+      ],
+      "loop": false
+    }
+  },
+  "note": "Frame selection is driven by the existing fighter stateTime/vertical velocity; physics controls airtime and height. Main attack poses have priority over these movement-only frames.",
+  "frames": [
+    {
+      "index": 0,
+      "x": 62,
+      "y": 42,
+      "w": 133,
+      "h": 200,
+      "ax": 66,
+      "footBaseline": 242
+    },
+    {
+      "index": 1,
+      "x": 331,
+      "y": 85,
+      "w": 106,
+      "h": 157,
+      "ax": 53,
+      "footBaseline": 242
+    },
+    {
+      "index": 2,
+      "x": 583,
+      "y": 62,
+      "w": 114,
+      "h": 180,
+      "ax": 57,
+      "footBaseline": 242
+    },
+    {
+      "index": 3,
+      "x": 834,
+      "y": 37,
+      "w": 124,
+      "h": 205,
+      "ax": 62,
+      "footBaseline": 242
+    },
+    {
+      "index": 4,
+      "x": 70,
+      "y": 306,
+      "w": 117,
+      "h": 192,
+      "ax": 58,
+      "footBaseline": 242
+    },
+    {
+      "index": 5,
+      "x": 336,
+      "y": 330,
+      "w": 97,
+      "h": 168,
+      "ax": 48,
+      "footBaseline": 242
+    },
+    {
+      "index": 6,
+      "x": 590,
+      "y": 348,
+      "w": 99,
+      "h": 150,
+      "ax": 50,
+      "footBaseline": 242
+    },
+    {
+      "index": 7,
+      "x": 828,
+      "y": 317,
+      "w": 137,
+      "h": 181,
+      "ax": 68,
+      "footBaseline": 242
+    },
+    {
+      "index": 8,
+      "x": 70,
+      "y": 562,
+      "w": 117,
+      "h": 192,
+      "ax": 58,
+      "footBaseline": 242
+    },
+    {
+      "index": 9,
+      "x": 326,
+      "y": 554,
+      "w": 117,
+      "h": 200,
+      "ax": 58,
+      "footBaseline": 242
+    },
+    {
+      "index": 10,
+      "x": 576,
+      "y": 562,
+      "w": 127,
+      "h": 192,
+      "ax": 64,
+      "footBaseline": 242
+    },
+    {
+      "index": 11,
+      "x": 842,
+      "y": 588,
+      "w": 109,
+      "h": 166,
+      "ax": 54,
+      "footBaseline": 242
+    },
+    {
+      "index": 12,
+      "x": 70,
+      "y": 867,
+      "w": 116,
+      "h": 143,
+      "ax": 58,
+      "footBaseline": 242
+    },
+    {
+      "index": 13,
+      "x": 314,
+      "y": 811,
+      "w": 139,
+      "h": 199,
+      "ax": 70,
+      "footBaseline": 242
+    }
+  ]
+}
