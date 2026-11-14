@@ -56,7 +56,7 @@
     let image,number=0,rate=12,loop=true,count=6;
     if(clip==="idle"){
       image=idleV17;count=12;
-    }else if(clip==="forward" && relative<=300){
+    }else if(clip==="forward"){
       image=walkV17;rate=13;count=12;
     }else if(clip==="retreat" || clip==="backdash"){
       image=backTurnV17;rate=clip==="backdash"?20:12;
@@ -64,7 +64,7 @@
       image=backTurnV17;rate=10;number=6;loop=false;
     }else if(clip==="rush"){
       image=runDashV17;rate=20;number=6;loop=false;
-    }else if(clip==="forward" && relative>300){
+    }else if(clip==="sprint"){
       image=runDashV17;rate=16;
     }
     if(!image)return null;
@@ -72,7 +72,10 @@
     const index=number+(loop?step%count:Math.min(count-1,step));
     const frame={x:(index%6)*256,y:Math.floor(index/6)*256,
       w:256,h:256,ax:128,key:index};
-    return {image,frame,index,clip,scale:Math.min(.94,MAX_RENDER_HEIGHT/220),
+    // Keep the illustrated body approximately the same height through walking,
+    // sprinting and dashing. Previous .94 scaling made the run disproportionately small.
+    const scale=Math.min(1.16,MAX_RENDER_HEIGHT/(clip==="sprint"||clip==="rush"?200:205));
+    return {image,frame,index,clip,scale,
       part:"movement-v17",source:"movement-v17",progress:0,frameCount:12};
   }
   const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
@@ -189,8 +192,8 @@
       clip=relative<0?"backdash":"rush";
       const seq=movementClips[clip];
       index=seq[Math.floor(t*15)%seq.length];
-    }else if(state==="walk" && Math.abs(relative)>18){
-      clip=relative<0?"retreat":"forward";
+    }else if((state==="walk" || state==="run") && Math.abs(relative)>18){
+      clip=relative<0?"retreat":state==="run"?"sprint":"forward";
       const seq=movementClips[clip];
       index=seq[Math.floor(t*11)%seq.length];
     }else if((fighter.turnTimer||0)>0 && Math.abs(relative)<18){
@@ -238,13 +241,16 @@
       clip==="stagger" ? -.04 :
       clip==="rush" ? .028 : clip==="backdash" ? -.035:0;
     const dx=(Number(fighter.x)||0)+face*lunge;
-    const dy=(Number(fighter.y)||0)+bob;
+    // Every V17 cel has a 12px transparent gutter below its foot pivot.
+    // Offset once at draw time rather than shifting world physics / hitboxes.
+    const dy=(Number(fighter.y)||0)+bob+
+      (selected.source==="movement-v17"?12*scale:0);
     ctx.save();
     ctx.translate(dx,dy);
     ctx.scale(face,1);
     if(tilt)ctx.rotate(tilt);
-    ctx.imageSmoothingEnabled=true;
-    if("imageSmoothingQuality" in ctx)ctx.imageSmoothingQuality="high";
+    ctx.imageSmoothingEnabled=selected.source!=="movement-v17";
+    if("imageSmoothingQuality" in ctx && ctx.imageSmoothingEnabled)ctx.imageSmoothingQuality="high";
     // This is the ONLY full-body Yusuke draw for each game frame.
     ctx.drawImage(image,frame.x,frame.y,frame.w,frame.h,
       -frame.ax*scale,-frame.h*scale,frame.w*scale,frame.h*scale);
