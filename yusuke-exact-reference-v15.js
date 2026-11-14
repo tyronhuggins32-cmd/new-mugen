@@ -29,6 +29,44 @@
 
   // V16: dedicated eight-cel breathing idle and eight-cel walking atlas.
   // The attack sheet remains the sole source of attack, guard, hurt and special poses.
+  // Optional V17 authored motion atlases. Preserve the v16 walk/idle and
+  // legacy source sprites as a fallback if artwork hasn't been deployed yet.
+  const V17_BACK_TURN_SRC = "characters/yusuke/yusuke_walk_backward_turn_12frames.png";
+  const V17_RUN_DASH_SRC = "characters/yusuke/yusuke_run_dash_12frames.png";
+  let backTurnV17=null, runDashV17=null, v17Requested=false;
+  function loadV17Movement(){
+    if(v17Requested || typeof root.Image !== "function")return;
+    v17Requested=true;
+    function load(src,set){
+      const image=new root.Image();
+      image.decoding="async";
+      image.onload=()=>{if((image.naturalWidth||image.width)===1536 &&
+        (image.naturalHeight||image.height)===512)set(image);};
+      image.onerror=()=>{}; // Missing optional art must not break existing movement.
+      image.src=src;
+    }
+    load(V17_BACK_TURN_SRC,image=>{backTurnV17=image;});
+    load(V17_RUN_DASH_SRC,image=>{runDashV17=image;});
+  }
+  function v17Pose(clip,relative,t){
+    let image,number,rate,loop;
+    if(clip==="retreat" || clip==="backdash"){
+      image=backTurnV17;rate=clip==="backdash"?20:12;number=0;loop=true;
+    }else if(clip==="turn"){
+      image=backTurnV17;rate=10;number=6;loop=false;
+    }else if(clip==="rush"){
+      image=runDashV17;rate=20;number=6;loop=false;
+    }else if(clip==="forward" && relative>300){
+      image=runDashV17;rate=16;number=0;loop=true;
+    }
+    if(!image)return null;
+    const step=Math.floor(Math.max(0,t)*rate);
+    const index=number+(loop?step%6:Math.min(5,step));
+    const frame={x:(index%6)*256,y:Math.floor(index/6)*256,
+      w:256,h:256,ax:128,key:index};
+    return {image,frame,index,clip,scale:Math.min(.94,MAX_RENDER_HEIGHT/220),
+      part:"movement-v17",source:"movement-v17",progress:0,frameCount:12};
+  }
   const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
   const WALK_IDLE_BOUNDS = Object.freeze([[128,14,262,247],[128,8,262,247],[128,6,262,247],[128,1,265,247],[128,6,265,246],[129,12,263,246],[129,15,262,246],[129,17,262,246],[113,20,255,247],[126,19,255,242],[118,19,273,240],[101,23,264,240],[140,25,256,246],[137,21,257,243],[112,21,279,243],[122,23,257,246]]);
   const WALK_IDLE_FRAMES = Object.freeze(WALK_IDLE_BOUNDS.map((b,i)=>Object.freeze({
@@ -99,6 +137,7 @@
     if(!image || (image.naturalWidth||image.width)!==WIDTH ||
       (image.naturalHeight||image.height)!==HEIGHT)return null;
     loadWalkIdle();
+    loadV17Movement();
     return Object.freeze({image,frames:FRAMES,scale:1,source:"user-reference",
       frameCount:16,width:WIDTH,height:HEIGHT,maximumHeight:MAX_RENDER_HEIGHT});
   }
@@ -146,6 +185,8 @@
       clip=relative<0?"retreat":"forward";
       const seq=movementClips[clip];
       index=seq[Math.floor(t*11)%seq.length];
+    }else if((fighter.turnTimer||0)>0 && Math.abs(relative)<18){
+      clip="turn";index=0;
     }else if(state==="idle"&&t<.13 &&
       (fighter._exactPreviousClip==="knockback"||fighter._exactPreviousClip==="stagger")){
       clip="recovery";index=15;
@@ -154,6 +195,8 @@
     }
     fighter._exactPreviousClip=clip;
     // Never overlay a second fighter. Select ONE texture for this frame only.
+    const expanded=v17Pose(clip,relative,t);
+    if(expanded)return expanded;
     if(walkIdleImage && (clip==="idle" || clip==="forward" || clip==="retreat")){
       const seq=clip==="idle"?IDLE_CYCLE:clip==="retreat"?BACKWALK_CYCLE:WALK_CYCLE;
       const rate=clip==="idle"?12:13;
