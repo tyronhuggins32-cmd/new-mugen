@@ -23,7 +23,7 @@ assert.ok(home.includes('class="sf4-paint"')&&home.includes('class="menu sf4-cho
 assert.ok(home.includes('NEW MUGEN RISING'),"original branding");
 assert.ok(home.includes('class="sf4-description"')&&home.includes('class="rb-briefing-badge"'),"dynamic mode description preserved");
 assert.ok(home.includes('id="menu-music-activation"'),"autoplay fallback is reachable");
-assert.ok(home.includes('characters/yusuke/portrait.webp'),"current Yusuke portrait reused");
+assert.ok(!home.includes('class="sf4-fighter"'),"main menu shows scenery instead of fighter portrait");
 assert.ok(home.includes('data-mode="arcade"')&&home.includes('data-mode="options"'));
 assert.ok(home.includes('data-mode="multiplayer"')&&home.includes('data-mode="manual"')&&home.includes('data-mode="quit"'),"reference-density game mode labels");
 assert.ok(html.includes('quit: {title:"Quit Game"'),"new modes have descriptions");
@@ -45,7 +45,9 @@ for(const id of requiredIds) {
 assert.match(html,/href="mugen-rebirth-ui\.css\?v=\d+"/,"character selection CSS preserved");
 assert.match(html,/href="mugen-street-menu\.css\?v=\d+"/,"new menu CSS linked");
 assert.ok(menuCss.includes('#main-menu-screen.sf4-menu')&&menuCss.includes('prefers-reduced-motion:reduce'),"menu responsive/motion rules present");
-assert.ok(menuCss.includes('assets/menu/ink-sunset.svg'),"original sunset art linked");
+assert.ok(menuCss.includes('assets/menu/lava-eruption.webp'),"new lava eruption background linked");
+assert.ok(fs.existsSync(path.join(root,"assets/menu/lava-eruption.webp")),"lava asset bundled with game");
+assert.ok(fs.existsSync(path.join(root,"characters/yusuke/portrait.webp")),"new Yusuke portrait bundled with game");
 assert.ok(menuCss.includes('.frame > .topbar')&&menuCss.includes('.frame > .footer'),"old app chrome removed only on menu");
 assert.ok(menuCss.includes('.sf4-choices .menu-item::before'),"extended brushstroke selection bar present");
 assert.ok(menuCss.includes('body:not([data-screen="fight"])'),"menu styling excluded from gameplay");
