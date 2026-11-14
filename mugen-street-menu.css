@@ -59,7 +59,7 @@ body:not([data-screen="fight"]):not([data-screen="arcade"]) .scanlines {display:
   position:absolute;inset:0;z-index:0;pointer-events:none;
   /* User-supplied lava eruption replaces the old fighter hero art. */
   background-color:#170905;
-  background-image:linear-gradient(90deg,rgba(7,4,5,.83) 0%,rgba(13,7,6,.63) 34%,rgba(10,6,7,.18) 67%,rgba(8,5,6,.34) 100%),url("https://d2ol7oe51mr4n9.cloudfront.net/user_3J3FsehSSM8aaRaK5HcNwjYb3e6/542ac1ca-14ec-40fa-9c0a-571ea7645527.jpg");
+  background-image:linear-gradient(90deg,rgba(7,4,5,.83) 0%,rgba(13,7,6,.63) 34%,rgba(10,6,7,.18) 67%,rgba(8,5,6,.34) 100%),url("assets/menu/lava-eruption.webp");
   background-position:center,center 51%;
   background-size:cover,cover;
   background-repeat:no-repeat;
