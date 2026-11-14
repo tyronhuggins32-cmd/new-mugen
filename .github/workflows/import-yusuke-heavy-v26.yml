@@ -1,0 +1,47 @@
+name: Import Yusuke heavy Triangle sprite atlas V26
+on:
+  push:
+    paths: ['.github/workflows/import-yusuke-heavy-v26.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-atlas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download original transparent heavy combo atlas
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p characters/yusuke
+          curl --fail --location --silent --show-error --retry 3 --max-time 90 \
+            'https://at.adobe.com/y391X9VP5dtObr5k' \
+            -o characters/yusuke/yusuke_heavy_combo_triangle_16frames.png
+          echo 'ca2593d71aba240b6f62d8e04d1bf0cbb70d79042525b2ce29147623e9684ba9  characters/yusuke/yusuke_heavy_combo_triangle_16frames.png' | sha256sum -c -
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct
+          b=Path('characters/yusuke/yusuke_heavy_combo_triangle_16frames.png').read_bytes()
+          assert b[:8]==bytes.fromhex('89504e470d0a1a0a')
+          assert struct.unpack('>II',b[16:24])==(1024,1024)
+          assert b[25]==6, 'True RGBA alpha required'
+          assert len(b)>500000
+          print('Verified 16 transparent 256x256 Yusuke heavy frames')
+          PY
+      - name: Commit the sprite PNG
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke_heavy_combo_triangle_16frames.png
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Add 16 frame Triangle heavy attack atlas"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
