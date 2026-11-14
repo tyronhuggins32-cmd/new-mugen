@@ -78,6 +78,30 @@
     return {image,frame,index,clip,scale,
       part:"movement-v17",source:"movement-v17",progress:0,frameCount:12};
   }
+  // V18 crouch artwork uses a 5x2 texture so it cannot share V17's 6-column crops.
+  const V18_CROUCH_SRC = "characters/yusuke/yusuke_crouch_crouchwalk_10frames.png";
+  let crouchImageV18=null, crouchRequestedV18=false;
+  function loadV18Crouch(){
+    if(crouchRequestedV18 || typeof root.Image!=="function")return;
+    crouchRequestedV18=true;
+    const image=new root.Image();
+    image.decoding="async";
+    image.onload=()=>{if((image.naturalWidth||image.width)===1280 &&
+       (image.naturalHeight||image.height)===512)crouchImageV18=image;};
+    image.onerror=()=>{}; // Never replace legacy art with a broken texture.
+    image.src=V18_CROUCH_SRC;
+  }
+  function v18CrouchPose(clip,t){
+    if(!crouchImageV18 || (clip!=="crouch" && clip!=="crouchWalk"))return null;
+    const index=clip==="crouch" ? Math.min(4,Math.floor(Math.max(0,t)*12))
+      : 5+(Math.floor(Math.max(0,t)*12)%5);
+    // The authored feet are at local y=244, so crop the empty final 12 pixels.
+    const frame={x:(index%5)*256,y:Math.floor(index/5)*256,
+      w:256,h:244,ax:128,key:index};
+    return {image:crouchImageV18,frame,index,clip,
+      scale:Math.min(.85,MAX_RENDER_HEIGHT/frame.h),
+      part:"movement-v18",source:"movement-v18",progress:0,frameCount:10};
+  }
   const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
   const WALK_IDLE_BOUNDS = Object.freeze([[128,14,262,247],[128,8,262,247],[128,6,262,247],[128,1,265,247],[128,6,265,246],[129,12,263,246],[129,15,262,246],[129,17,262,246],[113,20,255,247],[126,19,255,242],[118,19,273,240],[101,23,264,240],[140,25,256,246],[137,21,257,243],[112,21,279,243],[122,23,257,246]]);
   const WALK_IDLE_FRAMES = Object.freeze(WALK_IDLE_BOUNDS.map((b,i)=>Object.freeze({
@@ -182,9 +206,10 @@
     }else if(state==="charge"){
       clip="charge";index=t>.25?9:8;
     }else if(state==="block"){
-      clip="guard";index=movementClips.guard[Math.floor(t*5)%2];
+      clip=fighter._crouchVisual?"crouch":"guard";
+      index=clip==="guard"?movementClips.guard[Math.floor(t*5)%2]:4;
     }else if(state==="crouch" || state==="crouchWalk"){
-      clip="crouch";index=4;
+      clip=state;index=4;
     }else if(inAir){
       clip=Number(fighter.vy)<0?"jumpRise":"jumpFall";
       index=movementClips[clip][Math.floor(t*10)%2];
@@ -207,7 +232,8 @@
     fighter._exactPreviousClip=clip;
     // Never overlay a second fighter. Select ONE texture for this frame only.
     loadV17Movement();
-    const expanded=v17Pose(clip,relative,t);
+    if(clip==="crouch" || clip==="crouchWalk")loadV18Crouch();
+    const expanded=v18CrouchPose(clip,t)||v17Pose(clip,relative,t);
     if(expanded)return expanded;
     if(walkIdleImage && (clip==="idle" || clip==="forward" || clip==="retreat")){
       const seq=clip==="idle"?IDLE_CYCLE:clip==="retreat"?BACKWALK_CYCLE:WALK_CYCLE;
