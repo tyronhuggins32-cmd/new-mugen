@@ -35,6 +35,24 @@
   const V17_RUN_DASH_SRC = "characters/yusuke/yusuke_run_dash_12frames.png";
   const V17_IDLE_SRC = "characters/yusuke/yusuke_idle_12frames.png";
   const V17_WALK_SRC = "characters/yusuke/yusuke_walk_forward_12frames.png";
+  // V21: extended 24-frame authored forward walk (6×4, 256px cells).
+  // It overrides only the forward walk. Idle, run, backwalk and dash are preserved.
+  const V21_WALK_SRC = "characters/yusuke/yusuke_walk_forward_v21_24frames.png";
+  let walkV21=null,walkV21Status="unrequested";
+  function loadV21Walk(){
+    if(walkV21Status!=="unrequested" || typeof root.Image!=="function")return;
+    walkV21Status="loading";
+    const image=new root.Image();
+    image.decoding="async";
+    image.onload=()=>{
+      if((image.naturalWidth||image.width)===1536 &&
+         (image.naturalHeight||image.height)===1024){
+        walkV21=image;walkV21Status="ready";
+      }else walkV21Status="invalid";
+    };
+    image.onerror=()=>{walkV21Status="missing";};
+    image.src=V21_WALK_SRC;
+  }
   let backTurnV17=null, runDashV17=null, idleV17=null, walkV17=null, v17Requested=false;
   let runOnlyV20=null, dashOnlyV20=null;
   // Split the already-deployed combined texture into two cached render targets:
@@ -85,7 +103,9 @@
     if(clip==="idle"){
       image=idleV17;count=12;
     }else if(clip==="forward"){
-      image=walkV17;rate=13;count=12;
+      image=walkV21||walkV17;
+      rate=walkV21?24:13;
+      count=walkV21?24:12;
     }else if(clip==="retreat" || clip==="backdash"){
       image=backTurnV17;rate=clip==="backdash"?20:12;
     }else if(clip==="turn"){
@@ -108,7 +128,9 @@
     // sprinting and dashing. Previous .94 scaling made the run disproportionately small.
     const scale=Math.min(.96,MAX_RENDER_HEIGHT/220);
     return {image,frame,index,clip,scale,
-      part:"movement-v17",source:"movement-v17",progress:0,frameCount:12};
+      part:walkV21&&image===walkV21?"movement-v21":"movement-v17",
+      source:walkV21&&image===walkV21?"movement-v21":"movement-v17",
+      progress:0,frameCount:count};
   }
   // V18 crouch artwork uses a 5x2 texture so it cannot share V17's 6-column crops.
   const V18_CROUCH_SRC = "characters/yusuke/yusuke_crouch_crouchwalk_10frames.png";
@@ -305,6 +327,7 @@
     fighter._exactPreviousClip=clip;
     // Never overlay a second fighter. Select ONE texture for this frame only.
     loadV17Movement();
+    if(clip==="forward")loadV21Walk();
     if(clip==="crouch" || clip==="crouchWalk")loadV18Crouch();
     if(clip==="jumpRise" || clip==="jumpFall" || clip==="landing")loadV19Jump();
     const expanded=v19JumpPose(clip,t,Number(fighter.vy)||0)||
@@ -336,7 +359,10 @@
     // Do NOT crossfade two full sprites; that makes giant overlapping ghosts.
     const lunge=attackClips[clip]?
       Math.sin(Math.PI*progress)*Math.min(6,Math.max(0,20*progress)):0;
-    const bob=idle?Math.sin((time||0)*.005)*.7:clip==="forward"||clip==="retreat"?
+    // V21 cels already contain the head/hip rise of a planted heel-toe gait.
+    // Do not add a second synthetic bob that makes the feet skate.
+    const bob=selected.source==="movement-v21"?0:idle?
+      Math.sin((time||0)*.005)*.7:clip==="forward"||clip==="retreat"?
       Math.sin(t*15)*1.15:0;
     const tilt=clip==="knockback" ? -.09 :
       clip==="stagger" ? -.04 :
@@ -345,12 +371,13 @@
     // Every V17 cel has a 12px transparent gutter below its foot pivot.
     // Offset once at draw time rather than shifting world physics / hitboxes.
     const dy=(Number(fighter.y)||0)+bob+
-      (selected.source==="movement-v17"?12*scale:0);
+      (selected.source==="movement-v21"?8*scale:
+       selected.source==="movement-v17"?12*scale:0);
     ctx.save();
     ctx.translate(dx,dy);
     ctx.scale(face,1);
     if(tilt)ctx.rotate(tilt);
-    ctx.imageSmoothingEnabled=selected.source!=="movement-v17";
+    ctx.imageSmoothingEnabled=!["movement-v17","movement-v21"].includes(selected.source);
     if("imageSmoothingQuality" in ctx && ctx.imageSmoothingEnabled)ctx.imageSmoothingQuality="high";
     // This is the ONLY full-body Yusuke draw for each game frame.
     ctx.drawImage(image,frame.x,frame.y,frame.w,frame.h,
