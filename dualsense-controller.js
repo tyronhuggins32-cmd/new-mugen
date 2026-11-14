@@ -94,6 +94,8 @@
         right: down("right") || axisX > DEADZONE,
         jump: down("up") || axisY < -.72 || down("cross"),
         block: down("down") || axisY > .72 || down("l1"),
+        // Retain ordinary blocking while distinguishing the low D-pad input.
+        crouch: down("down") || axisY > .72,
         light: down("square"),
         heavy: down("triangle"),
         gun: down("circle"),
