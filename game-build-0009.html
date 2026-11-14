@@ -3051,7 +3051,10 @@
               this.applyPhysics(dt);
               return;
             }
+            // Preserve Yusuke's V18 crouch contract while giving Thorfinn
+            // the same dedicated D-pad-down pose. L1 remains high guard.
             this._crouchVisual = !this.cpu && !isThorfinnSelected() && Boolean(input.crouch);
+            if (!this.cpu && isThorfinnSelected() && input.crouch) this._crouchVisual = true;
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             this.setState("block");
             this.vx *= Math.max(0, 1 - dt * movement.groundFriction);
@@ -3478,13 +3481,15 @@
             if (attackName === "heavy") animName = attack.animations?.[this.attackVariant] || "heavyUppercut";
             if (attackName === "shotgun") animName = "whirlwind";
             if (!this.grounded) animName = attack.airAnimation || "airKick";
-          } else if (this.state === "block") animName = "guard";
+          } else if (this.state === "block")
+            animName = this._crouchVisual ? "crouch" : "guard";
           else if (this.state === "crouchWalk") animName = "crouchWalk";
           else if (this.state === "landing") animName = "landing";
           else if (!this.grounded || this.state === "jump")
             animName = this.vy < 0 ? "jumpRise" : "jumpFall";
           else if (this.dashTimer > 0) animName = "dodge";
           else if (this.state === "walk") animName = "walk";
+          else if (this.state === "run") animName = "run";
           // Damage reactions and attacks now use the real authored blade
           // cels; the original 56 movement frames are kept for locomotion.
           const combatSprite = definition.combatSpriteSheet;
@@ -3503,8 +3508,12 @@
             : usesCombatArt ? combatSprite : sprite;
           const poseImage = usesExtraArt ? extraImage
             : usesCombatArt ? thorfinnCombatSpriteSheet : thorfinnSpriteSheet;
+          // A missing optional dodge atlas must never make R1 look idle.
+          // Keep the existing run/dash sprite as the fallback visual.
+          const fallbackName = animName === "dodge" ? "sprint" : animName;
           const chosen = usesExtraArt ? extraAnim
-            : poseSheet.animations?.[animName] || sprite.animations.idle;
+            : poseSheet.animations?.[fallbackName] || sprite.animations?.[fallbackName] ||
+              sprite.animations.idle;
           // Falling starts midway through flight; restart the fall sequence
           // at that transition instead of jumping straight to its last cel.
           const apexSeconds = Math.abs(yusukeCombat.movement.jumpVelocity /
@@ -3521,7 +3530,12 @@
                 Math.floor(progress * chosen.frames.length))]
             : animationFrameFrom(chosen, poseSeconds, poseProgress);
           const frame = poseSheet.frames[index] || poseSheet.frames[0];
-          const scale = poseSheet.scale || 1;
+          // The old combat sheets use 384px cels whereas movement uses 256px.
+          // Without source-specific normalization, a slash abruptly enlarges
+          // Thorfinn. V2 optional atlases have consistent ~280px body height
+          // and need a separate presentation factor to match the base atlas.
+          const scale = (poseSheet.scale || 1) *
+            (usesExtraArt ? .79 : usesCombatArt ? .87 : 1);
           context.save();
           // The draw() alpha argument is simulation interpolation, not an
           // opacity channel. Keep the separate Thorfinn character visible
@@ -4294,12 +4308,19 @@
           document.querySelector("#combo-window").style.width =
             `${unlocked ? (player.comboTime / (yusukeCombat.combo?.displayTime ?? 2.2)) * 100 : 0}%`;
           document.querySelector("#shotgun-ready").textContent =
-            `${window.MugenComboFX?.ready(player) ? "COMBO 5 · PUNCH VFX UNLOCKED" : "COMBO 5 UNLOCKS PUNCH VFX"} · +${Math.round(player.comboBonusDamage)} BONUS DAMAGE`;
+            `${isThorfinnSelected() ? "BLADE COMBO" :
+               (window.MugenComboFX?.ready(player) ? "COMBO 5 · PUNCH VFX UNLOCKED" : "COMBO 5 UNLOCKS PUNCH VFX")} · +${Math.round(player.comboBonusDamage)} BONUS DAMAGE`;
           const shotgunAvailable = player.energy > 50;
           const triangleHint = document.querySelector("#triangle-action");
-          triangleHint.textContent = shotgunAvailable
-            ? `△ SPIRIT SHOTGUN · ${Math.ceil(player.energy)}% SPIRIT`
-            : `△ POWER KICK · ${Math.ceil(player.energy)}% SPIRIT`;
+          if (isThorfinnSelected()) {
+            triangleHint.textContent = shotgunAvailable
+              ? `△ WHIRLWIND BLADES · ${Math.ceil(player.energy)}% FOCUS`
+              : `△ LAUNCHING SLASH · ${Math.ceil(player.energy)}% FOCUS`;
+          } else {
+            triangleHint.textContent = shotgunAvailable
+              ? `△ SPIRIT SHOTGUN · ${Math.ceil(player.energy)}% SPIRIT`
+              : `△ POWER KICK · ${Math.ceil(player.energy)}% SPIRIT`;
+          }
           if (triangleHint.dataset) triangleHint.dataset.mode = shotgunAvailable ? "shotgun" : "kick";
           document.querySelector("#match-score").textContent = `Rounds ${this.roundWins[0]} – ${this.roundWins[1]} · First to 2`;
           playerHealth.parentElement.title = `${Math.ceil(this.player.health)} / ${this.player.maxHealth} HP`;
@@ -4781,9 +4802,11 @@
           controllerStatus.classList.toggle("connected", connected);
         },
         onDisconnect: () => {
+          // A single missing Bluetooth/Gamepad API poll must not leave a
+          // running fight stuck behind PAUSED. Gamepad.update() already
+          // releases held buttons and resumes scanning for the controller.
           if (activeScreen === "fight") {
-            arcadeGame?.setPaused(true);
-            showToast("Controller disconnected. Reconnect to resume.");
+            showToast("Controller signal lost. Reconnect to keep using your gamepad.");
           }
         },
         navigate: direction => {
