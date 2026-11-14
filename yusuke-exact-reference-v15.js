@@ -26,6 +26,41 @@
     x:(i%4)*CW+b[0],y:Math.floor(i/4)*CH+b[1],
     w:b[2]-b[0],h:b[3]-b[1],ax:ANCHOR_X-b[0],key:i
   })));
+
+  // V16: dedicated eight-cel breathing idle and eight-cel walking atlas.
+  // The attack sheet remains the sole source of attack, guard, hurt and special poses.
+  const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
+  const WALK_IDLE_BOUNDS = Object.freeze([[128,14,262,247],[128,8,262,247],[128,6,262,247],[128,1,265,247],[128,6,265,246],[129,12,263,246],[129,15,262,246],[129,17,262,246],[113,20,255,247],[126,19,255,242],[118,19,273,240],[101,23,264,240],[140,25,256,246],[137,21,257,243],[112,21,279,243],[122,23,257,246]]);
+  const WALK_IDLE_FRAMES = Object.freeze(WALK_IDLE_BOUNDS.map((b,i)=>Object.freeze({
+    x:(i%4)*CW+b[0],y:Math.floor(i/4)*CH+b[1],
+    w:b[2]-b[0],h:b[3]-b[1],ax:192-b[0],key:i
+  })));
+  const IDLE_CYCLE = Object.freeze([0,1,2,3,4,5,6,7,6,5,4,3,2,1]);
+  const WALK_CYCLE = Object.freeze([8,9,10,11,12,13,14,15]);
+  const BACKWALK_CYCLE = Object.freeze([15,14,13,12,11,10,9,8]);
+  let walkIdleImage = null;
+  let walkIdleStatus = "unrequested";
+  function loadWalkIdle(){
+    if(walkIdleStatus !== "unrequested" || typeof root.Image !== "function") return;
+    walkIdleStatus = "loading";
+    const image = new root.Image();
+    image.decoding = "async";
+    image.onload = function(){
+      if((image.naturalWidth||image.width) === WIDTH &&
+         (image.naturalHeight||image.height) === HEIGHT){
+        walkIdleImage = image;
+        walkIdleStatus = "ready";
+      }else{
+        walkIdleStatus = "failed";
+        root.console?.warn?.("Yusuke walk/idle atlas has incorrect dimensions; retaining original artwork");
+      }
+    };
+    image.onerror = function(){
+      walkIdleStatus = "failed";
+      root.console?.warn?.("Yusuke walk/idle atlas could not load; retaining original artwork");
+    };
+    image.src = WALK_IDLE_SRC;
+  }
   const attackClips=Object.freeze({
     light:Object.freeze([0,1,2,3]),
     cross:Object.freeze([4,5,6,7]),
@@ -63,6 +98,7 @@
   function build(image){
     if(!image || (image.naturalWidth||image.width)!==WIDTH ||
       (image.naturalHeight||image.height)!==HEIGHT)return null;
+    loadWalkIdle();
     return Object.freeze({image,frames:FRAMES,scale:1,source:"user-reference",
       frameCount:16,width:WIDTH,height:HEIGHT,maximumHeight:MAX_RENDER_HEIGHT});
   }
@@ -117,6 +153,16 @@
       clip="idle";index=0;
     }
     fighter._exactPreviousClip=clip;
+    // Never overlay a second fighter. Select ONE texture for this frame only.
+    if(walkIdleImage && (clip==="idle" || clip==="forward" || clip==="retreat")){
+      const seq=clip==="idle"?IDLE_CYCLE:clip==="retreat"?BACKWALK_CYCLE:WALK_CYCLE;
+      const rate=clip==="idle"?12:13;
+      const movementIndex=seq[Math.floor(t*rate)%seq.length];
+      const frame=WALK_IDLE_FRAMES[movementIndex];
+      const scale=Math.min(.88,MAX_RENDER_HEIGHT/frame.h);
+      return {image:walkIdleImage,frame,index:movementIndex,clip,scale,
+        part:"walk-idle",source:"walk-idle-v16",progress:0,frameCount:16};
+    }
     const frame=atlas.frames[index];
     const scale=Math.min(.88,MAX_RENDER_HEIGHT/frame.h);
     return {image:atlas.image,frame,index,clip,scale,part:"exact",source:"user-reference",
@@ -125,7 +171,7 @@
   function draw(fighter,ctx,time,_alpha,atlas,attackDuration){
     const selected=pose(fighter,atlas,attackDuration);
     if(!selected||!ctx?.drawImage)return false;
-    const {frame,scale,clip,progress}=selected;
+    const {image,frame,scale,clip,progress}=selected;
     const face=fighter.facing<0?-1:1;
     const t=Math.max(0,Number(fighter.stateTime)||0);
     const fwd=(Number(fighter.vx)||0)*face;
@@ -148,13 +194,15 @@
     ctx.imageSmoothingEnabled=true;
     if("imageSmoothingQuality" in ctx)ctx.imageSmoothingQuality="high";
     // This is the ONLY full-body Yusuke draw for each game frame.
-    ctx.drawImage(atlas.image,frame.x,frame.y,frame.w,frame.h,
+    ctx.drawImage(image,frame.x,frame.y,frame.w,frame.h,
       -frame.ax*scale,-frame.h*scale,frame.w*scale,frame.h*scale);
     ctx.restore();
     return true;
   }
   root.MugenExactYusuke=Object.freeze({
-    build,pose,draw,frames:FRAMES,attackClips,movementClips,
+    build,pose,draw,frames:FRAMES,walkIdleFrames:WALK_IDLE_FRAMES,
+    walkIdleSource:WALK_IDLE_SRC,walkIdleStatus:()=>walkIdleStatus,
+    attackClips,movementClips,
     sourceSize:Object.freeze([WIDTH,HEIGHT]),maximumHeight:MAX_RENDER_HEIGHT
   });
 })(typeof window==="undefined"?globalThis:window);
