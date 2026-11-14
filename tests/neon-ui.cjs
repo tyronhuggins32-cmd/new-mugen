@@ -30,7 +30,7 @@ assert.ok(html.includes('quit: {title:"Quit Game"'),"new modes have descriptions
 assert.ok(select.includes('class="select-layout rb-select-layout"'),"poster, data, roster rebuilt as one grid");
 assert.ok(select.includes('character-stage rb-poster')&&select.includes('character-details rb-fighter-card'));
 assert.ok(select.includes('roster-panel rb-roster'),"wide roster strip");
-assert.ok(select.includes('characters/yusuke/portrait.webp'),"existing fighter artwork");
+assert.ok(select.includes('characters/yusuke/select-portrait-tournament.webp'),"existing fighter artwork");
 assert.ok(select.includes("DEMON SCOUT"),"opponent preview");
 assert.ok(select.includes('id="character-moves"')&&select.includes('id="character-stats"'));
 assert.ok(select.includes('id="choose-character"'),"play button maintained");
