@@ -102,7 +102,7 @@ const exact=html.indexOf("MugenExactYusuke?.draw",render);
 const legacy=html.indexOf("const premiumPose =",render);
 assert.ok(render>0 && exact>render && exact<legacy,
   "reference rendering must be ahead of ALL legacy animation paths");
-assert.match(html,/yusuke-exact-reference-v15\.js\?v=20/);
+assert.match(html,/yusuke-exact-reference-v15\.js\?v=21/);
 assert.match(html,/characters\/yusuke\/yusuke-reference-exact-v15\.png/);
 assert.match(html,/exactYusukeAtlas = window\.MugenExactYusuke\?\.build/);
 const studio=fs.readFileSync("yusuke-sprite-studio.html","utf8");
