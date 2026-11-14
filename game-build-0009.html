@@ -1841,6 +1841,10 @@
       // Movement art and Yusuke remain unchanged.
       const thorfinnCombatSpriteSheet = new Image();
       thorfinnCombatSpriteSheet.decoding = "async";
+      // Optional creator-authored animation pack. Existing 56+36 cels remain
+      // the fallback so a missing upload never disables Thorfinn.
+      const thorfinnAnimationPackImages = Object.create(null);
+      let thorfinnAnimationPack = null;
 
       const items = [...document.querySelectorAll(".menu-item")];
       const modeTitle = document.querySelector("#mode-title");
@@ -2205,6 +2209,56 @@
         });
       }
 
+      async function loadThorfinnAnimationPack() {
+        thorfinnAnimationPack = null;
+        const path = "characters/thorfinn/animation-pack/";
+        try {
+          const response = await fetch(new URL(path + "animation-pack.json", document.baseURI),
+            { cache: "no-store" });
+          if (!response.ok) return; // Older deployments keep the existing two atlases.
+          const pack = await response.json();
+          if (pack.version !== 1 || !pack.groups || !pack.gameAnimations)
+            throw Error("Thorfinn extra animation manifest invalid");
+          const groups = Object.entries(pack.groups);
+          const loaded = await Promise.allSettled(groups.map(async ([name, group]) => {
+            if (!/^[a-z_]+$/.test(name) || !/^[a-z_]+\.webp$/.test(group.src) ||
+                !Number.isInteger(group.cols) || !Number.isInteger(group.rows) ||
+                !Number.isInteger(group.cellWidth) || !Number.isInteger(group.cellHeight) ||
+                !Array.isArray(group.frames) ||
+                group.frames.length !== group.cols * group.rows ||
+                group.cellWidth <= 0 || group.cellHeight <= 0) {
+              throw Error("Invalid Thorfinn optional group: " + name);
+            }
+            const image = new Image();
+            image.decoding = "async";
+            await loadSpriteAsset(image, {
+              src: path + group.src,
+              width: group.cols * group.cellWidth,
+              height: group.rows * group.cellHeight
+            }, "Thorfinn " + name);
+            return [name, image];
+          }));
+          for (const result of loaded) {
+            if (result.status === "fulfilled") {
+              thorfinnAnimationPackImages[result.value[0]] = result.value[1];
+            } else {
+              console.warn("Skipped an unavailable Thorfinn optional atlas", result.reason);
+            }
+          }
+          for (const [name, anim] of Object.entries(pack.gameAnimations)) {
+            const group = pack.groups[anim.sheet];
+            if (!group || !Array.isArray(anim.frames) || !anim.frames.length ||
+                anim.frames.some(index => !Number.isInteger(index) ||
+                  index < 0 || index >= group.frames.length)) {
+              throw Error("Invalid Thorfinn optional timeline: " + name);
+            }
+          }
+          thorfinnAnimationPack = pack;
+        } catch (error) {
+          console.warn("Thorfinn extra sprite pack unavailable; using existing art.", error);
+        }
+      }
+
       async function loadCharacterDefinition() {
         characterReady = false;
         combatAtlasReady = false;
@@ -2434,6 +2488,7 @@
             loadSpriteAsset(thorfinnSpriteSheet, sheet, "Thorfinn movement atlas"),
             loadSpriteAsset(thorfinnCombatSpriteSheet, combatSheet, "Thorfinn authored combat atlas")
           ]);
+          await loadThorfinnAnimationPack();
           thorfinnDefinition = character;
           thorfinnReady = true;
           thorfinnRoster.disabled = false;
@@ -2929,6 +2984,15 @@
             return;
           }
 
+          // Landing playback is non-interrupting except for jumping or attacks.
+          if (!this.cpu && isThorfinnSelected() && this.state === "landing" &&
+              this.stateTime < .19 && this.grounded && !this.jumpBuffer &&
+              !input.gunPressed && !input.heavyPressed && !input.lightPressed) {
+            this.vx *= Math.max(0, 1 - dt * movement.groundFriction);
+            this.applyPhysics(dt);
+            return;
+          }
+
           // R1 uses the held direction (left or right); no direction still
           // dashes toward the enemy. Latch the vector for the whole burst so
           // releasing the stick/button mid-dash cannot reverse direction.
@@ -3027,7 +3091,19 @@
             this.vy = 0;
             if (startedAirborne && landingSpeed > 450) window.MugenPlayCombatSfx?.("land", .42);
             this._crossOverActive = false;
-            if (this.state === "jump") this.setState("idle");
+            if (this.state === "jump") {
+              // Keep the final landing sprite visible briefly before idle.
+              this.setState(!this.cpu && isThorfinnSelected() &&
+                landingSpeed > 450 ? "landing" : "idle");
+            }
+            if (!this.cpu && isThorfinnSelected() && startedAirborne &&
+                landingSpeed > 450 && this.state === "hit" &&
+                this.hitReaction === "knockback") {
+              this.hitReaction = "knockdown";
+              this.hitstun = Math.max(this.hitstun, .38);
+              this.stateTime = 0;
+              this.vx *= .45;
+            }
           }
         }
 
@@ -3382,17 +3458,20 @@
           const attack = attackName ? attackData[attackName] : null;
           const progress = attack ? Math.min(1, this.stateTime / attack.duration) : 0;
           let animName = "idle";
-          if (this.state === "hit") animName = "hit";
-          else if (attack) {
+          if (this.state === "hit") {
+            animName = ["knockdown", "knockback", "stagger"].includes(this.hitReaction)
+              ? this.hitReaction : "hit";
+          } else if (attack) {
             animName = attack.animation || "light";
             if (attackName === "heavy") animName = attack.animations?.[this.attackVariant] || "heavyUppercut";
             if (attackName === "shotgun") animName = "whirlwind";
             if (!this.grounded) animName = attack.airAnimation || "airKick";
           } else if (this.state === "block") animName = "guard";
           else if (this.state === "crouchWalk") animName = "crouchWalk";
+          else if (this.state === "landing") animName = "landing";
           else if (!this.grounded || this.state === "jump")
             animName = this.vy < 0 ? "jumpRise" : "jumpFall";
-          else if (this.dashTimer > 0) animName = "sprint";
+          else if (this.dashTimer > 0) animName = "dodge";
           else if (this.state === "walk") animName = "walk";
           // Damage reactions and attacks now use the real authored blade
           // cels; the original 56 movement frames are kept for locomotion.
@@ -3402,9 +3481,18 @@
             combatSprite.animations?.[animName] &&
             thorfinnCombatSpriteSheet.naturalWidth === combatSprite.width
           );
-          const poseSheet = usesCombatArt ? combatSprite : sprite;
-          const poseImage = usesCombatArt ? thorfinnCombatSpriteSheet : thorfinnSpriteSheet;
-          const chosen = poseSheet.animations[animName] || sprite.animations.idle;
+          const extraAnim = thorfinnAnimationPack?.gameAnimations?.[animName];
+          const extraSheet = extraAnim && thorfinnAnimationPack?.groups?.[extraAnim.sheet];
+          const extraImage = extraAnim && thorfinnAnimationPackImages[extraAnim.sheet];
+          const usesExtraArt = Boolean(extraSheet && extraImage?.naturalWidth ===
+            extraSheet.cols * extraSheet.cellWidth && extraImage.naturalHeight ===
+            extraSheet.rows * extraSheet.cellHeight);
+          const poseSheet = usesExtraArt ? extraSheet
+            : usesCombatArt ? combatSprite : sprite;
+          const poseImage = usesExtraArt ? extraImage
+            : usesCombatArt ? thorfinnCombatSpriteSheet : thorfinnSpriteSheet;
+          const chosen = usesExtraArt ? extraAnim
+            : poseSheet.animations?.[animName] || sprite.animations.idle;
           // Falling starts midway through flight; restart the fall sequence
           // at that transition instead of jumping straight to its last cel.
           const apexSeconds = Math.abs(yusukeCombat.movement.jumpVelocity /
@@ -3416,7 +3504,10 @@
             ? Math.min(1, this.stateTime /
                 (yusukeCombat.effects.hitAnimationDuration || .3))
             : progress;
-          const index = animationFrameFrom(chosen, poseSeconds, poseProgress);
+          const index = usesExtraArt && attack
+            ? chosen.frames[Math.min(chosen.frames.length - 1,
+                Math.floor(progress * chosen.frames.length))]
+            : animationFrameFrom(chosen, poseSeconds, poseProgress);
           const frame = poseSheet.frames[index] || poseSheet.frames[0];
           const scale = poseSheet.scale || 1;
           context.save();
@@ -3439,7 +3530,7 @@
             frame.w*scale,frame.h*scale);
           // The user's new sprites already contain hand-drawn slash arcs.
           // Do not superimpose the old generic white ring on those frames.
-          if (attack && !attack.projectile && !usesCombatArt &&
+          if (attack && !attack.projectile && !usesCombatArt && !usesExtraArt &&
               this.stateTime >= attack.activeStart && this.stateTime <= attack.activeEnd) {
             context.globalAlpha *= .8;
             context.beginPath();
