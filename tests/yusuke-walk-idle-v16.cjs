@@ -40,9 +40,9 @@ function get(state,time,vx=0){
  actor.state=state;actor.stateTime=time;actor.vx=vx;
  return exact.pose(actor,atlas,.19);
 }
-const idleFrames=new Set(Array.from({length:14},(_,i)=>get("idle",i/12).index));
+const idleFrames=new Set(Array.from({length:14},(_,i)=>get("idle",(i+.01)/12).index));
 assert.equal(idleFrames.size,8,"idle uses all eight actual illustrated breathing cels");
-const walkingFrames=new Set(Array.from({length:8},(_,i)=>get("walk",i/13,160).index));
+const walkingFrames=new Set(Array.from({length:8},(_,i)=>get("walk",(i+.01)/13,160).index));
 assert.equal(walkingFrames.size,8,"walk uses all eight actual illustrated footstep cels");
 assert.equal(get("walk",.2,-160).clip,"retreat");
 assert.equal(get("walk",.2,-160).source,"walk-idle-v16");
