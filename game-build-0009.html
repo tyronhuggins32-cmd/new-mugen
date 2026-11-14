@@ -2756,6 +2756,7 @@
           this.vx = 0;
           this.vy = 0;
           this.sprintEnabled = false; // L3 toggles sustained running; R1 remains a separate dash.
+          this._crouchVisual = false; // Stationary low-guard pose without changing block mechanics.
           this.maxHealth = yusukeCombat?.maxHealth ?? 1000;
           this.health = this.maxHealth;
           this.energy = cpu ? 70 : (yusukeCombat?.startEnergy ?? 70);
@@ -3035,17 +3036,18 @@
           // backward input used to consume the backwalk, especially up close.
           // L1 / down remains the explicit way to block.
           if (input.block && this.grounded) {
-            // Thorfinn: Down + direction is a low, mobile crouch-walk.
-            // Guard without horizontal input remains a stationary block.
-            // This uses the correct low hurtbox and deliberately does not
-            // grant blocking immunity while moving.
-            if (!this.cpu && isThorfinnSelected() && direction) {
+            // Down + direction crouch-walks for both playable fighters.
+            // Moving low uses its own short hurtbox, never block immunity.
+            // Without horizontal input, normal defensive block still applies.
+            if (!this.cpu && direction) {
+              this._crouchVisual = false;
               this.setFacing(direction);
               this.setState("crouchWalk");
               this.vx = direction * 155;
               this.applyPhysics(dt);
               return;
             }
+            this._crouchVisual = !this.cpu && !isThorfinnSelected();
             this.setFacing(opponent.x >= this.x ? 1 : -1);
             this.setState("block");
             this.vx *= Math.max(0, 1 - dt * movement.groundFriction);
@@ -3053,6 +3055,7 @@
             return;
           }
 
+          this._crouchVisual = false;
           if (this.state === "block" || this.state === "crouchWalk") this.setState("idle");
 
           if (input.gunPressed && this.grounded && this.beginAttack("gun")) {
