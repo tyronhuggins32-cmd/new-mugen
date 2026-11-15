@@ -339,6 +339,52 @@
     return {image:dodgeV24,frame,index,clip,scale:Math.min(.95,MAX_RENDER_HEIGHT/217),
       part:"dodge-v24",source:"dodge-v24",progress:p,frameCount:8};
   }
+  // V32: new coherent 30-frame Square combo, rebuilt from the uploaded
+  // fight recording: jab, cross, body strike, and full-sized rising uppercut.
+  // These are body-only transparent PNGs. Existing blue hit VFX, 60 Hz
+  // physics, move costs and real hitboxes remain independent and unchanged.
+  const V32_COMBO_SRC="characters/yusuke/yusuke_square_3hit_v32.png";
+  const V32_UPPER_SRC="characters/yusuke/yusuke_square_upper_v32.png";
+  const V32_ROWS=Object.freeze({light:0,cross:1,body:2});
+  let v32Light=null,v32Upper=null,v32Requested=false;
+  function loadV32Combo(){
+    if(v32Requested||typeof root.Image!=="function")return;
+    v32Requested=true;
+    function fetch(src,w,h,store){
+      const image=new root.Image();image.decoding="async";
+      image.onload=()=>{
+        if((image.naturalWidth||image.width)===w &&
+           (image.naturalHeight||image.height)===h)store(image);
+      };
+      image.onerror=()=>{}; // Remain playable with the previous V25/V28 art.
+      image.src=src;
+    }
+    fetch(V32_COMBO_SRC,1536,768,image=>{v32Light ||= image;});
+    fetch(V32_UPPER_SRC,1280,768,image=>{v32Upper ||= image;});
+  }
+  function v32SquarePose(clip,progress,fighter){
+    if(!fighter?.grounded)return null;
+    let image,index,frame,frameCount;
+    if(clip==="upper"){
+      image=v32Upper;
+      if(!image)return null;
+      index=Math.min(11,Math.floor(clamp(progress)*12));
+      frame={x:(index%4)*320,y:Math.floor(index/4)*256,
+        w:320,h:256,ax:160,key:index};
+      frameCount=12;
+    }else if(Object.prototype.hasOwnProperty.call(V32_ROWS,clip)){
+      image=v32Light;
+      if(!image)return null;
+      const local=Math.min(5,Math.floor(clamp(progress)*6));
+      index=V32_ROWS[clip]*6+local;
+      frame={x:(index%6)*256,y:Math.floor(index/6)*256,
+        w:256,h:256,ax:128,key:index};
+      frameCount=18;
+    }else return null;
+    return {image,frame,index,clip,scale:.96,
+      part:"square-combo-v32",source:"square-combo-v32",
+      progress,frameCount};
+  }
   // V25: three authored six-frame punch animations, reserved for grounded
   // Square light / cross / body. Existing hitboxes, cancel timing, and VFX
   // thresholds are intentionally unchanged.
@@ -660,6 +706,8 @@
     if(clip==="jumpRise" || clip==="jumpFall" || clip==="landing")loadV19Jump();
     if(clip==="guard" || clip==="guardRecover")loadV23Guard();
     if(clip==="backdash" && (fighter?.dashDuration||0)>0)loadV24Dodge();
+    if(fighter.grounded && (clip==="upper" || Object.prototype.hasOwnProperty.call(V32_ROWS,clip)))
+      loadV32Combo();
     if(fighter.grounded && Object.prototype.hasOwnProperty.call(V25_ATTACK_ROWS,clip))
       loadV25LightCombo();
     if(clip==="heavy" && fighter.grounded)loadV26Heavy();
@@ -667,7 +715,8 @@
     if((clip==="heavy" || clip==="spiritPunch") && fighter.grounded)
       loadV30SpiritPunch();
     if(clip==="upper" && fighter.grounded)loadV28Uppercut();
-    const expanded=v31TriangleLauncherPose(clip,progress,fighter)||
+    const expanded=v32SquarePose(clip,progress,fighter)||
+      v31TriangleLauncherPose(clip,progress,fighter)||
       v30SpiritPunchPose(clip,progress,fighter)||
       v28UppercutPose(clip,progress,fighter)||
       v26HeavyPose(clip,progress,fighter)||
@@ -768,6 +817,7 @@
     loadV22Walk();
     loadV24Dash();
     loadV25LightCombo();
+    loadV32Combo();
     loadV26Heavy();
     loadV28Uppercut();
     loadV18Crouch();
@@ -776,7 +826,8 @@
     const essential=[
       V17_IDLE_SRC,V17_BACK_TURN_SRC,V17_WALK_SRC,V17_RUN_DASH_SRC,
       V22_WALK_SRC,V24_DASH_SRC,V25_LIGHT_COMBO_SRC,V26_HEAVY_SRC,
-      V28_UPPERCUT_SRC,V18_CROUCH_SRC,V19_JUMP_SRC,V23_GUARD_SRC,
+      V28_UPPERCUT_SRC,V32_COMBO_SRC,V32_UPPER_SRC,
+      V18_CROUCH_SRC,V19_JUMP_SRC,V23_GUARD_SRC,
       V24_DODGE_SRC
     ];
     return Promise.all(essential.map(src=>new Promise(resolve=>{
@@ -813,6 +864,8 @@
       runDashV17 ||= direct(V17_RUN_DASH_SRC);
       if(runDashV17 && !runOnlyV20)splitRunDashV20(runDashV17);
       dashV24 ||= cleaned(V24_DASH_SRC,"movement-v24");
+      v32Light ||= direct(V32_COMBO_SRC);
+      v32Upper ||= direct(V32_UPPER_SRC);
       lightComboV25 ||= cleaned(V25_LIGHT_COMBO_SRC,"light-combo-v25");
       heavyV26 ||= cleaned(V26_HEAVY_SRC,"heavy-triangle-v26");
       launcherV28 ||= cleaned(V28_UPPERCUT_SRC,"launcher-v28");
@@ -824,7 +877,7 @@
       root.MugenYusukePaletteV30?.setReference(idle);
       const images=[
         idleV17,walkV17,walkV22,backTurnV17,runDashV17,runOnlyV20,
-        dashOnlyV20,dashV24,lightComboV25,heavyV26,launcherV28,
+        dashOnlyV20,dashV24,lightComboV25,v32Light,v32Upper,heavyV26,launcherV28,
         guardV23,jumpV19,dodgeV24
       ];
       for(const img of images)if(img){
