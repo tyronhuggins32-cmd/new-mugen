@@ -95,6 +95,32 @@ const fs=require("node:fs");
         footGap:Math.round(layout.footOffset),bodyOffset:Math.round(layout.horizontalOffset),
         removedWhiteRim:art?.removedPale||0,removedRedRim:art?.removedRed||0});
     }
+    // Entire Square chain must be measured, not a single pose at .15s.
+    // The previous browser gate never observed the final uppercut/return to
+    // idle; that gap let a visibly small final sprite ship for months.
+    const square=[];
+    for(const [move,frames] of [["light",6],["cross",6],["body",6],["upper",12]]){
+      for(let i=0;i<frames;i++){
+        p.state="attack-"+move;p.grounded=true;p.hitstun=0;
+        p.stateTime=(i+.25)/frames*.33;
+        const cel=painter.pose(p,atlas,.33);
+        const visible=director.resolve(cel);
+        square.push({move,i,source:cel.source,
+          px:Math.round(visible.opaqueHeight),scale:+visible.scale.toFixed(3)});
+      }
+    }
+    // Return to idle with the actual final Square pose cached in the renderer.
+    p.state="idle";p.stateTime=.035;
+    const recover=painter.pose(p,atlas,.33);
+    const recoveryHeight=Math.round(director.resolve(recover).opaqueHeight);
+    p.stateTime=.10;
+    const rest=painter.pose(p,atlas,.33);
+    const idleHeight=Math.round(director.resolve(rest).opaqueHeight);
+    const upperEnd=square.filter(s=>s.move==="upper").slice(-2);
+    const bodyEnd=square.filter(s=>s.move==="body").slice(-2);
+    console.log("SQUARE-END-BASELINE",JSON.stringify({
+      upperEnd,bodyEnd,recoveryHeight,idleHeight
+    }));
     const standing=samples.filter(s=>
       ["idle","walk","run","block","attack-light","attack-cross",
        "attack-body","attack-heavy","hit"].includes(s.state));
@@ -117,7 +143,7 @@ const fs=require("node:fs");
       throw Error("Attack recovery locks character in attack pose");
     // Draw positions are separate from gameplay hitboxes: all samples use
     // the same world-root and consistent source-relative alpha foot alignment.
-    return {heightRange:[lo,hi],samples,
+    return {heightRange:[lo,hi],samples,square,upperEnd,bodyEnd,recoveryHeight,idleHeight,
       recovery:{heldSource:held.source,lastSource:lastHeavy.source,rest:resting.source}};
   });
   assert.deepEqual(errors,[],"browser drawing must not throw");
