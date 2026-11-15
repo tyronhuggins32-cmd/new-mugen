@@ -56,6 +56,8 @@ jobs:
         run: node tests/yusuke-light-combo-v25.cjs
       - name: New 16-frame Yusuke heavy combo on Triangle V26
         run: node tests/yusuke-heavy-combo-v26.cjs
+      - name: Evolved Spirit Punch on Triangle and R2 plus Square V30
+        run: node tests/yusuke-spirit-punch-v30.cjs
       - name: Twelve-frame Yusuke fourth-Square Launcher Uppercut V28
         run: node tests/yusuke-uppercut-v28.cjs
       - name: Recorded Yusuke V27 palette, body scale and close-combat collision fixes
