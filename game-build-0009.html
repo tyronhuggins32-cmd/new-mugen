@@ -2572,6 +2572,10 @@
       const controlSources = new Map();
       const heldControls = new Set();
       const tappedControls = new Set();
+      // R2 is a modifier while held. Only standalone R2 on release activates
+      // MAX Spirit Gun, preventing accidental supers during R2+Square.
+      let spiritModifierPending = false;
+      let spiritModifierUsed = false;
       const fightKeyMap = Object.freeze({
         ArrowLeft: "left",
         KeyA: "left",
@@ -2612,6 +2616,8 @@
         controlSources.clear();
         heldControls.clear();
         tappedControls.clear();
+        spiritModifierPending = false;
+        spiritModifierUsed = false;
         touchButtons.forEach(button => button.classList.remove("active"));
       }
 
@@ -2622,22 +2628,40 @@
       }
 
       function humanInput() {
+        const r2Held = heldControls.has("ultimate");
+        const squareHeld = heldControls.has("light");
+        const r2Tapped = consumeTap("ultimate");
+        const squareTapped = consumeTap("light");
+        if (r2Tapped) {
+          spiritModifierPending = true;
+          spiritModifierUsed = false;
+        }
+        const spiritPunchPressed = r2Held &&
+          (squareTapped || (r2Tapped && squareHeld));
+        if (spiritPunchPressed) spiritModifierUsed = true;
+        // MAX Spirit Gun remains available on R2 alone after release.
+        const ultimatePressed = !r2Held && spiritModifierPending &&
+          !spiritModifierUsed;
+        if (!r2Held) {
+          spiritModifierPending = false;
+          spiritModifierUsed = false;
+        }
         return {
           left: heldControls.has("left"),
           right: heldControls.has("right"),
           block: heldControls.has("block"),
-          // Down/S and D-pad down are crouch modifiers; L1/Shift stays guard.
           crouch: heldControls.has("crouch") ||
             Boolean(controlSources.get("block")?.has("ArrowDown") ||
                     controlSources.get("block")?.has("KeyS")),
           jumpPressed: consumeTap("jump"),
-          lightPressed: consumeTap("light"),
+          lightPressed: squareTapped && !r2Held,
+          spiritPunchPressed,
           heavyPressed: consumeTap("heavy"),
           gunPressed: consumeTap("gun"),
           dashPressed: consumeTap("dash"),
           runTogglePressed: consumeTap("runToggle"),
           charge: heldControls.has("charge"),
-          ultimatePressed: consumeTap("ultimate")
+          ultimatePressed
         };
       }
 
@@ -2891,8 +2915,8 @@
           const punchPitch = { light: 290, cross: 245, body: 184, upper: 150 };
           // Quiet whooshes mark the initial swing; hit impacts sound only
           // after collision so a whiff never produces a false contact cue.
-          if (["light", "cross", "body", "upper", "powerKick"].includes(type)) {
-            const charged = type === "upper" || type === "powerKick";
+          if (["light", "cross", "body", "upper", "powerKick", "spiritPunch"].includes(type)) {
+            const charged = type === "upper" || type === "powerKick" || type === "spiritPunch";
             if (!window.MugenPlayCombatSfx?.(charged ? "swing-heavy" : "swing",
               charged ? .62 : .46))
               if (!window.MugenSFX) playTone(punchPitch[type] ?? 115, .06);
@@ -2966,8 +2990,9 @@
           const attackType = this.currentAttack();
           if (attackType) {
             const attack = attackData[attackType];
-            const queuedAttack = input.gunPressed
-              ? "gun"
+            const queuedAttack = input.spiritPunchPressed && this.grounded
+              ? "spiritPunch"
+              : input.gunPressed ? "gun"
               : input.heavyPressed ? "heavy" : input.lightPressed ? "light" : null;
             if (queuedAttack) {
               this.actionBuffer = queuedAttack;
@@ -3096,6 +3121,11 @@
           this._crouchVisual = false;
           if (this.state === "block" || this.state === "crouchWalk") this.setState("idle");
 
+          if (input.spiritPunchPressed && this.grounded &&
+              this.beginAttack("spiritPunch", energyAtInput)) {
+            this.applyPhysics(dt);
+            return;
+          }
           if (input.gunPressed && this.grounded && this.beginAttack("gun")) {
             this.applyPhysics(dt);
             return;
