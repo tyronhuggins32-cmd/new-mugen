@@ -595,7 +595,14 @@
     }else if(state==="hit" || (fighter.hitstun||0)>0){
       clip=fighter.hitReaction==="knockback"?"knockback":"stagger";
       const seq=movementClips[clip];
-      progress=(t*12)%1;index=seq[Math.floor(t*12)%seq.length];
+      if(clip==="knockback" && fighter._spiritPunchLaunch){
+        // A single clear recoil -> airborne flight -> grounded recovery;
+        // never alternate two unrelated cels while being launched backwards.
+        progress=clamp(t/.82);
+        index=t<.105?seq[0]:!fighter.grounded?seq[1]:15;
+      }else{
+        progress=(t*12)%1;index=seq[Math.floor(t*12)%seq.length];
+      }
     }else if(state==="knockdown" || state==="down"){
       clip="knockdown";index=12;
     }else if(state==="charge"){
