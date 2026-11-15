@@ -4,7 +4,8 @@
   "use strict";
 
   const clamp = (n, a = 0, b = 1) => Math.max(a, Math.min(b, n));
-  const MIN_SPACING = 142;
+  // Match the new 190-208px full-body sprite silhouettes at neutral range.
+  const MIN_SPACING = 168;
   const CONTACT_ASSIST = 25;
   const PUNCHES = new Set(["light", "cross", "body", "upper", "heavy"]);
   // Body hurtboxes follow the actual stance. Pushbox rules below are
@@ -23,10 +24,10 @@
   // 0.5-scale V7 Yusuke cels, not generic full-body rectangles.
   // High punches deliberately pass over crouching opponents.
   const HITBOXES = Object.freeze({
-    light:     {forward:48, reach:88, above:175, height:52},
+    light:     {forward:48, reach:94, above:175, height:52},
     cross:     {forward:43, reach:102, above:174, height:64},
-    body:      {forward:40, reach:89, above:129, height:79},
-    upper:     {forward:25, reach:99, above:224, height:172},
+    body:      {forward:40, reach:99, above:129, height:79},
+    upper:     {forward:25, reach:110, above:224, height:172}
     heavy:     {forward:35, reach:110, above:192, height:125},
     powerKick: {forward:46, reach:107, above:155, height:92}
   });
@@ -104,7 +105,7 @@
 
   // Tiny active-frame magnetism makes jabs land at convincing reach rather
   // than missing by one pixel. It never teleports past a target, never bypasses
-  // the 142px body-spacing rule, and never assists attacks behind the fighter.
+  // the 168px body-spacing rule, and never assists attacks behind the fighter.
   function assistPunch(attacker, defender, attack, arena, opts = {}) {
     if (!attacker || !defender || !attack || !arena) return false;
     const kind = attacker.currentAttack?.();
