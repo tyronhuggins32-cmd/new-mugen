@@ -1,0 +1,50 @@
+{
+  "formatVersion": 1,
+  "character": "Yusuke Urameshi",
+  "action": "Triangle",
+  "animation": "heavy-triangle-v26",
+  "atlas": {
+    "src": "characters/yusuke/yusuke_heavy_combo_triangle_16frames.png",
+    "width": 1024,
+    "height": 1024,
+    "rows": 4,
+    "columns": 4,
+    "cellWidth": 256,
+    "cellHeight": 256,
+    "frames": 16,
+    "alpha": "RGBA",
+    "sha256": "ca2593d71aba240b6f62d8e04d1bf0cbb70d79042525b2ce29147623e9684ba9"
+  },
+  "playback": {
+    "clip": "heavy",
+    "sequence": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "durationSeconds": 0.325,
+    "loop": false,
+    "selection": "clamp(floor(stateTime / attack.duration *16),0,15)"
+  },
+  "behavior": {
+    "controller": "PS5 Triangle",
+    "spiritCost": 0,
+    "usesExisting": "heavy attack collision, original damage, recovery, hitstop and hitstun",
+    "previousTriangleBehavior": "Shotgun / powerKick no longer selected by Triangle",
+    "fallback": "Previous Yusuke heavy art if atlas missing"
+  },
+  "notes": "Full-body frames with a common bottom pivot; no attack VFX baked into the sprite sheet"
+}
