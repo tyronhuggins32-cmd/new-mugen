@@ -40,7 +40,8 @@ on:
       - ".github/workflows/browser-smoke.yml"
 jobs:
   browser:
-    runs-on: ubuntu-latest
+    # Playwright 1.55 does not support the Ubuntu 26.04 image used by latest.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
