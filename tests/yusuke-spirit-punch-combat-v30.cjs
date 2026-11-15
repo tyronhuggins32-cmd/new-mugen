@@ -23,7 +23,7 @@ vm.runInContext([
  "g.reset();g.state='play';g.player.energy=60;",
  "g.player.update(1/60,{...neutral,spiritPunchPressed:true},g.cpu,g);",
  "assert.equal(g.player.currentAttack(),'spiritPunch');",
- "assert.equal(g.player.energy,36);",
+ "assert.ok(g.player.energy>36 && g.player.energy<36.3,'Spirit cost is 24 after one 60Hz regen tick');",
  "g.player.stateTime=.32;",
  "assert.ok(g.player.activeHitbox());",
  "assert.equal(g.player.activeHitbox().width,146);",
