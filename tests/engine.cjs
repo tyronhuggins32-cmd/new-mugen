@@ -140,6 +140,23 @@ vm.runInContext(`
  g.reset();g.state='play';g.player.x=500;g.cpu.x=750;
  g.player.update(1/60,{...neutral,dashPressed:true},g.cpu,g);
  assert.ok(g.player.vx>0,'neutral R1 remains the original forward dash');
+ g.reset();g.state='play';g.player.x=500;g.cpu.x=950;
+ const phaseBefore=g.player.gaitPhase;
+ g.player.update(1/60,{...neutral,right:true},g.cpu,g);
+ assert.ok(g.player.gaitPhase>phaseBefore,'walking advances stride with actual travel');
+ const afterWalk=g.player.gaitPhase;
+ g.player.sprintEnabled=true;
+ g.player.update(1/60,{...neutral,right:true},g.cpu,g);
+ assert.ok(g.player.gaitPhase!==afterWalk,
+   'switching L3 run preserves phase while changing stride length');
+ const atRight=g.player.gaitPhase;
+ g.player.x=arena.right;
+ g.player.update(1/60,{...neutral,right:true},g.cpu,g);
+ assert.equal(g.player.gaitPhase,atRight,
+   'a fighter pressed against the stage boundary must not animate treadmill feet');
+ g.player.update(1/60,{...neutral},g.cpu,g);
+ assert.equal(g.player.gaitPhase,atRight,
+   'neutral input must preserve the last planted gait phase');
  g.reset();g.state='play';
  g.damageFighter(g.player,g.cpu,{damage:10,knockback:135,hitstun:.2,heavyImpact:false},g.cpu.x,g.cpu.y-105);
  assert.equal(g.cpu.state,'hit');assert.equal(g.cpu.hitReaction,'stagger');
