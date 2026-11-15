@@ -9,7 +9,7 @@
   "profile": {
     "title": "Spirit Detective",
     "archetype": "Instinctive Brawler / Spirit Artillery",
-    "description": "Dark Tournament Yusuke fights like a fearless street brawler: sharp punches and kicks build spirit energy, then Spirit Gun punishes retreats and Spirit Shotgun catches evasive opponents."
+    "description": "Dark Tournament Yusuke fights with precise Square chains and a direct Triangle heavy combo. Spirit Gun punishes retreats, while his other spirit techniques remain available in the combat system."
   },
   "engineStats": {
     "life": 5000,
@@ -872,18 +872,11 @@
       "description": "Tap Square for jab, cross, body shot and uppercut. The first two presses deal normal damage. On the third consecutive press, the combo meter appears and damage starts multiplying."
     },
     {
-      "id": "power_kick",
-      "name": "Power Kick",
-      "input": "△ / Triangle at ≤50% Spirit",
-      "type": "normal",
-      "description": "A free, spirit-enhanced kick with a new eight-frame animation that launches opponents backward and upward."
-    },
-    {
-      "id": "spirit_shotgun",
-      "name": "Spirit Shotgun",
-      "input": "△ / Triangle at >50% Spirit",
-      "type": "special",
-      "description": "Triangle at strictly more than 50% Spirit: Yusuke gathers blue Spirit Energy around his fist and unleashes a blinding fan of seven damaging Spirit Shotgun pellets with forty visual-only fragments and clustered impacts. Costs 30 Spirit."
+      "id": "heavy_triangle_v26",
+      "name": "Heavy Combo (16 Frames)",
+      "input": "△ / Triangle",
+      "type": "heavy",
+      "description": "Triangle executes a dedicated 16-frame physical heavy attack at any Spirit level: windup, driving punch, cross, rising finish and recovery. Uses original heavy damage, hitboxes and knockback; no Spirit cost."
     },
     {
       "id": "spirit_gun",
