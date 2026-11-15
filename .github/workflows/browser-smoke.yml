@@ -9,6 +9,8 @@ on:
       - "yusuke-exact-reference-v15.js"
       - "mugen-yusuke-animation-v28.js"
       - "mugen-yusuke-art-v29.js"
+      - "mugen-yusuke-palette-v30.js"
+      - "tests/yusuke-palette-v30.cjs"
       - "tests/yusuke-art-v29.cjs"
       - "tests/yusuke-animation-v28.cjs"
       - "tests/browser-yusuke-animation-v28.cjs"
