@@ -62,6 +62,8 @@ jobs:
         run: node tests/yusuke-video-bugs-v27.cjs
       - name: Yusuke V28 consistent sprite proportions, foot pivots and phase-locked locomotion
         run: node tests/yusuke-animation-v28.cjs
+      - name: Yusuke V29 source pixel halo and palette cleanup
+        run: node tests/yusuke-art-v29.cjs
       - name: White alpha-edge and enclosed white-gap cleanup regression
         run: node tests/yusuke-alpha-v9.cjs
       - name: Yusuke skin and costume palette consistency
