@@ -1,0 +1,94 @@
+{
+  "formatVersion": 1,
+  "character": "Yusuke Urameshi",
+  "move": "Spirit Punch: Overdrive / Evolved Triangle Heavy",
+  "reference": "https://yuyuhakusho.fandom.com/wiki/Spirit_Punch",
+  "atlas": {
+    "src": "characters/yusuke/yusuke_spirit_punch_16frames.png",
+    "width": 1024,
+    "height": 1024,
+    "columns": 4,
+    "rows": 4,
+    "frameWidth": 256,
+    "frameHeight": 256,
+    "frameCount": 16,
+    "format": "RGBA",
+    "sha256": "0cee1ed6617b1d5b0053e9b52f8cf1db5638a9a23d0a1a923ca72857dd517777"
+  },
+  "clips": {
+    "start": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "energyConcentration": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "spiritStrike": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "recovery": [
+      12,
+      13,
+      14,
+      15
+    ]
+  },
+  "controls": {
+    "triangle": "Heavy Spirit Punch animation: original heavy damage, knockback and meter cost 0",
+    "r2Square": "Empowered Spirit Punch: grounded melee, costs 24 Spirit, stronger knockback and damage",
+    "r2Alone": "MAX Spirit Gun on R2 release, no accidental triggering during R2 + Square"
+  },
+  "rendering": {
+    "direction": "facing right, mirror for left",
+    "anchorX": 128,
+    "footlineByFrame": [
+      243,
+      243,
+      243,
+      243,
+      244,
+      244,
+      244,
+      244,
+      239,
+      239,
+      239,
+      239,
+      248,
+      248,
+      248,
+      248
+    ],
+    "cropBottomPadding": 2,
+    "scale": "min(.87,208/250)",
+    "noProjectile": true
+  },
+  "combat": {
+    "triangle": {
+      "attack": "heavy",
+      "duration": 0.325,
+      "activeStart": 0.085,
+      "activeEnd": 0.198
+    },
+    "overdrive": {
+      "attack": "spiritPunch",
+      "cost": 24,
+      "duration": 0.58,
+      "activeStart": 0.282,
+      "activeEnd": 0.422,
+      "damage": 76,
+      "hitstun": 0.43,
+      "range": 146,
+      "knockback": 610
+    }
+  },
+  "note": "V30 is a render-only upgrade to Triangle's heavy. R2 + Square adds a dedicated special while preserving the existing ordinary Square chain, Spirit Gun, and R2 super. Single rendered body; no long-range projectile."
+}
