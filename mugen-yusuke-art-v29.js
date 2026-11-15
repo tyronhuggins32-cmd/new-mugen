@@ -9,7 +9,8 @@
   const reports=new WeakMap();
   const targets=new Set([
     "light-combo-v25","heavy-triangle-v26","movement-v24",
-    "movement-v17","launcher-v28","dodge-v24","guard-v23"
+    "movement-v17","launcher-v28","dodge-v24","guard-v23",
+    "spirit-punch-v30"
   ]);
   const clamp=x=>Math.max(0,Math.min(255,Math.round(x)));
   function normalize(data,w,h){
