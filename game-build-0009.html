@@ -1620,9 +1620,8 @@
           <p class="move-heading">SPECIAL MOVES</p>
           <ul class="move-list" id="character-moves">
             <li><span>3-Square Combo · Damage Multiplier</span><span class="move-input">□ ×3</span></li>
-            <li><span>Power Kick · Spirit ≤50%</span><span class="move-input">△</span></li>
+            <li><span>Heavy Combo · 16-frame finisher</span><span class="move-input">△</span></li>
             <li><span>Spirit Gun</span><span class="move-input">○</span></li>
-            <li><span>Spirit Shotgun · Spirit >50%</span><span class="move-input">△</span></li>
             <li><span>Forward Dash / Backdash</span><span class="move-input">R1 + direction</span></li>
             <li><span>Spirit Charge</span><span class="move-input">L2</span></li>
             <li><span>MAX Spirit Gun</span><span class="move-input">R2</span></li>
@@ -1690,7 +1689,7 @@
           <span id="run-mode-indicator" class="run-mode-indicator" data-active="false" aria-live="polite">L3 RUN OFF</span>
         </div>
 
-        <div class="triangle-action" id="triangle-action" aria-live="polite">△ TRIANGLE · SPIRIT SHOTGUN / POWER KICK</div>
+        <div class="triangle-action" id="triangle-action" aria-live="polite">△ TRIANGLE · HEAVY COMBO</div>
         <div class="combo-panel" hidden aria-live="polite"><strong id="combo-label">3 SQUARES · COMBO ×1.20</strong><div class="combo-track"><span id="combo-fill"></span></div><div class="combo-time"><span id="combo-window"></span></div><small id="shotgun-ready">COMBO 5 UNLOCKS PUNCH VFX</small></div>
         <div class="round-banner" id="round-banner" aria-hidden="true"><strong id="round-banner-text">Fight!</strong></div>
 
@@ -1718,8 +1717,8 @@
         <span><span class="key">○ / Esc</span> Back</span>
       </div>
       <div class="controls" id="fight-controls" hidden>
-        <span><span class="key">PS5</span> Stick / D-pad: Move · ×: Jump · L1: Block · □: Punch ×3 for Combo · △: Shotgun >50% Spirit / Power Kick ≤50% · ○: Spirit Gun · L3: Toggle Run · R1: Dash (hold away to backdash) · L2: Charge · R2: MAX · Options: Pause</span>
-        <span><span class="key">Keyboard fallback</span> A/D + W/S · J: Combo · K: Shotgun/Kick · L: Spirit Gun · E Dash · R Toggle Run · I Charge · U MAX</span>
+        <span><span class="key">PS5</span> Stick / D-pad: Move · ×: Jump · L1: Block · □: Punch ×3 for Combo · △: Heavy Combo · ○: Spirit Gun · L3: Toggle Run · R1: Dash (hold away to backdash) · L2: Charge · R2: MAX · Options: Pause</span>
+        <span><span class="key">Keyboard fallback</span> A/D + W/S · J: Combo · K: Heavy Combo · L: Spirit Gun · E Dash · R Toggle Run · I Charge · U MAX</span>
       </div>
       <div class="copyright">New Mugen // Prototype</div>
     </footer>
@@ -2088,7 +2087,7 @@
           `${character.shortName} <span>Player 1</span>`;
         document.querySelector("#triangle-action").textContent = character.id === "thorfinn_karlsefni"
           ? "△ TRIANGLE · WHIRLWIND BLADES / LAUNCHING SLASH"
-          : "△ TRIANGLE · SPIRIT SHOTGUN / POWER KICK";
+          : "△ TRIANGLE · HEAVY COMBO";
         rosterPortrait.src = yusukePortraitUrl;
         selectedCharacterName.textContent = character.shortName;
         selectedCharacterTitle.textContent = profile.title;
@@ -4361,11 +4360,10 @@
               ? `△ WHIRLWIND BLADES · ${Math.ceil(player.energy)}% FOCUS`
               : `△ LAUNCHING SLASH · ${Math.ceil(player.energy)}% FOCUS`;
           } else {
-            triangleHint.textContent = shotgunAvailable
-              ? `△ SPIRIT SHOTGUN · ${Math.ceil(player.energy)}% SPIRIT`
-              : `△ POWER KICK · ${Math.ceil(player.energy)}% SPIRIT`;
+            triangleHint.textContent = "△ HEAVY COMBO · NO SPIRIT COST";
           }
-          if (triangleHint.dataset) triangleHint.dataset.mode = shotgunAvailable ? "shotgun" : "kick";
+          if (triangleHint.dataset) triangleHint.dataset.mode = isThorfinnSelected()
+            ? (shotgunAvailable ? "shotgun" : "kick") : "heavy";
           document.querySelector("#match-score").textContent = `Rounds ${this.roundWins[0]} – ${this.roundWins[1]} · First to 2`;
           playerHealth.parentElement.title = `${Math.ceil(this.player.health)} / ${this.player.maxHealth} HP`;
           cpuHealth.parentElement.title = `${Math.ceil(this.cpu.health)} / ${this.cpu.maxHealth} HP`;
