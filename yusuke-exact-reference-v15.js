@@ -45,7 +45,8 @@
     picture.onload=()=>{
       if((picture.naturalWidth||picture.width)===1774 &&
          (picture.naturalHeight||picture.height)===887){
-        dashV24=picture;dashV24Status="ready";
+        dashV24=root.MugenYusukeArtV29?.prepare(picture,"movement-v24")||picture;
+        dashV24Status="ready";
       }else dashV24Status="invalid";
     };
     picture.onerror=()=>{dashV24Status="missing";};
@@ -127,7 +128,8 @@
         context.putImageData(pixels,0,0);
         surfaces.push(canvas);
       }
-      runOnlyV20=surfaces[0];dashOnlyV20=surfaces[1];
+      runOnlyV20=root.MugenYusukeArtV29?.prepare(surfaces[0],"movement-v17")||surfaces[0];
+      dashOnlyV20=root.MugenYusukeArtV29?.prepare(surfaces[1],"movement-v17")||surfaces[1];
     }catch(_){/* Keep the already-deployed combined atlas as fallback. */}
   }
   function loadV17Movement(){
@@ -279,7 +281,8 @@
     guardRequestedV23=true;
     const image=new root.Image();image.decoding="async";
     image.onload=()=>{if((image.naturalWidth||image.width)===1024 &&
-      (image.naturalHeight||image.height)===512)guardV23=image;};
+      (image.naturalHeight||image.height)===512)
+         guardV23=root.MugenYusukeArtV29?.prepare(image,"guard-v23")||image;};
     image.onerror=()=>{}; // Retain the reference sheet if this atlas is unavailable.
     image.src=V23_GUARD_SRC;
   }
@@ -346,7 +349,8 @@
     image.decoding="async";
     image.onload=()=>{
       if((image.naturalWidth||image.width)===1536 &&
-         (image.naturalHeight||image.height)===768)lightComboV25=image;
+         (image.naturalHeight||image.height)===768)
+         lightComboV25=root.MugenYusukeArtV29?.prepare(image,"light-combo-v25")||image;
     };
     image.onerror=()=>{}; // Missing optional art falls back to prior attack sprites.
     image.src=V25_LIGHT_COMBO_SRC;
@@ -372,7 +376,8 @@
     const image=new root.Image();image.decoding="async";
     image.onload=()=>{
       if((image.naturalWidth||image.width)===1024 &&
-        (image.naturalHeight||image.height)===1024)heavyV26=image;
+        (image.naturalHeight||image.height)===1024)
+         heavyV26=root.MugenYusukeArtV29?.prepare(image,"heavy-triangle-v26")||image;
     };
     image.onerror=()=>{}; // Preserve legacy heavy pose on upload failure.
     image.src=V26_HEAVY_SRC;
@@ -397,7 +402,8 @@
     const image=new root.Image();image.decoding="async";
     image.onload=()=>{
       if((image.naturalWidth||image.width)===1024 &&
-         (image.naturalHeight||image.height)===768)launcherV28=image;
+         (image.naturalHeight||image.height)===768)
+         launcherV28=root.MugenYusukeArtV29?.prepare(image,"launcher-v28")||image;
     };
     image.onerror=()=>{}; // Missing art must retain the original uppercut.
     image.src=V28_UPPERCUT_SRC;
