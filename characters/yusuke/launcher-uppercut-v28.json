@@ -1,0 +1,75 @@
+{
+  "formatVersion": 1,
+  "character": "Yusuke Urameshi",
+  "animation": "launcher-uppercut-v28",
+  "source": "characters/yusuke/yusuke_launcher_uppercut_12frames.png",
+  "atlas": {
+    "width": 1024,
+    "height": 768,
+    "columns": 4,
+    "rows": 3,
+    "frameWidth": 256,
+    "frameHeight": 256,
+    "frameCount": 12,
+    "alpha": "RGBA",
+    "sha256": "97dfe746e8d9aff15e02724ec59a2af19dd61cd2baff939b0560ac4ff7974387"
+  },
+  "render": {
+    "sourceFacing": "right",
+    "pivotX": 128,
+    "pivotY": 244,
+    "frameCropHeight": 248,
+    "scale": 0.91
+  },
+  "clips": {
+    "upper": {
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "duration": 0.39,
+      "loop": false,
+      "activeStart": 0.112,
+      "activeEnd": 0.24
+    }
+  },
+  "phases": {
+    "preparation": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "rise": [
+      4,
+      5,
+      6
+    ],
+    "peak": [
+      7,
+      8
+    ],
+    "recovery": [
+      9,
+      10,
+      11
+    ]
+  },
+  "behavior": {
+    "trigger": "existing fourth Square attack -> upper",
+    "noControlChanges": true,
+    "preserve": "existing attack hitbox, damage, hitstun, knockback, launch and audio",
+    "fallback": "legacy uppercut artwork if optional atlas missing"
+  },
+  "notes": "The single cyan arc on frame 7 is baked into the visual cel; do not layer duplicate uppercut crescents."
+}
