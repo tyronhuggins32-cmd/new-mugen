@@ -4265,9 +4265,17 @@
             defender._guardImpactHeavy = Boolean(attack.heavyImpact);
           }
           defender.dashTimer = 0;
+          // Spirit Punch creates a fresh airborne knockback reaction on actual
+          // contact. If the defender was already stunned, restart the pose
+          // timer so the launch never begins halfway through an old animation.
+          // A successful guard still receives block stun and chip damage only.
+          const forcedKnockback = !blocked && Boolean(attack.forceKnockback);
           defender.setState(blocked ? "block" : "hit");
-          defender.hitReaction = !blocked && (attack.heavyImpact || (attack.knockback || 0) >= 250)
-            ? "knockback" : "stagger";
+          if (forcedKnockback) defender.stateTime = 0;
+          defender.hitReaction = forcedKnockback
+            ? (attack.knockbackAnimation || "knockback")
+            : !blocked && (attack.heavyImpact || (attack.knockback || 0) >= 250)
+              ? "knockback" : "stagger";
           const direction = attack.facing || attacker.facing;
           defender.vx = direction * attack.knockback * (blocked ? .34 : 1);
           defender.knockbackDrag = !blocked ? (attack.knockbackDrag ?? 5.2) : 5.2;
