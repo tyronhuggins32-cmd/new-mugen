@@ -549,6 +549,17 @@
     }else{
       clip="idle";index=0;
     }
+    const priorClip=fighter._exactPreviousClip;
+    const previousAttack=["light","cross","body","upper","heavy"].includes(priorClip)
+      ||priorClip==="attackRecover";
+    // The authored attack sheets end in guarded stances. Keep the final
+    // sprite for a few simulation ticks before returning to idle; otherwise
+    // the outfit/limbs snap to an unrelated atlas in a single frame.
+    if(!attack && state==="idle" && t<.075 && previousAttack &&
+       fighter._exactLastAttackPose){
+      fighter._exactPreviousClip="attackRecover";
+      return {...fighter._exactLastAttackPose,clip:"attackRecover"};
+    }
     fighter._exactPreviousClip=clip;
     // Never overlay a second fighter. Select ONE texture for this frame only.
     loadV17Movement();
@@ -569,7 +580,10 @@
       v23GuardPose(clip,t,fighter)||
       v19JumpPose(clip,t,Number(fighter.vy)||0)||
       v18CrouchPose(clip,t,fighter)||v17Pose(clip,relative,t,fighter);
-    if(expanded)return expanded;
+    if(expanded){
+      if(attack)fighter._exactLastAttackPose=expanded;
+      return expanded;
+    }
     if(walkIdleImage && (clip==="idle" || clip==="forward" || clip==="retreat")){
       const seq=clip==="idle"?IDLE_CYCLE:clip==="retreat"?BACKWALK_CYCLE:WALK_CYCLE;
       const rate=clip==="idle"?12:13;
