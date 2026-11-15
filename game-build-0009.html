@@ -3115,7 +3115,15 @@
             this.setState(this.grounded ? (sprinting ? "run" : "walk") : "jump");
           } else {
             this.vx *= Math.max(0, 1 - dt * (this.grounded ? movement.groundFriction : movement.airFriction));
-            if (this.grounded) this.setState("idle");
+            if (this.grounded) {
+              // Releasing the stick does not instantly swap a moving leg
+              // to a planted idle cel while the physics body is still
+              // coasting. Finish a short, distance-driven step first.
+              const moving=["walk","run"].includes(this.state);
+              const coasting=moving && Math.abs(this.vx)>
+                Math.max(32,movement.groundSpeed*.14);
+              if (!coasting) this.setState("idle");
+            }
           }
 
           this.applyPhysics(dt);
