@@ -27,7 +27,7 @@
     light:     {forward:48, reach:94, above:175, height:52},
     cross:     {forward:43, reach:102, above:174, height:64},
     body:      {forward:40, reach:99, above:129, height:79},
-    upper:     {forward:25, reach:110, above:224, height:172}
+    upper:     {forward:25, reach:110, above:224, height:172},
     heavy:     {forward:35, reach:110, above:192, height:125},
     powerKick: {forward:46, reach:107, above:155, height:92}
   });
