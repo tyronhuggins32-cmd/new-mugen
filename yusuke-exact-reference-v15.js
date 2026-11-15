@@ -366,6 +366,29 @@
       part:"heavy-triangle-v26",source:"heavy-triangle-v26",
       progress,frameCount:16};
   }
+  // V28: 12-frame Launcher / Uppercut. Only the fourth Square attack
+  // changes its visible pose; hit timing, physics and Triangle remain intact.
+  const V28_UPPERCUT_SRC="characters/yusuke/yusuke_launcher_uppercut_12frames.png";
+  let launcherV28=null,launcherRequestedV28=false;
+  function loadV28Uppercut(){
+    if(launcherRequestedV28 || typeof root.Image!=="function")return;
+    launcherRequestedV28=true;
+    const image=new root.Image();image.decoding="async";
+    image.onload=()=>{
+      if((image.naturalWidth||image.width)===1024 &&
+         (image.naturalHeight||image.height)===768)launcherV28=image;
+    };
+    image.onerror=()=>{}; // Missing art must retain the original uppercut.
+    image.src=V28_UPPERCUT_SRC;
+  }
+  function v28UppercutPose(clip,progress,fighter){
+    if(clip!=="upper" || !launcherV28 || !fighter?.grounded)return null;
+    const index=Math.min(11,Math.floor(clamp(progress)*12));
+    const frame={x:(index%4)*256,y:Math.floor(index/4)*256,
+      w:256,h:248,ax:128,key:index};
+    return {image:launcherV28,frame,index,clip,scale:Math.min(.91,MAX_RENDER_HEIGHT/248),
+      part:"launcher-v28",source:"launcher-v28",progress,frameCount:12};
+  }
   const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
   const WALK_IDLE_BOUNDS = Object.freeze([[128,14,262,247],[128,8,262,247],[128,6,262,247],[128,1,265,247],[128,6,265,246],[129,12,263,246],[129,15,262,246],[129,17,262,246],[113,20,255,247],[126,19,255,242],[118,19,273,240],[101,23,264,240],[140,25,256,246],[137,21,257,243],[112,21,279,243],[122,23,257,246]]);
   const WALK_IDLE_FRAMES = Object.freeze(WALK_IDLE_BOUNDS.map((b,i)=>Object.freeze({
@@ -517,7 +540,9 @@
     if(fighter.grounded && Object.prototype.hasOwnProperty.call(V25_ATTACK_ROWS,clip))
       loadV25LightCombo();
     if(clip==="heavy" && fighter.grounded)loadV26Heavy();
-    const expanded=v26HeavyPose(clip,progress,fighter)||
+    if(clip==="upper" && fighter.grounded)loadV28Uppercut();
+    const expanded=v28UppercutPose(clip,progress,fighter)||
+      v26HeavyPose(clip,progress,fighter)||
       v25LightComboPose(clip,progress,fighter)||
       v24DodgePose(clip,fighter)||
       v23GuardPose(clip,t,fighter)||
