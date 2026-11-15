@@ -60,6 +60,8 @@ jobs:
         run: node tests/yusuke-spirit-punch-v30.cjs
       - name: Spirit Punch combat energy, hitbox, knockout and input buffer V30
         run: node tests/yusuke-spirit-punch-combat-v30.cjs
+      - name: Spirit Punch airborne knockback, directional flight, and guarded recovery V32
+        run: node tests/yusuke-spirit-punch-launch-v32.cjs
       - name: Twelve-frame Yusuke fourth-Square Launcher Uppercut V28
         run: node tests/yusuke-uppercut-v28.cjs
       - name: Twelve-frame Triangle Rising Launcher with preserved R2 Square Spirit Punch V31
