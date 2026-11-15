@@ -102,7 +102,12 @@ const fs=require("node:fs");
         throw Error("Missing canonical palette on "+state);
       if(state==="attack-heavy" &&
          (!art||art.removedPale<8))
-        throw Error("Heavy combo still has pale outlines: "+JSON.stringify(art));
+        throw Error("Heavy combo still has pale outlines: "+JSON.stringify({
+          art,source:pose.source,clip:pose.clip,index:pose.index,
+          imgWidth:pose.image?.naturalWidth||pose.image?.width,
+          imgHeight:pose.image?.naturalHeight||pose.image?.height,
+          converted:!!unified,masterReady:window.MugenYusukePaletteV30.isReady()
+        }));
       samples.push({state,source:pose.source,
         frame:pose.index,visibleHeight:Math.round(layout.opaqueHeight),
         footGap:Math.round(layout.footOffset),bodyOffset:Math.round(layout.horizontalOffset),
