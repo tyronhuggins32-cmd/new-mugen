@@ -15,7 +15,7 @@
     l3: 10, r3: 11,
     up: 12, down: 13, left: 14, right: 15
   });
-  const DEADZONE = .30;
+  const DEADZONE = .26;
   const HOLD_REPEAT_MS = 215;
 
   function create(callbacks) {
@@ -30,7 +30,7 @@
 
     const buttonDown = (pad, number) => {
       const button = pad.buttons && pad.buttons[number];
-      return Boolean(button && (button.pressed || button.value >= .55));
+      return Boolean(typeof button === "number" ? button >= .55 : button && (button.pressed || button.value >= .55));
     };
 
     function updateStatus(value, pad) {
@@ -58,7 +58,7 @@
       try { gamepads = callbacks.getGamepads?.() || []; } catch (_) { /* no API */ }
       const pads = Array.from(gamepads).filter(p => p && p.connected !== false);
       // Keep the same controller when other Bluetooth gamepads wake up.
-      const pad = pads.find(p => p.index === previousPad && p.id === previousPadId) || pads[0] || null;
+      const pad = pads.find(p => p.index === previousPad && p.id === previousPadId) || pads.find(p => p.mapping === "standard" && p.buttons?.length >= 12) || pads.find(p => p.buttons?.length >= 12) || pads[0] || null;
       if (!pad) {
         if (connected) {
           releaseAndForget();
@@ -94,7 +94,6 @@
         right: down("right") || axisX > DEADZONE,
         jump: down("up") || axisY < -.72 || down("cross"),
         block: down("down") || axisY > .72 || down("l1"),
-        crouch: down("down") || axisY > .72,
         // Retain ordinary blocking while distinguishing the low D-pad input.
         crouch: down("down") || axisY > .72,
         light: down("square"),
@@ -119,7 +118,12 @@
       }
 
       if (!acceptingFightInput || callbacks.isPaused?.()) {
-        const direction = down("up") || axisY < -.56 ? -1 : down("down") || axisY > .56 ? 1 : 0;
+        // Roster navigation is horizontal; all other menus use vertical input.
+        const horizontal = screen === "arcade" && !callbacks.isModalOpen?.();
+        const direction = horizontal
+          ? (down("left") || axisX < -.56 ? -1 : down("right") || axisX > .56 ? 1 :
+             down("up") || axisY < -.56 ? -1 : down("down") || axisY > .56 ? 1 : 0)
+          : (down("up") || axisY < -.56 ? -1 : down("down") || axisY > .56 ? 1 : 0);
         if (direction) {
           if (lastMenuDirection !== direction || now >= nextMenuMove) {
             callbacks.navigate?.(direction);
