@@ -158,7 +158,8 @@ assert.match(html,/: premiumPose \? null : motionPose/);
 
 assert.match(html,/previousSheet/);
 assert.match(html,/window\.MugenFluid\?\.drawCel/);
-assert.match(html,/defender\.hitReaction = !blocked/);
+assert.match(html,/defender\.hitReaction = forcedKnockback/);
+assert.match(html,/: !blocked && \(attack\.heavyImpact/);
 assert.match(html,/this\.state === "hit" && yusukeMotionAtlas\?\.generated/);
 const inline=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
   .map(m=>m[1]).find(s=>s.includes("function selectYusukeCombatPose"));
