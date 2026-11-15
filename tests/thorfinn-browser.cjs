@@ -53,8 +53,13 @@ const assert=require('node:assert/strict');
    game.player.stateTime=.24;
    if(!game.player.activeHitbox()) throw Error('Dagger Lunge missing melee hitbox');
    game.player.energy=75;
-   if(!game.player.beginAttack('heavy',75)||game.player.currentAttack()!=='shotgun')
-     throw Error('Whirlwind Blades mapping missing');
+   if(!game.player.beginAttack('heavy',75)||game.player.currentAttack()!=='heavy')
+     throw Error('Triangle heavy combo mapping missing');
+   game.player.stateTime=.15;
+   if(!game.player.activeHitbox()) throw Error('Heavy combo missing melee hitbox');
+   // Whirlwind Blades is still a separate special, no longer Triangle.
+   if(!game.player.beginAttack('shotgun',75)||game.player.currentAttack()!=='shotgun')
+     throw Error('Whirlwind Blades special missing');
    game.player.stateTime=.26;
    if(!game.player.activeHitbox()) throw Error('Whirlwind Blades missing melee hitbox');
    // The two newly uploaded sprite families are functional game states.
