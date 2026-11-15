@@ -41,7 +41,7 @@ const fs=require("node:fs");
   // The match loader now prewarms the actual artist-authored sheets.
   // A cached request must resolve immediately and every critical PNG exist.
   const warm=await page.evaluate(()=>window.MugenExactYusuke.preloadForMatch());
-  assert.equal(warm.length,13);
+  assert.equal(warm.length,15);
   assert.ok(warm.every(a=>a.ok), "Critical authored sprite sheet failed to preload");
   const reference=await page.evaluate(()=>({
     ready:window.MugenYusukePaletteV30?.isReady(),
@@ -140,6 +140,9 @@ const fs=require("node:fs");
     if(recoveryHeight<190 || Math.abs(recoveryHeight-idleHeight)>6)
       throw Error("Square finisher recovery shrinks vs idle: "+
         JSON.stringify({recoveryHeight,idleHeight}));
+    if(square.some(s=>s.source!=="square-combo-v32"))
+      throw Error("Square must use all 30 NEW sprite frames, not old V25/V28: "+
+        JSON.stringify(square.filter(s=>s.source!=="square-combo-v32")));
     const upperEnd=square.filter(s=>s.move==="upper").slice(-2);
     if(upperEnd.some(s=>s.px<190))
       throw Error("Square uppercut end still shrinks: "+JSON.stringify(upperEnd));
