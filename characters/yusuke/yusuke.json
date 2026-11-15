@@ -678,7 +678,9 @@
           "heavyKick"
         ],
         "airAnimation": "airKick",
-        "heavyImpact": true
+        "heavyImpact": true,
+        "launchVelocity": -440,
+        "animation": "upper"
       },
       "gun": {
         "duration": 0.6,
@@ -892,10 +894,10 @@
     },
     {
       "id": "heavy_triangle_v26",
-      "name": "Spirit Punch Heavy (16 Frames)",
+      "name": "Rising Launcher Uppercut (12 Frames)",
       "input": "△ / Triangle",
       "type": "heavy",
-      "description": "Triangle executes the evolved 16-frame Spirit Punch heavy: guarded windup, blue-white energy focused around the fist, driving blow and recovery. Retains original heavy damage, knockback and no Spirit cost."
+      "description": "Triangle launches the opponent with a new 12-frame rising uppercut and brief cyan arc. Grounded heavy strike with 45 base damage, unchanged hit timing, no Spirit cost, and stronger upward launch for aerial follow-ups. R2 + Square still performs metered Spirit Punch."
     },
     {
       "id": "spirit_punch_overdrive_v30",
