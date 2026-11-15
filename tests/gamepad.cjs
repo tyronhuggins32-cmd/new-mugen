@@ -101,4 +101,43 @@ assert.equal(input.connected, false);
 assert.equal(controls.size, 0);
 assert.ok(events.includes("disconnect"));
 
+// A second connected virtual controller must not steal inputs from a mapped pad.
+const unusedPad = { index: 3, id: "virtual", mapping: "", connected: true,
+  buttons: [], axes: [0, 0] };
+const numericPad = { index: 4, id: "PS5 browser fallback", mapping: "standard",
+  connected: true, buttons: Array(16).fill(0), axes: [0, 0] };
+const forwarded = [];
+let selectionScreen = "arcade";
+let overlayOpen = false;
+const fallback = scope.window.MugenGamepad.create({
+  getGamepads: () => [unusedPad, numericPad],
+  screen: () => selectionScreen,
+  isModalOpen: () => overlayOpen,
+  isPaused: () => false,
+  isResultOpen: () => false,
+  press: control => forwarded.push("press:" + control),
+  release: control => forwarded.push("release:" + control),
+  navigate: direction => forwarded.push("nav:" + direction)
+});
+fallback.update(600);
+numericPad.axes[0] = 0.8;
+fallback.update(610);
+assert.ok(forwarded.includes("nav:1"), "horizontal stick navigates character selection");
+numericPad.axes[0] = 0;
+fallback.update(620);
+overlayOpen = true;
+numericPad.axes[0] = 0.8;
+fallback.update(630);
+assert.equal(forwarded.filter(x => x === "nav:1").length, 1,
+  "overlay ignores horizontal movement and uses vertical navigation");
+selectionScreen = "fight";
+numericPad.axes[0] = 0;
+numericPad.buttons[2] = 1;
+fallback.update(640);
+assert.ok(forwarded.includes("press:light"),
+  "numeric button and proper physical gamepad are accepted");
+numericPad.connected = false;
+fallback.update(650);
+assert.ok(forwarded.includes("release:light"), "disconnect releases held inputs");
+
 console.log("PASS: DualSense L3 edge-triggered run toggle, R1 dash, stick/D-pad, X confirm, menu repeat, attacks, pause/resume and disconnect cleanup.");
