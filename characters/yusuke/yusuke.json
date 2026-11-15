@@ -752,6 +752,25 @@
         "heavyImpact": true,
         "spiritCoated": true,
         "cost": 0
+      },
+      "spiritPunch": {
+        "duration": 0.58,
+        "activeStart": 0.282,
+        "activeEnd": 0.422,
+        "damage": 76,
+        "range": 146,
+        "height": 118,
+        "knockback": 610,
+        "knockbackDrag": 4.5,
+        "hitstun": 0.43,
+        "energyGain": 0,
+        "cost": 24,
+        "animation": "heavyUppercut",
+        "airAnimation": "airKick",
+        "spiritCoated": true,
+        "heavyImpact": true,
+        "referenceHit": true,
+        "groundedOnly": true
       }
     },
     "projectile": {
@@ -873,10 +892,17 @@
     },
     {
       "id": "heavy_triangle_v26",
-      "name": "Heavy Combo (16 Frames)",
+      "name": "Spirit Punch Heavy (16 Frames)",
       "input": "△ / Triangle",
       "type": "heavy",
-      "description": "Triangle executes a dedicated 16-frame physical heavy attack at any Spirit level: windup, driving punch, cross, rising finish and recovery. Uses original heavy damage, hitboxes and knockback; no Spirit cost."
+      "description": "Triangle executes the evolved 16-frame Spirit Punch heavy: guarded windup, blue-white energy focused around the fist, driving blow and recovery. Retains original heavy damage, knockback and no Spirit cost."
+    },
+    {
+      "id": "spirit_punch_overdrive_v30",
+      "name": "Spirit Punch: Overdrive",
+      "input": "Hold R2 + Square (24 Spirit)",
+      "type": "special",
+      "description": "Empowered close-range Spirit Punch. Concentrates cyan-white energy around the fist before a powerful melee hit. Costs 24 Spirit, only on the ground; separate from MAX Spirit Gun on R2 release."
     },
     {
       "id": "spirit_gun",
@@ -1676,5 +1702,18 @@
         ]
       }
     }
+  },
+  "spiritPunchSpriteSheet": {
+    "src": "characters/yusuke/yusuke_spirit_punch_16frames.png",
+    "width": 1024,
+    "height": 1024,
+    "columns": 4,
+    "rows": 4,
+    "frameWidth": 256,
+    "frameHeight": 256,
+    "frames": 16,
+    "format": "RGBA",
+    "input": "R2+Square",
+    "triangleHeavyVisual": true
   }
 }
