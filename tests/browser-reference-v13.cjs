@@ -25,11 +25,12 @@ const assert=require("node:assert/strict");
    game.controller.update=()=>({left:false,right:false,block:false});
    const moves=window.YusukeAttackLab.moves();
    const atlas=window.testReference.atlas, exact=window.testReference.exactAtlas;
+   const exactCanonical=window.MugenYusukePaletteV30?.prepare(exact?.image)||exact?.image;
    let exactDrawCount=0,hitCount=0,heavyHits=0;
    const canvas=document.querySelector("#game-canvas"),ctx=canvas.getContext("2d"),
     originalDraw=ctx.drawImage.bind(ctx);
    ctx.drawImage=function(...args){
-     if(exact && args[0]===exact.image)exactDrawCount++;
+     if(exact && (args[0]===exact.image||args[0]===exactCanonical))exactDrawCount++;
      return originalDraw(...args);
    };
    game.damageFighter=function(a,d,h,x,y){
@@ -100,7 +101,7 @@ const assert=require("node:assert/strict");
   assert.equal(result.atlasFrames,64,"all 64 new cel poses built in real Chromium");
   assert.deepEqual(result.atlasSize,[4096,4096]);
   assert.equal(result.exactFrames,16,"Yusuke uses the 16-pose user image for ALL move visuals");
-  assert.ok(result.drew>=1,"game draws the submitted exact Yusuke sprite sheet during flash rush");
+  assert.ok(result.drew>=1,"flash rush draws the submitted Yusuke sheet or its exact-color canonical canvas");
   assert.equal(result.flashed,true);
   assert.equal(result.immediate,"flashRush");
   assert.equal(result.flash.hits,5,"all five flash-step damage beats must connect");
