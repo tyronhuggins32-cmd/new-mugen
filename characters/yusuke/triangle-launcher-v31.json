@@ -1,0 +1,62 @@
+{
+  "formatVersion": 1,
+  "character": "Yusuke Urameshi",
+  "animation": "triangle-launcher-v31",
+  "input": "Triangle",
+  "sheet": "characters/yusuke/yusuke_triangle_launcher_12frames.png",
+  "atlas": {
+    "width": 1024,
+    "height": 768,
+    "columns": 4,
+    "rows": 3,
+    "cellWidth": 256,
+    "cellHeight": 256,
+    "count": 12,
+    "alpha": "RGBA",
+    "sha256": "fc9d254538c3981313767a691287423867f12de5a2878a600deca21dd8cc4c1d"
+  },
+  "pivot": {
+    "x": 128,
+    "footY": 246,
+    "renderFootY": 248
+  },
+  "clips": {
+    "triangleLauncher": {
+      "frameRange": [
+        0,
+        11
+      ],
+      "loop": false,
+      "phases": {
+        "anticipation": [
+          0,
+          4
+        ],
+        "activeRisingStrike": [
+          5,
+          8
+        ],
+        "recovery": [
+          9,
+          11
+        ]
+      },
+      "durationSeconds": 0.325
+    }
+  },
+  "battle": {
+    "state": "attack-heavy",
+    "baseDamage": 45,
+    "energyCost": 0,
+    "hitWindowSeconds": [
+      0.085,
+      0.198
+    ],
+    "launchVelocity": -440,
+    "hitStunSeconds": 0.34,
+    "knockback": 485,
+    "existingFourthSquareUppercut": true,
+    "spiritPunchR2Square": "Unchanged 24-spirit melee special"
+  },
+  "notes": "V31 art overrides grounded heavy sprite selection. If texture fails to load, older Spirit Punch/heavy art is the fallback. Foot pivots and palette are normalized, no separate VFX compositing layer."
+}
