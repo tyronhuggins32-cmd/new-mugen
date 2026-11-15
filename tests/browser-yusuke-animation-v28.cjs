@@ -38,9 +38,12 @@ const fs=require("node:fs");
       window.MugenExactYusuke.pose(p,window.v28Probe.atlas,.32);
     }
   });
-  // Assets are requested on first use; allow the browser to finish loading
-  // rather than treating the initial optional fallback as the final art.
-  await page.waitForTimeout(650);
+  // The match loader now prewarms the actual artist-authored sheets.
+  // A cached request must resolve immediately and every critical PNG exist.
+  const warm=await page.evaluate(()=>window.MugenExactYusuke.preloadForMatch());
+  assert.equal(warm.length,7);
+  assert.ok(warm.every(a=>a.ok), "Critical authored sprite sheet failed to preload");
+  await page.waitForTimeout(100);
   const report=await page.evaluate(()=>{
     const {game,atlas,arena}=window.v28Probe;
     const painter=window.MugenExactYusuke;
@@ -98,9 +101,24 @@ const fs=require("node:fs");
     const lo=Math.min(...standing.map(s=>s.visibleHeight));
     const hi=Math.max(...standing.map(s=>s.visibleHeight));
     if(hi-lo>67)throw Error("Visually inconsistent body heights: "+JSON.stringify(standing));
+    // Hold the last artwork frame briefly at the attack/idle boundary.
+    // It must not flash to an unrelated legacy sprite on the first tick.
+    p.state="attack-heavy";p.stateTime=.31;p.hitstun=0;
+    p.grounded=true;p.dashTimer=0;
+    const lastHeavy=painter.pose(p,atlas,.325);
+    p.state="idle";p.stateTime=.02;
+    const held=painter.pose(p,atlas,.325);
+    if(held.clip!=="attackRecover" || held.image!==lastHeavy.image ||
+       held.frame.key!==lastHeavy.frame.key)
+      throw Error("Heavy attack snaps to a different atlas before recovery");
+    p.stateTime=.10;
+    const resting=painter.pose(p,atlas,.325);
+    if(resting.clip==="attackRecover")
+      throw Error("Attack recovery locks character in attack pose");
     // Draw positions are separate from gameplay hitboxes: all samples use
     // the same world-root and consistent source-relative alpha foot alignment.
-    return {heightRange:[lo,hi],samples};
+    return {heightRange:[lo,hi],samples,
+      recovery:{heldSource:held.source,lastSource:lastHeavy.source,rest:resting.source}};
   });
   assert.deepEqual(errors,[],"browser drawing must not throw");
   assert.ok(report.samples.length>=12);
