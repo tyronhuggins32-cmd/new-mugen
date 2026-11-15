@@ -63,6 +63,8 @@ jobs:
           exit 1
       - name: Play through browser combat
         run: node tests/combat.cjs
+      - name: Check Yusuke V28 actual PNG silhouettes, pose continuity and foot anchors
+        run: node tests/browser-yusuke-animation-v28.cjs
       - name: Play Thorfinn sprite and dagger moves in Chromium
         run: node tests/thorfinn-browser.cjs
       - name: Verify fluid render updates in Chromium
