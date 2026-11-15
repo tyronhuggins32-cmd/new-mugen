@@ -2814,6 +2814,7 @@
           this.stateTime = 0;
           this.hitstun = 0;
           this.hitReaction = "stagger";
+          this._spiritPunchLaunch = false;
           this.invulnerability = 0;
           this.attackConnected = false;
           this.projectileSpawned = false;
@@ -2982,6 +2983,7 @@
             this.vx *= Math.max(0, 1 - dt * (this.knockbackDrag || 5.2));
             if (this.hitstun <= 0) {
               this.knockbackDrag = 5.2;
+              this._spiritPunchLaunch = false;
               this.setState("idle");
             }
             this.applyPhysics(dt);
@@ -4270,6 +4272,7 @@
           // timer so the launch never begins halfway through an old animation.
           // A successful guard still receives block stun and chip damage only.
           const forcedKnockback = !blocked && Boolean(attack.forceKnockback);
+          defender._spiritPunchLaunch = forcedKnockback;
           defender.setState(blocked ? "block" : "hit");
           if (forcedKnockback) defender.stateTime = 0;
           defender.hitReaction = forcedKnockback
