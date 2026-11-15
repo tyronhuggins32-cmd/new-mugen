@@ -437,7 +437,10 @@
       (image.naturalHeight||image.height)!==HEIGHT)return null;
     loadWalkIdle();
     // V17 is requested lazily on first rendered pose to preserve V16 boot behavior.
-    return Object.freeze({image,frames:FRAMES,scale:1,source:"user-reference",
+    // Match the navy-pants walking and punch atlases without editing the
+    // user's original 16-pose PNG. The recolored canvas is cached once.
+    const normalized=root.MugenLegacyYusukeV27?.prepare(image)||image;
+    return Object.freeze({image:normalized,frames:FRAMES,scale:1,source:"user-reference",
       frameCount:16,width:WIDTH,height:HEIGHT,maximumHeight:MAX_RENDER_HEIGHT});
   }
   function frameAt(seq,p){
@@ -531,7 +534,10 @@
         part:"walk-idle",source:"walk-idle-v16",progress:0,frameCount:16};
     }
     const frame=atlas.frames[index];
-    const scale=Math.min(.88,MAX_RENDER_HEIGHT/frame.h);
+    // The old fallback's character fills more of each crop than the new
+    // navy sheets. Keep its visible body near 190px, not 208px, so hit
+    // reactions and specials do not suddenly make Yusuke a giant.
+    const scale=Math.min(.88,190/frame.h);
     return {image:atlas.image,frame,index,clip,scale,part:"exact",source:"user-reference",
       progress,frameCount:atlas.frameCount};
   }
@@ -549,7 +555,7 @@
       Math.sin(Math.PI*progress)*Math.min(6,Math.max(0,20*progress)):0;
     // V21 cels already contain the head/hip rise of a planted heel-toe gait.
     // Do not add a second synthetic bob that makes the feet skate.
-    const bob=selected.source==="movement-v21"?0:idle?
+    const bob=["movement-v21","movement-v22","movement-v22-generated"].includes(selected.source)?0:idle?
       Math.sin((time||0)*.005)*.7:clip==="forward"||clip==="retreat"?
       Math.sin(t*15)*1.15:0;
     const tilt=clip==="knockback" ? -.09 :
@@ -566,8 +572,9 @@
     ctx.translate(dx,dy);
     ctx.scale(face,1);
     if(tilt)ctx.rotate(tilt);
-    ctx.imageSmoothingEnabled=!["movement-v17","movement-v21",
-      "movement-v22","movement-v22-generated","movement-v24"].includes(selected.source);
+    // Every atlas is pixel art. Smooth scaling blurred the legacy fallback
+    // precisely when transitioning into a newer crisp punch cel.
+    ctx.imageSmoothingEnabled=false;
     if("imageSmoothingQuality" in ctx && ctx.imageSmoothingEnabled)ctx.imageSmoothingQuality="high";
     // This is the ONLY full-body Yusuke draw for each game frame.
     ctx.drawImage(image,frame.x,frame.y,frame.w,frame.h,
