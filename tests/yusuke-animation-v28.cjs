@@ -118,4 +118,21 @@ assert.ok(html.indexOf("mugen-yusuke-animation-v28.js")>
 assert.match(html,/continuity=28/);
 assert.match(html,/this.gaitPhase=\(this.gaitPhase\+travel\/stride\)%1/,
   "physics must advance gait using actual distance, not animation time");
+// Painting at 120Hz uses the actual [previous,current] physics positions.
+// It must not be a double-drawn ghost or a simulation-only snapped position.
+const painted=[];
+const paintCtx={save(){},restore(){},scale(){},rotate(){},
+  translate(x,y){painted.push([x,y]);},drawImage(){},
+  imageSmoothingEnabled:true};
+fighter.state="idle";fighter.vx=0;fighter.dashTimer=0;fighter.hitstun=0;
+fighter.x=520;fighter.y=650;fighter.prevX=490;fighter.prevY=638;
+renderer.draw(fighter,paintCtx,0,0,atlas,.35);
+renderer.draw(fighter,paintCtx,0,.5,atlas,.35);
+renderer.draw(fighter,paintCtx,0,1,atlas,.35);
+assert.equal(painted.length,3,"one transformed body each render pass");
+assert.ok(Math.abs(painted[1][0]-painted[0][0]-15)<.001);
+assert.ok(Math.abs(painted[2][0]-painted[0][0]-30)<.001);
+assert.ok(Math.abs(painted[1][1]-painted[0][1]-6)<.001);
+assert.ok(Math.abs(painted[2][1]-painted[0][1]-12)<.001,
+  "the painted Yusuke body must interpolate world Y as well as X");
 console.log("PASS: V28 alpha-measured ground pivots, fixed family proportions, cached readback, no treadmill gait, dash and PS5 inputs unchanged.");
