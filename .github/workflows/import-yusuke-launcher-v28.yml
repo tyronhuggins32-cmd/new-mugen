@@ -1,0 +1,50 @@
+name: Import Yusuke Launcher Uppercut V28
+on:
+  push:
+    paths:
+      - '.github/workflows/import-yusuke-launcher-v28.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-atlas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and verify authored 12-frame RGBA PNG
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p characters/yusuke
+          curl --fail --location --silent --show-error --retry 3 --max-time 90 \
+            'https://at.adobe.com/R7reAKprjQ5iiGF3' \
+            -o characters/yusuke/yusuke_launcher_uppercut_12frames.png
+          echo '97dfe746e8d9aff15e02724ec59a2af19dd61cd2baff939b0560ac4ff7974387  characters/yusuke/yusuke_launcher_uppercut_12frames.png' | sha256sum -c -
+          python3 - <<'PY'
+          import struct
+          p='characters/yusuke/yusuke_launcher_uppercut_12frames.png'
+          b=open(p,'rb').read()
+          assert b[:8]==bytes.fromhex('89504e470d0a1a0a')
+          assert struct.unpack('>II',b[16:24])==(1024,768), 'Expected 4 columns by 3 rows'
+          assert b[25]==6, 'True RGBA alpha required'
+          assert len(b)>500000, 'Full-resolution PNG missing'
+          print('PASS: 12 launcher cels in 1024x768 transparent PNG')
+          PY
+      - name: Commit game atlas safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke_launcher_uppercut_12frames.png
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Add authored transparent Yusuke 12-frame uppercut launcher'
+          for n in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
