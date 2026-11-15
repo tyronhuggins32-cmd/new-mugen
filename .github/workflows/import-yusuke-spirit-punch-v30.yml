@@ -1,0 +1,47 @@
+name: Import Yusuke Spirit Punch V30 sprite atlas
+on:
+  push:
+    paths:
+      - '.github/workflows/import-yusuke-spirit-punch-v30.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and verify approved Spirit Punch animation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p characters/yusuke
+          curl --fail --location --silent --show-error --retry 4 --max-time 120 \
+            'https://at.adobe.com/EQBhSgLCeqnOjjT6' \
+            -o characters/yusuke/yusuke_spirit_punch_16frames.png
+          echo '0cee1ed6617b1d5b0053e9b52f8cf1db5638a9a23d0a1a923ca72857dd517777  characters/yusuke/yusuke_spirit_punch_16frames.png' | sha256sum -c -
+          python3 - <<'PY'
+          import struct
+          b=open('characters/yusuke/yusuke_spirit_punch_16frames.png','rb').read()
+          assert b[:8]==bytes.fromhex('89504e470d0a1a0a')
+          assert struct.unpack('>II',b[16:24])==(1024,1024)
+          assert b[25]==6, 'True PNG RGBA alpha required'
+          assert len(b)>800000, 'Do not replace full sprite data with a preview'
+          print('PASS 16 x 256px detailed RGBA cels with verified SHA256')
+          PY
+      - name: Commit original sprites without overwriting other changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke_spirit_punch_16frames.png
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Import original 16-frame transparent Yusuke Spirit Punch V30 atlas'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
