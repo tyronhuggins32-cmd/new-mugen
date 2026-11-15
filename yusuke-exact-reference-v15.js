@@ -59,6 +59,15 @@
   const V22_WALK_SRC = "characters/yusuke/yusuke_walk_forward_v22_24frames.png";
   let walkV22=null,walkV22Status="unrequested";
   let walkSynthesizedV22=null;
+  function maybeSynthesizeWalkFallback(){
+    // V22's real 24 unique PNG frames make synthetic halfway-poses redundant.
+    // Avoid a large Canvas allocation on the first gameplay frame unless
+    // that art failed to load and we actually need the offline fallback.
+    if(!walkSynthesizedV22 && walkV17 && !walkV22 &&
+      ["missing","invalid"].includes(walkV22Status)){
+      walkSynthesizedV22=root.MugenWalkPolishV22?.generate(walkV17)||null;
+    }
+  }
   function loadV22Walk(){
     if(walkV22Status!=="unrequested"||typeof root.Image!=="function")return;
     walkV22Status="loading";
@@ -68,9 +77,13 @@
       if((image.naturalWidth||image.width)===1536 &&
          (image.naturalHeight||image.height)===1024){
         walkV22=image;walkV22Status="ready";
-      }else walkV22Status="invalid";
+      }else{
+        walkV22Status="invalid";maybeSynthesizeWalkFallback();
+      }
     };
-    image.onerror=()=>{walkV22Status="missing";};
+    image.onerror=()=>{
+      walkV22Status="missing";maybeSynthesizeWalkFallback();
+    };
     image.src=V22_WALK_SRC;
   }
   let walkV21=null,walkV21Status="unrequested";
@@ -133,7 +146,7 @@
     load(V17_IDLE_SRC,image=>{idleV17=image;});
     load(V17_WALK_SRC,image=>{
       walkV17=image;
-      walkSynthesizedV22=root.MugenWalkPolishV22?.generate(image)||null;
+      maybeSynthesizeWalkFallback();
     });
   }
   function v17Pose(clip,relative,t,fighter){
