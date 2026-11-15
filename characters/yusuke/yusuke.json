@@ -845,7 +845,7 @@
       "extraPerHit": 0.2,
       "maxMultiplier": 2.6
     },
-    "spacing": 142,
+    "spacing": 168,
     "punchAssist": 25,
     "collision": {
       "groundedCenterSpacing": 142,
