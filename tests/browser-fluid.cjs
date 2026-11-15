@@ -41,7 +41,8 @@ const path = require("node:path");
     const second=sample();
     const exact=window.testEngine.exactYusukeAtlas;
     const exactReady=Boolean(exact?.image && exact.frameCount===16 &&
-      exact.image.naturalWidth===1536 && exact.image.naturalHeight===1024);
+      (exact.image.naturalWidth||exact.image.width)===1536 &&
+      (exact.image.naturalHeight||exact.image.height)===1024);
     const exactMaterial={hair:0,shirt:0,pants:0,shoes:0,transparent:0};
     if(exactReady){
       const scratch=document.createElement("canvas");
@@ -55,8 +56,11 @@ const path = require("node:path");
         if(A<230)continue;
         if(R<55&&G<95&&B<115)exactMaterial.hair++;
         if(R>135&&G>110&&B<170&&R>G*1.12)exactMaterial.shirt++;
-        if(G>R*1.3&&G>B*1.03&&G>28&&R<130)exactMaterial.pants++;
-        if(R>168&&G>168&&B>168)exactMaterial.shoes++;
+        const row=Math.floor((k/4)/384);
+        if(row>120 && B>G*1.24 && G>R*1.12 && B>55 && B<190)
+          exactMaterial.pants++;
+        if(row>215 && R<90 && G<95 && B<130 && B>R*1.1)
+          exactMaterial.shoes++;
       }
     }
     const extra=window.testEngine.directionalAtlas;
@@ -132,7 +136,10 @@ const path = require("node:path");
     g.render(1720); // Load and paint the kick atlas in the real canvas context.
     g.reset();g.state="play";g.player.energy=51;g.player.beginAttack("heavy");
     const highAction=g.player.currentAttack();
-    // Simulate actual shot release and hit in Chromium, not just metadata.
+    // Shotgun is now an independent special, not the Triangle heavy.
+    // Exercise it directly so its projectile and VFX regression stays real.
+    g.reset();g.state="play";g.player.energy=100;
+    g.player.beginAttack("shotgun");
     g.cpu.x=g.player.x+240;
     for(let i=0;i<20;i++)g.player.update(1/60,neutral,g.cpu,g);
     const shotgunProjectileCount=g.projectiles.filter(p=>p.kind==="spiritShotgun").length;
@@ -212,10 +219,10 @@ const path = require("node:path");
   });
   assert.notEqual(result.first,result.second,"movement should modify actual rendered pixels continuously");
   assert.equal(result.exactReady,true,
-    "all Yusuke states must render the user's 1536x1024 exact reference image");
+    "all Yusuke states must render the 1536x1024 alpha-cleaned reference or cached canvas");
   assert.ok(result.exactMaterial.hair>1000 && result.exactMaterial.shirt>1000 &&
     result.exactMaterial.pants>1000 && result.exactMaterial.shoes>100,
-    "uploaded cel must preserve dark hair, yellow shirt, green pants and white shoes");
+    "normalized legacy cel must preserve hair/shirt and use navy pants/dark shoes");
   assert.ok(result.exactMaterial.transparent>40000,
     "old JPEG white background must be transparent in the playable game");
   assert.deepEqual(result.atlasCounts,[16,16],"existing premium sheets remain aligned");
@@ -262,8 +269,8 @@ const path = require("node:path");
   assert.equal(result.premiumWidths[0],2048,"combat pose sprites must load at high resolution");
   assert.equal(result.premiumWidths[1],2048,"movement pose sprites must load at high resolution");
   assert.equal(result.arenaWidth,2600,"rooftop stage world must be larger than the viewport");
-  assert.equal(result.lowAction,"powerKick","at 50 Spirit Triangle becomes Power Kick");
-  assert.equal(result.highAction,"shotgun","at 51 Spirit Triangle becomes Spirit Shotgun");
+  assert.equal(result.lowAction,"heavy","Triangle at 50 Spirit executes the heavy combo");
+  assert.equal(result.highAction,"heavy","Triangle at 51 Spirit still executes the heavy combo");
   assert.equal(result.shotgunProjectileCount,7,"Spirit Shotgun keeps seven damaging collision pellets");
   assert.equal(result.shotgunVisualFragments,40,"anime reference emits forty visual-only energy shots");
   assert.equal(result.shotgunImpacts,1,"one clustered impact effect after a confirmed hit");
@@ -272,7 +279,7 @@ const path = require("node:path");
   assert.ok(result.gamepadConnected,"DualSense input module should remain loaded");
   assert.ok(result.premiumReady && !!result.atlasCounts.length,"premium V7 art stays active");
   assert.equal(errors.length,0,errors.join("\n"));
-  console.log("PASS: real kick atlas rendered, strict energy-gated Triangle, fluid sprite motion, camera, controller.");
+  console.log("PASS: normalized exact reference, independent Triangle heavy/Shotgun, fluid motion, camera and controller.");
   console.log(result);
   await browser.close();
 })().catch(e=>{console.error(e);process.exit(1);});
