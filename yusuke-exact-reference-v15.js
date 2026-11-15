@@ -419,9 +419,41 @@
     return {image:launcherV28,frame,index,clip,scale:Math.min(.91,MAX_RENDER_HEIGHT/248),
       part:"launcher-v28",source:"launcher-v28",progress,frameCount:12};
   }
+  // V31: Triangle = Rising Launcher, one grounded 12-frame physical uppercut.
+  // Previous heavy/Spirit Punch artwork remains as a texture-loading fallback.
+  // R2+Square remains the independent metered Spirit Punch attack.
+  const V31_TRIANGLE_LAUNCHER_SRC="characters/yusuke/yusuke_triangle_launcher_12frames.png";
+  let triangleLauncherV31=null,triangleLauncherRequestedV31=false;
+  function loadV31TriangleLauncher(){
+    if(triangleLauncherRequestedV31 || typeof root.Image!=="function")return;
+    triangleLauncherRequestedV31=true;
+    const image=new root.Image();image.decoding="async";
+    image.onload=()=>{
+      if((image.naturalWidth||image.width)===1024 &&
+         (image.naturalHeight||image.height)===768)
+        triangleLauncherV31=image;
+    };
+    image.onerror=()=>{}; // A missing texture must not stop combat.
+    image.src=V31_TRIANGLE_LAUNCHER_SRC;
+  }
+  function v31TriangleLauncherPose(clip,progress,fighter){
+    if(clip!=="heavy" || !fighter?.grounded || !triangleLauncherV31)return null;
+    const p=clamp(progress);
+    // Heavy active window (.085-.198 of .325s) overlaps frames 5-8:
+    // anticipation, rising contact, finishing uppercut, then replant.
+    const index=p<.24 ? Math.min(4,Math.floor(p/.24*5)) :
+      p<.61 ? 5+Math.min(3,Math.floor((p-.24)/.37*4)) :
+      9+Math.min(2,Math.floor((p-.61)/.39*3));
+    const frame={x:(index%4)*256,y:Math.floor(index/4)*256,
+      w:256,h:248,ax:128,key:index};
+    return {image:triangleLauncherV31,frame,index,clip,
+      scale:Math.min(.86,MAX_RENDER_HEIGHT/248),
+      part:"triangle-launcher-v31",source:"triangle-launcher-v31",
+      progress:p,frameCount:12};
+  }
   // V30: Spirit Punch concentrates cyan-white energy around the fist.
-  // Triangle evolves its heavy COMBAT VISUAL; R2+Square uses a stronger
-  // metered melee hit. Neither becomes a projectile or changes input timing.
+  // V30 remains the metered R2+Square special, and a fallback if V31 is missing.
+  // Neither move becomes a projectile or changes attack input timing.
   const V30_SPIRIT_PUNCH_SRC="characters/yusuke/yusuke_spirit_punch_16frames.png";
   const V30_FOOT_Y=Object.freeze([243,243,243,243,244,244,244,244,
     239,239,239,239,248,248,248,248]);
@@ -624,10 +656,12 @@
     if(fighter.grounded && Object.prototype.hasOwnProperty.call(V25_ATTACK_ROWS,clip))
       loadV25LightCombo();
     if(clip==="heavy" && fighter.grounded)loadV26Heavy();
+    if(clip==="heavy" && fighter.grounded)loadV31TriangleLauncher();
     if((clip==="heavy" || clip==="spiritPunch") && fighter.grounded)
       loadV30SpiritPunch();
     if(clip==="upper" && fighter.grounded)loadV28Uppercut();
-    const expanded=v30SpiritPunchPose(clip,progress,fighter)||
+    const expanded=v31TriangleLauncherPose(clip,progress,fighter)||
+      v30SpiritPunchPose(clip,progress,fighter)||
       v28UppercutPose(clip,progress,fighter)||
       v26HeavyPose(clip,progress,fighter)||
       v25LightComboPose(clip,progress,fighter)||
