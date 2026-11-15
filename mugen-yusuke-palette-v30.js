@@ -10,6 +10,7 @@
   "use strict";
   const kinds=["navy","green","yellow","skin","teal"];
   const palettes=new Map(),normalized=new WeakMap(),reports=new WeakMap();
+  const shadeCache=new Map(); // Identical input shades share one nearest-palette lookup.
   let reference=null;
   function category(r,g,b){
     // Order matters: classify the clothing blues before dark hair highlights.
@@ -68,7 +69,7 @@
         if(frequent.length<3)return false;
         built.set(name,frequent.map(v=>Object.freeze([v.r,v.g,v.b])));
       }
-      palettes.clear();
+      palettes.clear();shadeCache.clear();
       for(const [k,v] of built)palettes.set(k,Object.freeze(v));
       reference=img;
       return true;
@@ -94,12 +95,16 @@
         if(!type)continue;
         const palette=palettes.get(type);
         if(!palette?.length)continue;
-        let best=null,distance=Infinity;
-        for(const rgb of palette){
-          // Prioritize hue and brightness without crushing dark cloth folds.
-          const dr=r-rgb[0],dg=g-rgb[1],db=b-rgb[2];
-          const score=dr*dr*.9+dg*dg*1.25+db*db*.85;
-          if(score<distance){distance=score;best=rgb;}
+        const shade=(r<<16)|(g<<8)|b;
+        let best=shadeCache.get(shade);
+        if(!best){
+          let distance=Infinity;
+          for(const rgb of palette){
+            const dr=r-rgb[0],dg=g-rgb[1],db=b-rgb[2];
+            const score=dr*dr*.9+dg*dg*1.25+db*db*.85;
+            if(score<distance){distance=score;best=rgb;}
+          }
+          if(best)shadeCache.set(shade,best);
         }
         if(!best)continue;
         counts[type]++;
