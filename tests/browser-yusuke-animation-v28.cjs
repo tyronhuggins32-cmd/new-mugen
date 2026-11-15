@@ -72,11 +72,16 @@ const fs=require("node:fs");
       const ctx=document.createElement("canvas").getContext("2d");
       ctx.canvas.width=1300;ctx.canvas.height=800;
       const original=ctx.drawImage.bind(ctx);
-      let count=0;
-      ctx.drawImage=(...args)=>{count++;return original(...args);};
+      let count=0,smoothAtDraw=null;
+      ctx.drawImage=(...args)=>{
+        count++;smoothAtDraw=ctx.imageSmoothingEnabled;
+        return original(...args);
+      };
       if(!painter.draw(p,ctx,seconds*1000,1,atlas,.325)||count!==1)
         throw Error("Multiple Yusuke bodies or missing body in "+state);
-      if(ctx.imageSmoothingEnabled)
+      // Canvas restore() correctly restores smoothing after rendering; the
+      // renderer must disable it at drawImage time, not permanently.
+      if(smoothAtDraw)
         throw Error("Pixel art blurred in "+state);
       samples.push({state,source:pose.source,
         frame:pose.index,visibleHeight:Math.round(layout.opaqueHeight),
