@@ -8,12 +8,43 @@ const assert = require('node:assert/strict');
  const errors=[]; page.on('pageerror',e=>errors.push(e.message));
  const source=fs.readFileSync(require('node:path').join(__dirname,'../game-build-0009.html'),'utf8');
  // Expose lexical engine state only in the test response, never in the shipped game.
- await page.route('**/game-build-0009.html*',r=>r.fulfill({contentType:'text/html',body:source.replace('      function beginFight() {','      window.testEngine = { get game() { return arcadeGame; }, Fighter, pressFightControl, releaseFightControl, humanInput, clearFightInput, arena };\n      function beginFight() {')}));
+ await page.route('**/game-build-0009.html*',r=>r.fulfill({contentType:'text/html',body:source.replace('      function beginFight() {','      window.testEngine = { get game() { return arcadeGame; }, get exactAtlas() { return exactYusukeAtlas; }, get rawExact() { return exactYusukeSpriteSheet; }, Fighter, pressFightControl, releaseFightControl, humanInput, clearFightInput, arena };\n      function beginFight() {')}));
  await page.goto('http://127.0.0.1:8000/');
  await page.locator('button.menu-item[data-mode="arcade"]').click();
  await page.locator('#choose-character').click();
  
  await page.waitForFunction(()=>window.testEngine.game.state==='play');
+ // Real browser regression against the actual uploaded legacy reference:
+ // the green trousers must be corrected before an uppercut or hit is drawn.
+ const paletteCheck=await page.evaluate(()=>{
+   const source=window.testEngine.rawExact;
+   const normalized=window.testEngine.exactAtlas?.image;
+   if(!source?.naturalWidth || !(normalized instanceof HTMLCanvasElement))
+     throw Error('Yusuke fallback atlas was not normalized in the browser');
+   const w=source.naturalWidth,h=source.naturalHeight;
+   const raw=document.createElement('canvas');raw.width=w;raw.height=h;
+   raw.getContext('2d').drawImage(source,0,0);
+   const before=raw.getContext('2d').getImageData(0,0,w,h).data;
+   const after=normalized.getContext('2d').getImageData(0,0,w,h).data;
+   let green=0,stillGreen=0,alphaErrors=0;
+   for(let y=0;y<h;y+=4){
+     if(y%256<145 || y%256>=247)continue;
+     for(let x=0;x<w;x+=4){
+       const i=(y*w+x)*4,r=before[i],g=before[i+1],b=before[i+2];
+       if(before[i+3]!==after[i+3])alphaErrors++;
+       if(before[i+3]>=45 && g>22 && g>r*1.12 && g>b*.92 &&
+          r<145 && g<200 && (g-r>7 || g-b>7)){
+         green++;
+         if(after[i+2]<=after[i+1])stillGreen++;
+       }
+     }
+   }
+   if(green<100)throw Error('Missing original green trouser pixels in test source');
+   if(stillGreen!==0)throw Error('Green trouser pixels survived legacy palette correction');
+   if(alphaErrors)throw Error('Sprite transparency changed during palette correction');
+   return green;
+ });
+ assert.ok(paletteCheck>100,'real uploaded green sprite pixels corrected to navy');
  const checks=await page.evaluate(()=>{
   const {game:g,arena,pressFightControl,releaseFightControl,humanInput,clearFightInput}=testEngine;
   g.stop();
