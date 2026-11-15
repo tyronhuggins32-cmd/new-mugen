@@ -34,7 +34,7 @@ vm.runInContext([
  "assert.equal(g.player.beginAttack('spiritPunch'),false);",
  "g.reset();g.state='play';g.player.energy=0;",
  "g.player.update(1/60,{...neutral,heavyPressed:true},g.cpu,g);",
- "assert.equal(g.player.currentAttack(),'heavy');assert.equal(g.player.energy,0);",
+ "assert.equal(g.player.currentAttack(),'heavy');assert.ok(g.player.energy>=0&&g.player.energy<.3,'Triangle retains zero attack cost after 60Hz regen');",
  "g.reset();g.state='play';g.player.energy=100;",
  "g.player.beginAttack('light');",
  "g.player.update(1/60,{...neutral,spiritPunchPressed:true},g.cpu,g);",
