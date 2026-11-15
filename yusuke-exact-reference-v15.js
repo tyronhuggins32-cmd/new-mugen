@@ -416,6 +416,48 @@
     return {image:launcherV28,frame,index,clip,scale:Math.min(.91,MAX_RENDER_HEIGHT/248),
       part:"launcher-v28",source:"launcher-v28",progress,frameCount:12};
   }
+  // V30: Spirit Punch concentrates cyan-white energy around the fist.
+  // Triangle evolves its heavy COMBAT VISUAL; R2+Square uses a stronger
+  // metered melee hit. Neither becomes a projectile or changes input timing.
+  const V30_SPIRIT_PUNCH_SRC="characters/yusuke/yusuke_spirit_punch_16frames.png";
+  const V30_FOOT_Y=Object.freeze([243,243,243,243,244,244,244,244,
+    239,239,239,239,248,248,248,248]);
+  let spiritPunchV30=null,spiritPunchRequestedV30=false;
+  function loadV30SpiritPunch(){
+    if(spiritPunchRequestedV30 || typeof root.Image!=="function")return;
+    spiritPunchRequestedV30=true;
+    const image=new root.Image();image.decoding="async";
+    image.onload=()=>{
+      if((image.naturalWidth||image.width)===1024 &&
+         (image.naturalHeight||image.height)===1024)spiritPunchV30=image;
+    };
+    image.onerror=()=>{}; // Prior v26 heavy and reference attacks remain safe.
+    image.src=V30_SPIRIT_PUNCH_SRC;
+  }
+  function v30SpiritPunchPose(clip,progress,fighter){
+    if(!spiritPunchV30 || !fighter?.grounded ||
+      (clip!=="heavy" && clip!=="spiritPunch"))return null;
+    const p=clamp(progress);
+    let index;
+    if(clip==="heavy"){
+      // Keep existing .085-.198 heavy hitbox synchronized with fist impact
+      // without touching its damage, active window or frame duration.
+      index=p<.16 ? Math.min(3,Math.floor(p/.16*4)) :
+        p<.26 ? 4+Math.min(3,Math.floor((p-.16)/.10*4)) :
+        p<.61 ? 8+Math.min(3,Math.floor((p-.26)/.35*4)) :
+        12+Math.min(3,Math.floor((p-.61)/.39*4));
+    }else{
+      index=Math.min(15,Math.floor(p*16));
+    }
+    // Each footline is cropped separately so the planted feet never
+    // jitter during charge, lunge or guard recovery. Scale stays uniform.
+    const frame={x:(index%4)*256,y:Math.floor(index/4)*256,
+      w:256,h:V30_FOOT_Y[index]+2,ax:128,key:index};
+    return {image:spiritPunchV30,frame,index,clip,
+      scale:Math.min(.87,MAX_RENDER_HEIGHT/250),
+      part:"spirit-punch-v30",source:"spirit-punch-v30",
+      progress,frameCount:16};
+  }
   const WALK_IDLE_SRC = "characters/yusuke/yusuke-walk-idle-v16.png";
   const WALK_IDLE_BOUNDS = Object.freeze([[128,14,262,247],[128,8,262,247],[128,6,262,247],[128,1,265,247],[128,6,265,246],[129,12,263,246],[129,15,262,246],[129,17,262,246],[113,20,255,247],[126,19,255,242],[118,19,273,240],[101,23,264,240],[140,25,256,246],[137,21,257,243],[112,21,279,243],[122,23,257,246]]);
   const WALK_IDLE_FRAMES = Object.freeze(WALK_IDLE_BOUNDS.map((b,i)=>Object.freeze({
@@ -454,6 +496,7 @@
     body:Object.freeze([8,9,10,11]),
     upper:Object.freeze([12,13,14,15]),
     heavy:Object.freeze([1,7,12,14,15]),
+    spiritPunch:Object.freeze([1,7,12,14,15]),
     powerKick:Object.freeze([4,7,12,14,15]),
     gun:Object.freeze([0,9,11,15]),
     shotgun:Object.freeze([0,10,13,15]),
@@ -578,8 +621,11 @@
     if(fighter.grounded && Object.prototype.hasOwnProperty.call(V25_ATTACK_ROWS,clip))
       loadV25LightCombo();
     if(clip==="heavy" && fighter.grounded)loadV26Heavy();
+    if((clip==="heavy" || clip==="spiritPunch") && fighter.grounded)
+      loadV30SpiritPunch();
     if(clip==="upper" && fighter.grounded)loadV28Uppercut();
-    const expanded=v28UppercutPose(clip,progress,fighter)||
+    const expanded=v30SpiritPunchPose(clip,progress,fighter)||
+      v28UppercutPose(clip,progress,fighter)||
       v26HeavyPose(clip,progress,fighter)||
       v25LightComboPose(clip,progress,fighter)||
       v24DodgePose(clip,fighter)||
