@@ -60,6 +60,8 @@ jobs:
         run: node tests/yusuke-uppercut-v28.cjs
       - name: Recorded Yusuke V27 palette, body scale and close-combat collision fixes
         run: node tests/yusuke-video-bugs-v27.cjs
+      - name: Yusuke V28 consistent sprite proportions, foot pivots and phase-locked locomotion
+        run: node tests/yusuke-animation-v28.cjs
       - name: White alpha-edge and enclosed white-gap cleanup regression
         run: node tests/yusuke-alpha-v9.cjs
       - name: Yusuke skin and costume palette consistency
