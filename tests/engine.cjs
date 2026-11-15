@@ -167,5 +167,22 @@ vm.runInContext(`
  g.cpu.update(1/60,neutral,g.player,g);
  assert.ok(g.cpu.x>recoilX,'a powerful strike moves the defender backward');
  assert.ok(g.cpu.y<arena.floor,'strong hit creates visible lift');
+ // A stick release must finish a short planted step rather than snapping
+ // from running legs directly into a static idle cel at full velocity.
+ g.reset();g.state='play';g.player.x=500;g.cpu.x=1000;
+ g.player.update(1/60,{...neutral,right:true},g.cpu,g);
+ assert.equal(g.player.state,'walk');
+ g.player.update(1/60,neutral,g.cpu,g);
+ assert.equal(g.player.state,'walk','walk finishes a deceleration step');
+ for(let i=0;i<12;i++)g.player.update(1/60,neutral,g.cpu,g);
+ assert.equal(g.player.state,'idle','fighter still comes to rest normally');
+ g.reset();g.state='play';g.player.x=500;g.cpu.x=1000;
+ g.player.sprintEnabled=true;
+ g.player.update(1/60,{...neutral,right:true},g.cpu,g);
+ assert.equal(g.player.state,'run');
+ g.player.update(1/60,neutral,g.cpu,g);
+ assert.equal(g.player.state,'run','L3 running gets a deceleration step too');
+ for(let i=0;i<12;i++)g.player.update(1/60,neutral,g.cpu,g);
+ assert.equal(g.player.state,'idle','sprint release settles into idle');
  console.log('PASS: fighter engine, hit timing, MAX Spirit Gun (8 hits), spirit charge, spirit dash, and fixed-step cadence.');
 `,context);
