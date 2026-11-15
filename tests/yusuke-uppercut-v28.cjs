@@ -19,8 +19,8 @@ const loaded=[];
 class FakeImage{
   set src(v){
     this._src=v;
-    this.naturalWidth=v===path?1024:v.includes("crouch")?1280:1536;
-    this.naturalHeight=v===path?768:v.includes("-v16.png")||v.includes("jump_landing")?1024:512;
+    this.naturalWidth=v===path||v.includes("heavy_combo")||v.includes("dodge")||v.includes("jump_landing")?1024:v.includes("crouch")?1280:1536;
+    this.naturalHeight=v===path||v.includes("light_combo")?768:v.includes("-v16.png")||v.includes("jump_landing")||v.includes("heavy_combo")?1024:512;
     loaded.push(v);
     this.onload?.();
   }
