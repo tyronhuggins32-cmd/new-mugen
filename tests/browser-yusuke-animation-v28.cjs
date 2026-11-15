@@ -100,7 +100,9 @@ const fs=require("node:fs");
       const unified=window.MugenYusukePaletteV30.getReport(drawnTexture);
       if(!unified||!unified.referenceColors?.navy)
         throw Error("Missing canonical palette on "+state);
-      if(state==="attack-heavy" &&
+      // Triangle may use the separately authored Spirit Punch sheet.
+      // Only demand the V26 white-fringe count when that source is selected.
+      if(state==="attack-heavy" && pose.source==="heavy-triangle-v26" &&
          (!art||art.removedPale<8))
         throw Error("Heavy combo still has pale outlines: "+JSON.stringify({
           art,source:pose.source,clip:pose.clip,index:pose.index,
