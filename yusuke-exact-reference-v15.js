@@ -164,6 +164,11 @@
     const dashProgress=clip==="rush" && (fighter?.dashDuration||0)>0
       ? Math.max(0,Math.min(1,(fighter.dashElapsed||0)/fighter.dashDuration))
       : null;
+    // Ground locomotion tracks real displacement, so it pauses against a
+    // wall and stays phase-coherent across walk, retreat and L3 running.
+    const stridePhase=["forward","retreat","sprint"].includes(clip) &&
+      Number.isFinite(fighter?.gaitPhase)
+      ? Math.floor(((fighter.gaitPhase%1)+1)%1*count) : null;
     const distancePhase=clip==="forward" &&
       Number.isFinite(fighter?.walkCycleDistance)
       ? Math.floor(((Math.max(0,fighter.walkCycleDistance)%240)/240)*count)
@@ -172,7 +177,8 @@
       // Render exactly one original pose per fixed 60Hz tick on the
       // 0.30-second R1 burst. The epsilon keeps the first pose visible.
       ? Math.min(count-1,Math.floor(Math.max(0,dashProgress-0.000001)*count))
-      : distancePhase!==null?distancePhase:Math.floor(Math.max(0,t)*rate);
+      : stridePhase!==null?stridePhase:
+        distancePhase!==null?distancePhase:Math.floor(Math.max(0,t)*rate);
     const index=number+(loop?step%count:Math.min(count-1,step));
     const dashOriginal=image===dashV24;
     const col=index%6,row=Math.floor(index/6);
@@ -203,10 +209,12 @@
     image.onerror=()=>{}; // Never replace legacy art with a broken texture.
     image.src=V18_CROUCH_SRC;
   }
-  function v18CrouchPose(clip,t){
+  function v18CrouchPose(clip,t,fighter){
     if(!crouchImageV18 || (clip!=="crouch" && clip!=="crouchWalk"))return null;
     const index=clip==="crouch" ? Math.min(4,Math.floor(Math.max(0,t)*12))
-      : 5+(Math.floor(Math.max(0,t)*12)%5);
+      : 5+(Number.isFinite(fighter?.gaitPhase)
+        ? Math.min(4,Math.floor(((fighter.gaitPhase%1)+1)%1*5))
+        : Math.floor(Math.max(0,t)*12)%5);
     // The authored feet are at local y=244, so crop the empty final 12 pixels.
     const frame={x:(index%5)*256,y:Math.floor(index/5)*256,
       w:256,h:244,ax:128,key:index};
@@ -503,7 +511,7 @@
     }else if(inAir){
       clip=Number(fighter.vy)<0?"jumpRise":"jumpFall";
       index=movementClips[clip][Math.floor(t*10)%2];
-    }else if((fighter.dashTimer||0)>0 || Math.abs(relative)>690){
+    }else if((fighter.dashTimer||0)>0 || state==="dash"){
       clip=relative<0?"backdash":"rush";
       const seq=movementClips[clip];
       index=seq[Math.floor(t*15)%seq.length];
@@ -547,7 +555,7 @@
       v24DodgePose(clip,fighter)||
       v23GuardPose(clip,t,fighter)||
       v19JumpPose(clip,t,Number(fighter.vy)||0)||
-      v18CrouchPose(clip,t)||v17Pose(clip,relative,t,fighter);
+      v18CrouchPose(clip,t,fighter)||v17Pose(clip,relative,t,fighter);
     if(expanded)return expanded;
     if(walkIdleImage && (clip==="idle" || clip==="forward" || clip==="retreat")){
       const seq=clip==="idle"?IDLE_CYCLE:clip==="retreat"?BACKWALK_CYCLE:WALK_CYCLE;
@@ -570,6 +578,10 @@
     const selected=pose(fighter,atlas,attackDuration);
     if(!selected||!ctx?.drawImage)return false;
     const {image,frame,scale,clip,progress}=selected;
+    // Measured once per actual RGBA cel. Locks family proportions, aligns
+    // painted feet, and prevents different atlas gutters from lifting Yusuke.
+    const continuity=root.MugenYusukeAnimationV28?.resolve(selected);
+    const renderScale=continuity?.measured?continuity.scale:scale;
     const face=fighter.facing<0?-1:1;
     const t=Math.max(0,Number(fighter.stateTime)||0);
     const fwd=(Number(fighter.vx)||0)*face;
@@ -587,12 +599,14 @@
       clip==="stagger" ? -.04 :
       clip==="rush" && selected.source!=="movement-v24" ? .028 :
       clip==="backdash" ? -.035:0;
-    const dx=(Number(fighter.x)||0)+face*lunge;
+    const dx=(Number(fighter.x)||0)+face*lunge+
+      face*(continuity?.horizontalOffset||0);
     // Every V17 cel has a 12px transparent gutter below its foot pivot.
     // Offset once at draw time rather than shifting world physics / hitboxes.
+    const legacyOffset=selected.source==="movement-v17"?12*scale:
+      ["movement-v21","movement-v22","movement-v22-generated"].includes(selected.source)?8*scale:0;
     const dy=(Number(fighter.y)||0)+bob+
-      (selected.source==="movement-v17"?12*scale:
-       ["movement-v21","movement-v22","movement-v22-generated"].includes(selected.source)?8*scale:0);
+      (continuity?.measured?continuity.footOffset:legacyOffset);
     ctx.save();
     ctx.translate(dx,dy);
     ctx.scale(face,1);
@@ -603,7 +617,8 @@
     if("imageSmoothingQuality" in ctx && ctx.imageSmoothingEnabled)ctx.imageSmoothingQuality="high";
     // This is the ONLY full-body Yusuke draw for each game frame.
     ctx.drawImage(image,frame.x,frame.y,frame.w,frame.h,
-      -frame.ax*scale,-frame.h*scale,frame.w*scale,frame.h*scale);
+      -frame.ax*renderScale,-frame.h*renderScale,
+      frame.w*renderScale,frame.h*renderScale);
     ctx.restore();
     return true;
   }
