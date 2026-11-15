@@ -101,7 +101,22 @@
     }
     // Unusually tall action smears may hit a safety cap, but never upscale
     // small compressed anticipation frames into bobbing giant sprites.
-    const scale=Math.min(base,BUDGET_HEIGHT/m.height);
+    let scale=Math.min(base,BUDGET_HEIGHT/m.height);
+    // Verified regression: Square's fourth (uppercut) attack ended at
+    // 174/181px before switching back to 196px idle. The last four authored
+    // uppercut poses are a return-to-guard, not a crouch or wind-up. Normalize
+    // ONLY those finishing cels to the canonical standing height. Preserve
+    // the intentionally compressed anticipation and airborne impact poses.
+    // Cached attackRecover reuses the same source cel and therefore inherits
+    // the corrected size instead of flashing a smaller fighter.
+    const isUpperRecovery=pose.source==="launcher-v28" &&
+      Number.isFinite(pose.index) && pose.index>=8;
+    if(isUpperRecovery){
+      const recoveryHeight=194;
+      const restore=recoveryHeight/m.height;
+      scale=Math.min(BUDGET_HEIGHT/m.height,
+        Math.max(scale,Math.min(orig*1.15,restore)));
+    }
     const offset=bound(m.bottomGap*scale,0,36);
     const stable=["idle","forward","retreat","sprint","guard",
       "guardRecover","turn","recovery","charge"].includes(pose.clip);
