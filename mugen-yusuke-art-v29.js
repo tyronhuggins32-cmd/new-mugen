@@ -81,7 +81,8 @@
       const pixels=ctx.getImageData(0,0,w,h);
       const stats=normalize(pixels.data,w,h);
       ctx.putImageData(pixels,0,0);
-      cache.set(img,canvas);reports.set(img,stats);
+      cache.set(img,canvas);cache.set(canvas,canvas);
+      reports.set(img,stats);reports.set(canvas,stats);
       return canvas;
     }catch(_){
       // Browsers without readable canvas must still render the fighter.
