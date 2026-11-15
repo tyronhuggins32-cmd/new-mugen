@@ -637,7 +637,10 @@
     ctx.imageSmoothingEnabled=false;
     if("imageSmoothingQuality" in ctx && ctx.imageSmoothingEnabled)ctx.imageSmoothingQuality="high";
     // This is the ONLY full-body Yusuke draw for each game frame.
-    ctx.drawImage(image,frame.x,frame.y,frame.w,frame.h,
+    // V29 edits the actual attack/dash atlas pixels once, not the physics
+    // sprite position or the hitbox. No extra composited ghost body.
+    const art=root.MugenYusukeArtV29?.prepare(image,selected.source)||image;
+    ctx.drawImage(art,frame.x,frame.y,frame.w,frame.h,
       -frame.ax*renderScale,-frame.h*renderScale,
       frame.w*renderScale,frame.h*renderScale);
     ctx.restore();
