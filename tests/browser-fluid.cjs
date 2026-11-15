@@ -167,7 +167,10 @@ const path = require("node:path");
     screen.drawImage=function(...args){
       if(args.length===9){
         const image=args[0],width=image?.naturalWidth||image?.width;
-        if(width===2048||width===1536||width===4096){
+        // All current Yusuke atlases render exactly one full body:
+        // 1024px launcher/heavy/guard, 1280px crouch, 1536px walk/idle,
+        // 1774px authored dash, plus legacy 2048/4096px textures.
+        if([1024,1280,1536,1774,2048,4096].includes(width)){
           const [sx,sy,sw,sh]=args.slice(1,5);
           const [dw,dh]=args.slice(7,9);
           if(sw>0&&sh>0&&Number.isFinite(dh)){
