@@ -8,6 +8,8 @@ on:
       - "yusuke-motion.js"
       - "yusuke-exact-reference-v15.js"
       - "mugen-yusuke-animation-v28.js"
+      - "mugen-yusuke-art-v29.js"
+      - "tests/yusuke-art-v29.cjs"
       - "tests/yusuke-animation-v28.cjs"
       - "tests/browser-yusuke-animation-v28.cjs"
       - "yusuke-exact-sprite-studio-v15.html"
