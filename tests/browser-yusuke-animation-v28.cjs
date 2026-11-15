@@ -41,8 +41,17 @@ const fs=require("node:fs");
   // The match loader now prewarms the actual artist-authored sheets.
   // A cached request must resolve immediately and every critical PNG exist.
   const warm=await page.evaluate(()=>window.MugenExactYusuke.preloadForMatch());
-  assert.equal(warm.length,7);
+  assert.equal(warm.length,13);
   assert.ok(warm.every(a=>a.ok), "Critical authored sprite sheet failed to preload");
+  const reference=await page.evaluate(()=>({
+    ready:window.MugenYusukePaletteV30?.isReady(),
+    sizes:Object.fromEntries(Object.entries(
+      window.MugenYusukePaletteV30?.getPalette()||{}).map(([k,p])=>[k,p.length]))
+  }));
+  assert.equal(reference.ready,true,"Idle reference master palette is required");
+  for(const material of ["navy","green","yellow","skin","teal"])
+    assert.ok(reference.sizes[material]>=3,
+      "Missing canonical "+material+" reference shades");
   await page.waitForTimeout(100);
   const report=await page.evaluate(()=>{
     const {game,atlas,arena}=window.v28Probe;
@@ -75,9 +84,10 @@ const fs=require("node:fs");
       const ctx=document.createElement("canvas").getContext("2d");
       ctx.canvas.width=1300;ctx.canvas.height=800;
       const original=ctx.drawImage.bind(ctx);
-      let count=0,smoothAtDraw=null;
+      let count=0,smoothAtDraw=null,drawnTexture=null;
       ctx.drawImage=(...args)=>{
         count++;smoothAtDraw=ctx.imageSmoothingEnabled;
+        drawnTexture=args[0];
         return original(...args);
       };
       if(!painter.draw(p,ctx,seconds*1000,1,atlas,.325)||count!==1)
@@ -87,13 +97,17 @@ const fs=require("node:fs");
       if(smoothAtDraw)
         throw Error("Pixel art blurred in "+state);
       const art=window.MugenYusukeArtV29?.stats(pose.image)||null;
+      const unified=window.MugenYusukePaletteV30.getReport(drawnTexture);
+      if(!unified||!unified.referenceColors?.navy)
+        throw Error("Missing canonical palette on "+state);
       if(state==="attack-heavy" &&
          (!art||art.removedPale<8))
         throw Error("Heavy combo still has pale outlines: "+JSON.stringify(art));
       samples.push({state,source:pose.source,
         frame:pose.index,visibleHeight:Math.round(layout.opaqueHeight),
         footGap:Math.round(layout.footOffset),bodyOffset:Math.round(layout.horizontalOffset),
-        removedWhiteRim:art?.removedPale||0,removedRedRim:art?.removedRed||0});
+        removedWhiteRim:art?.removedPale||0,removedRedRim:art?.removedRed||0,
+        canonicalRecolored:unified.changed});
     }
     // Entire Square chain must be measured, not a single pose at .15s.
     // The previous browser gate never observed the final uppercut/return to
@@ -116,7 +130,12 @@ const fs=require("node:fs");
     p.stateTime=.10;
     const rest=painter.pose(p,atlas,.33);
     const idleHeight=Math.round(director.resolve(rest).opaqueHeight);
+    if(recoveryHeight<190 || Math.abs(recoveryHeight-idleHeight)>6)
+      throw Error("Square finisher recovery shrinks vs idle: "+
+        JSON.stringify({recoveryHeight,idleHeight}));
     const upperEnd=square.filter(s=>s.move==="upper").slice(-2);
+    if(upperEnd.some(s=>s.px<190))
+      throw Error("Square uppercut end still shrinks: "+JSON.stringify(upperEnd));
     const bodyEnd=square.filter(s=>s.move==="body").slice(-2);
     console.log("SQUARE-END-BASELINE",JSON.stringify({
       upperEnd,bodyEnd,recoveryHeight,idleHeight
