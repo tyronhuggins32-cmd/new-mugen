@@ -753,10 +753,33 @@
       image.onerror=()=>finish(false);
       image.src=src;
     }))).then(assets=>{
-      // Do not let the first Square press switch from raw art to recolored
-      // art halfway through the attack. Finish canonical palette sampling
-      // and atlas conversion before the match becomes interactive.
-      const idle=idleV17||assets.find(x=>x.src===V17_IDLE_SRC)?.image;
+      // The primary asset loaders perform extra Canvas processing, so their
+      // Image.onload can finish after the duplicate preload's onload. Publish
+      // the fetched, fully decoded images to each clip before declaring the
+      // fighter ready. Otherwise Square can start on a legacy fallback and
+      // switch art halfway through the same combo.
+      const bySrc=new Map(assets.filter(x=>x.ok&&x.image)
+        .map(x=>[x.src,x.image]));
+      const direct=src=>bySrc.get(src)||null;
+      const cleaned=(src,kind)=>{
+        const image=direct(src);
+        return image?(root.MugenYusukeArtV29?.prepare(image,kind)||image):null;
+      };
+      idleV17 ||= direct(V17_IDLE_SRC);
+      backTurnV17 ||= direct(V17_BACK_TURN_SRC);
+      walkV17 ||= direct(V17_WALK_SRC);
+      walkV22 ||= direct(V22_WALK_SRC);
+      runDashV17 ||= direct(V17_RUN_DASH_SRC);
+      if(runDashV17 && !runOnlyV20)splitRunDashV20(runDashV17);
+      dashV24 ||= cleaned(V24_DASH_SRC,"movement-v24");
+      lightComboV25 ||= cleaned(V25_LIGHT_COMBO_SRC,"light-combo-v25");
+      heavyV26 ||= cleaned(V26_HEAVY_SRC,"heavy-triangle-v26");
+      launcherV28 ||= cleaned(V28_UPPERCUT_SRC,"launcher-v28");
+      guardV23 ||= cleaned(V23_GUARD_SRC,"guard-v23");
+      jumpV19 ||= direct(V19_JUMP_SRC);
+      dodgeV24 ||= cleaned(V24_DODGE_SRC,"dodge-v24");
+      // All 13 textures are now chosen and stable before user input starts.
+      const idle=idleV17;
       root.MugenYusukePaletteV30?.setReference(idle);
       const images=[
         idleV17,walkV17,walkV22,backTurnV17,runDashV17,runOnlyV20,
