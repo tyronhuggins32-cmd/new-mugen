@@ -110,7 +110,11 @@ class ImageV22 extends FakeImage {
   }
   get src(){return this._src;}
 }
-const root22={Image:ImageV22};
+const root22={Image:ImageV22,
+  MugenWalkPolishV22:{generate(){
+    throw Error("Do not synthesize 24 poses when the authored sheet exists");
+  }}
+};
 vm.runInNewContext(code,{window:root22,Math});
 const exact22=root22.MugenExactYusuke;
 const atlas22=exact22.build(oldArt);
