@@ -660,10 +660,44 @@
     ctx.restore();
     return true;
   }
+  function preloadForMatch(){
+    if(typeof root.Image!=="function")return Promise.resolve([]);
+    // Request the real authored assets *before* any button can start combat.
+    // Previously the first Square/Triangle/R1 tap could begin with fallback
+    // art and then morph into a newly loaded sheet in the SAME move.
+    loadV17Movement();
+    loadV22Walk();
+    loadV24Dash();
+    loadV25LightCombo();
+    loadV26Heavy();
+    loadV28Uppercut();
+    loadV18Crouch();
+    loadV19Jump();
+    loadV23Guard();
+    const essential=[
+      V17_IDLE_SRC,V17_RUN_DASH_SRC,V22_WALK_SRC,V24_DASH_SRC,
+      V25_LIGHT_COMBO_SRC,V26_HEAVY_SRC,V28_UPPERCUT_SRC
+    ];
+    return Promise.all(essential.map(src=>new Promise(resolve=>{
+      const image=new root.Image();
+      let finished=false;
+      const finish=ok=>{
+        if(finished)return;
+        finished=true;
+        if(timeout)root.clearTimeout(timeout);
+        resolve({src,ok});
+      };
+      const timeout=typeof root.setTimeout==="function"?
+        root.setTimeout(()=>finish(false),4500):null;
+      image.onload=()=>finish(true);
+      image.onerror=()=>finish(false);
+      image.src=src;
+    })));
+  }
   root.MugenExactYusuke=Object.freeze({
     build,pose,draw,frames:FRAMES,walkIdleFrames:WALK_IDLE_FRAMES,
     walkIdleSource:WALK_IDLE_SRC,walkIdleStatus:()=>walkIdleStatus,
-    attackClips,movementClips,
+    attackClips,movementClips,preloadForMatch,
     sourceSize:Object.freeze([WIDTH,HEIGHT]),maximumHeight:MAX_RENDER_HEIGHT
   });
 })(typeof window==="undefined"?globalThis:window);
