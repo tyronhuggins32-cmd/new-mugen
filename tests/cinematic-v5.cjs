@@ -119,7 +119,7 @@ assert.equal(game.cinematicImpact,null,"cinematic camera returns to normal");
 v.reset(game);assert.equal(v.stats(game).shotsFired,0);
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/mugen-combat-v5\.js\?v=1/);
+assert.match(html,/mugen-combat-v5\.js\?v=2/);
 assert.match(html,/mugen-spiritgun-v5\.js\?v=1/);
 assert.match(html,/MugenCombatV5\.separate\(this\.player, this\.cpu, arena\)/);
 assert.match(html,/MugenCombatV5\?\.assistPunch\(attacker, defender, attack, arena\)/);
