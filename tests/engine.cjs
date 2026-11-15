@@ -76,7 +76,7 @@ vm.runInContext(`
  g.player.update(2.1,neutral,g.cpu,g);assert.equal(g.player.comboHits,0);
  g.reset();g.cpu.setState('block');g.cpu.facing=-1;g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);assert.equal(g.cpu.health,4997.5);
  g.reset();g.damageFighter(g.player,g.cpu,{damage:10,hitstun:.1,knockback:0},0,0);g.damageFighter(g.cpu,g.player,{damage:10,hitstun:.1,knockback:0},0,0);assert.equal(g.player.comboHits,0);
- g.reset();g.player.energy=80;g.player.beginAttack('heavy');assert.equal(g.player.currentAttack(),'shotgun');for(let t=0;t<20;t++)g.player.update(1/60,neutral,g.cpu,g);assert.equal(g.projectiles.length,7);assert.ok(g.projectiles.every(p=>p.kind==='spiritShotgun'));
+ g.reset();g.player.energy=80;g.player.beginAttack('heavy');assert.equal(g.player.currentAttack(),'heavy','Triangle now uses heavy, not Shotgun');g.reset();g.player.energy=80;g.player.beginAttack('shotgun');assert.equal(g.player.currentAttack(),'shotgun');for(let t=0;t<20;t++)g.player.update(1/60,neutral,g.cpu,g);assert.equal(g.projectiles.length,7);assert.ok(g.projectiles.every(p=>p.kind==='spiritShotgun'));
  g.reset();g.state='play';g.player.energy=100;assert.ok(window.MugenCinematics.begin(g),'MAX Spirit Gun can activate at full meter');assert.equal(g.player.energy,0);
  for(let tick=0;tick<360&&g.superSequence;tick++)g.update(1/60);
  assert.equal(g.superSequence,null,'cinematic completes');assert.equal(g.player.energy,0,'MAX drains energy');assert.equal(g.player.comboHits,0,'MAX Spirit Gun does not bypass the three-Square combo gate');assert.ok(g.cpu.health<g.cpu.maxHealth-320,'beam damages opponent');
