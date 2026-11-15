@@ -145,7 +145,10 @@
     }
     load(V17_BACK_TURN_SRC,image=>{backTurnV17=image;});
     load(V17_RUN_DASH_SRC,image=>{runDashV17=image;splitRunDashV20(image);});
-    load(V17_IDLE_SRC,image=>{idleV17=image;});
+    load(V17_IDLE_SRC,image=>{
+      idleV17=image;
+      root.MugenYusukePaletteV30?.setReference(image);
+    });
     load(V17_WALK_SRC,image=>{
       walkV17=image;
       maybeSynthesizeWalkFallback();
@@ -706,7 +709,10 @@
     // V29 edits the actual attack/dash atlas pixels once, not the physics
     // sprite position or the hitbox. No extra composited ghost body.
     const art=root.MugenYusukeArtV29?.prepare(image,selected.source)||image;
-    ctx.drawImage(art,frame.x,frame.y,frame.w,frame.h,
+    // Every clothing/skin/hair shade comes from the SAME authored idle atlas.
+    // Transparent alpha is preserved; effects and geometry are not tinted.
+    const canonical=root.MugenYusukePaletteV30?.prepare(art)||art;
+    ctx.drawImage(canonical,frame.x,frame.y,frame.w,frame.h,
       -frame.ax*renderScale,-frame.h*renderScale,
       frame.w*renderScale,frame.h*renderScale);
     ctx.restore();
@@ -727,8 +733,10 @@
     loadV19Jump();
     loadV23Guard();
     const essential=[
-      V17_IDLE_SRC,V17_RUN_DASH_SRC,V22_WALK_SRC,V24_DASH_SRC,
-      V25_LIGHT_COMBO_SRC,V26_HEAVY_SRC,V28_UPPERCUT_SRC
+      V17_IDLE_SRC,V17_BACK_TURN_SRC,V17_WALK_SRC,V17_RUN_DASH_SRC,
+      V22_WALK_SRC,V24_DASH_SRC,V25_LIGHT_COMBO_SRC,V26_HEAVY_SRC,
+      V28_UPPERCUT_SRC,V18_CROUCH_SRC,V19_JUMP_SRC,V23_GUARD_SRC,
+      V24_DODGE_SRC
     ];
     return Promise.all(essential.map(src=>new Promise(resolve=>{
       const image=new root.Image();
@@ -737,14 +745,29 @@
         if(finished)return;
         finished=true;
         if(timeout)root.clearTimeout(timeout);
-        resolve({src,ok});
+        resolve({src,ok,image:ok?image:null});
       };
       const timeout=typeof root.setTimeout==="function"?
         root.setTimeout(()=>finish(false),4500):null;
       image.onload=()=>finish(true);
       image.onerror=()=>finish(false);
       image.src=src;
-    })));
+    }))).then(assets=>{
+      // Do not let the first Square press switch from raw art to recolored
+      // art halfway through the attack. Finish canonical palette sampling
+      // and atlas conversion before the match becomes interactive.
+      const idle=idleV17||assets.find(x=>x.src===V17_IDLE_SRC)?.image;
+      root.MugenYusukePaletteV30?.setReference(idle);
+      const images=[
+        idleV17,walkV17,walkV22,backTurnV17,runDashV17,runOnlyV20,
+        dashOnlyV20,dashV24,lightComboV25,heavyV26,launcherV28,
+        guardV23,jumpV19,dodgeV24
+      ];
+      for(const img of images)if(img){
+        root.MugenYusukePaletteV30?.prepare(img);
+      }
+      return assets;
+    });
   }
   root.MugenExactYusuke=Object.freeze({
     build,pose,draw,frames:FRAMES,walkIdleFrames:WALK_IDLE_FRAMES,
