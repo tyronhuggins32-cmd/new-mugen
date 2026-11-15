@@ -42,13 +42,14 @@ const assert = require('node:assert/strict');
   g.reset();g.player.setState('block');g.player.facing=1;
   g.damageFighter(g.cpu,g.player,{damage:10,facing:-1,hitstun:.2,knockback:10},0,0);
   ok(g.player.health===4997.5,'front guard');
-  // Triangle switches on the strict spirit meter threshold.
+  // Triangle is now a dedicated authored heavy combo regardless of Spirit
+  // meter. The old energy-dependent Shotgun/Power Kick switch was removed.
   g.reset();g.state='play';g.player.energy=50;
-  ok(g.player.beginAttack('heavy') && g.player.currentAttack()==='powerKick',
-    'Triangle at 50% activates knockback Power Kick');
+  ok(g.player.beginAttack('heavy') && g.player.currentAttack()==='heavy',
+    'Triangle at 50% activates the heavy combo');
   g.reset();g.state='play';g.player.energy=51;
-  ok(g.player.beginAttack('heavy') && g.player.currentAttack()==='shotgun',
-    'Triangle above 50% activates Spirit Shotgun');
+  ok(g.player.beginAttack('heavy') && g.player.currentAttack()==='heavy',
+    'Triangle above 50% still activates the heavy combo');
   g.reset();g.state='play';g.player.beginAttack('light');g.updateHud(true);
   ok(document.querySelector('.combo-panel').hidden,'combo meter is hidden before three Square taps');
   g.player.beginAttack('light');g.player.beginAttack('light');g.updateHud(true);
