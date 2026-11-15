@@ -83,9 +83,14 @@ const fs=require("node:fs");
       // renderer must disable it at drawImage time, not permanently.
       if(smoothAtDraw)
         throw Error("Pixel art blurred in "+state);
+      const art=window.MugenYusukeArtV29?.stats(pose.image)||null;
+      if(state==="attack-heavy" &&
+         (!art||art.removedPale<8))
+        throw Error("Heavy combo still has pale outlines: "+JSON.stringify(art));
       samples.push({state,source:pose.source,
         frame:pose.index,visibleHeight:Math.round(layout.opaqueHeight),
-        footGap:Math.round(layout.footOffset),bodyOffset:Math.round(layout.horizontalOffset)});
+        footGap:Math.round(layout.footOffset),bodyOffset:Math.round(layout.horizontalOffset),
+        removedWhiteRim:art?.removedPale||0,removedRedRim:art?.removedRed||0});
     }
     const standing=samples.filter(s=>
       ["idle","walk","run","block","attack-light","attack-cross",
