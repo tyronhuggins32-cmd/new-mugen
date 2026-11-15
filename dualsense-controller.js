@@ -1,9 +1,10 @@
 /* DualSense / standard Gamepad API input for New Mugen.
  * PS5 layout (standard mapping):
  * Left stick / D-pad = move; X / up = jump; L1 / down = block;
- * Square = light; Triangle = heavy; Circle = Spirit Gun;
+ * Square = light; Triangle = evolved Spirit Punch heavy; Circle = Spirit Gun;
  * R1 = dash; L3 (left-stick click) = toggle sustained run;
- * L2 = charge; R2 = MAX Spirit Gun; Options = pause.
+ * L2 = charge; R2 + Square = Spirit Punch Overdrive;
+ * R2 by itself, on release = MAX Spirit Gun; Options = pause.
  * Menu: D-pad / left stick vertical = select, X = confirm, O = back.
  * Gamepads only become available to Safari/Chromium after a physical button press.
  */
