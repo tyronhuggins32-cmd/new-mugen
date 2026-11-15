@@ -574,7 +574,7 @@
     return {image:atlas.image,frame,index,clip,scale,part:"exact",source:"user-reference",
       progress,frameCount:atlas.frameCount};
   }
-  function draw(fighter,ctx,time,_alpha,atlas,attackDuration){
+  function draw(fighter,ctx,time,alpha,atlas,attackDuration){
     const selected=pose(fighter,atlas,attackDuration);
     if(!selected||!ctx?.drawImage)return false;
     const {image,frame,scale,clip,progress}=selected;
@@ -599,13 +599,21 @@
       clip==="stagger" ? -.04 :
       clip==="rush" && selected.source!=="movement-v24" ? .028 :
       clip==="backdash" ? -.035:0;
-    const dx=(Number(fighter.x)||0)+face*lunge+
+    // The fixed 60Hz simulation stores prevX/prevY each update, while the
+    // canvas may paint between ticks. Interpolating the *one* sprite here
+    // stops 120Hz displays showing doubled/stuttering movement positions.
+    // Damage, physics, collision and R1 travel are never interpolated.
+    const blend=Number.isFinite(alpha)?clamp(alpha,0,1):1;
+    const worldX=Number(fighter.x)||0,worldY=Number(fighter.y)||0;
+    const beforeX=Number.isFinite(fighter.prevX)?fighter.prevX:worldX;
+    const beforeY=Number.isFinite(fighter.prevY)?fighter.prevY:worldY;
+    const dx=beforeX+(worldX-beforeX)*blend+face*lunge+
       face*(continuity?.horizontalOffset||0);
     // Every V17 cel has a 12px transparent gutter below its foot pivot.
     // Offset once at draw time rather than shifting world physics / hitboxes.
     const legacyOffset=selected.source==="movement-v17"?12*scale:
       ["movement-v21","movement-v22","movement-v22-generated"].includes(selected.source)?8*scale:0;
-    const dy=(Number(fighter.y)||0)+bob+
+    const dy=beforeY+(worldY-beforeY)*blend+bob+
       (continuity?.measured?continuity.footOffset:legacyOffset);
     ctx.save();
     ctx.translate(dx,dy);
