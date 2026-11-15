@@ -1774,7 +1774,8 @@
   <script src="mugen-yusuke-reference-v13.js?v=2"></script>
   <script src="yusuke-walk-polish-v22.js?v=22"></script>
   <script src="mugen-yusuke-legacy-fix-v27.js?v=27"></script>
-  <script src="yusuke-exact-reference-v15.js?v=22&walkIdle=16&runDash=20&walk24=22&crouch=18&jump=19&guard=23&dash18=24&dodge=24&lightCombo=25&heavyCombo=26&legacyFix=27&uppercut=28"></script>
+  <script src="mugen-yusuke-animation-v28.js?v=28"></script>
+  <script src="yusuke-exact-reference-v15.js?v=22&walkIdle=16&runDash=20&walk24=22&crouch=18&jump=19&guard=23&dash18=24&dodge=24&lightCombo=25&heavyCombo=26&legacyFix=27&continuity=28&uppercut=28"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=21"></script>
@@ -2772,6 +2773,7 @@
           // Footstep phase advances with WORLD DISTANCE rather than frame time:
           // standing against a wall cannot cause treadmill sliding.
           this.walkCycleDistance = 0;
+          this.gaitPhase = 0; // One continuous heel-toe phase for walk/run/retreat.
           this._crouchVisual = false; // Stationary low-guard pose without changing block mechanics.
           this._guardImpactTimer = 0; // Visual-only recoil, no extra hit or stun.
           this._guardImpactHeavy = false;
@@ -3126,9 +3128,17 @@
           this.x += this.vx * dt;
           this.y += this.vy * dt;
           this.x = Math.max(arena.left, Math.min(arena.right, this.x));
-          if (!startedAirborne && this.state === "walk") {
-            this.walkCycleDistance =
-              (this.walkCycleDistance + Math.abs(this.x - walkStartX)) % 240;
+          if (!startedAirborne &&
+              ["walk","run","crouchWalk"].includes(this.state)) {
+            // Advance cel timing ONLY when the fighter actually travels.
+            // Use a stride calibrated to each speed, not a wall-clock loop
+            // that keeps feet cycling against a blocking body or stage wall.
+            const travel=Math.abs(this.x-walkStartX);
+            const stride=this.state==="run"?190:
+              this.state==="crouchWalk"?140:240;
+            this.gaitPhase=(this.gaitPhase+travel/stride)%1;
+            if(this.state==="walk")
+              this.walkCycleDistance=(this.walkCycleDistance+travel)%240;
           }
           if (this.y >= arena.floor) {
             this.y = arena.floor;
