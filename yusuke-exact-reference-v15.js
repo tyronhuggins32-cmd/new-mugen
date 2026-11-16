@@ -690,7 +690,8 @@
       progress=p;
       index=frameAt(seq,p);
     }else if(state==="hit" || (fighter.hitstun||0)>0){
-      clip=fighter.hitReaction==="knockback"?"knockback":"stagger";
+      clip=["knockback","knockdown"].includes(fighter.hitReaction)
+        ?fighter.hitReaction:"stagger";
       const seq=movementClips[clip];
       if(clip==="knockback" && fighter._spiritPunchLaunch){
         // A single clear recoil -> airborne flight -> grounded recovery;
@@ -749,6 +750,12 @@
       return {...fighter._exactLastAttackPose,clip:"attackRecover"};
     }
     fighter._exactPreviousClip=clip;
+    // Dedicated V37 hit, airborne recoil and get-up sprites replace the
+    // old two-frame fallback on BOTH player and CPU damage reactions.
+    if(["stagger","knockback","knockdown","recovery"].includes(clip)){
+      const authored=root.MugenYusukeReactionV37?.pose(fighter,clip);
+      if(authored)return authored;
+    }
     // Never overlay a second fighter. Select ONE texture for this frame only.
     loadV17Movement();
     if(clip==="rush")loadV24Dash();
@@ -877,6 +884,8 @@
     loadV18Crouch();
     loadV19Jump();
     loadV23Guard();
+    const reactionsReady=root.MugenYusukeReactionV37?.preload()||
+      Promise.resolve(false);
     const essential=[
       V17_IDLE_SRC,V17_BACK_TURN_SRC,V17_WALK_SRC,V17_RUN_DASH_SRC,
       V33_WALK_SRC,V22_WALK_SRC,V24_DASH_SRC,V25_LIGHT_COMBO_SRC,V26_HEAVY_SRC,
@@ -953,7 +962,12 @@
         const clean=root.MugenYusukeArtV29?.prepare(img,source)||img;
         root.MugenYusukePaletteV30?.prepare(clean);
       }
-      return assets;
+      // Don't start the match while hit reaction frames are still loading,
+      // or the first confirmed punch can flash the original green-pants art.
+      return reactionsReady.then(()=>{
+        root.MugenYusukeReactionV37?.primePalette();
+        return assets;
+      });
     });
   }
   root.MugenExactYusuke=Object.freeze({
