@@ -114,12 +114,20 @@ vm.runInNewContext(fs.readFileSync("mugen-yusuke-reactions-v37.js","utf8"),
  assert.match(html,/mugen-yusuke-reactions-v37\.js\?v=37/);
  assert.match(html,/hitReactions=37/);
  const cfg=JSON.parse(fs.readFileSync("characters/yusuke/yusuke.json","utf8"));
- for(const [name,min] of [["light",.28],["cross",.33],["body",.36],
-   ["upper",.51],["heavy",.46]]){
+ for(const [name,min] of [["light",.33],["cross",.39],["body",.43],
+   ["upper",.60],["heavy",.54]]){
   const a=cfg.combat.attacks[name];
   assert.equal(a.duration,min,"retimed "+name);
   assert.ok(a.activeStart>0&&a.activeStart<a.activeEnd&&a.activeEnd<a.duration);
  }
- assert.ok(cfg.combat.effects.hitStop.heavy>=.09);
+ assert.ok(cfg.combat.effects.hitStop.heavy>=.11);
+ assert.ok(cfg.combat.effects.hitStop.light>=.065);
+ // All revised active windows remain aligned to the same relative point
+ // of the attack, despite slower readable choreography.
+ for(const move of ["light","cross","body","upper","heavy"]){
+   const a=cfg.combat.attacks[move];
+   assert.ok(a.activeStart/a.duration>=.16 && a.activeStart/a.duration<=.32);
+   assert.ok(a.activeEnd/a.duration>.52 && a.activeEnd/a.duration<.75);
+ }
  console.log("PASS: 26 authored hit/flight/knockdown poses; true knockback alpha; full sprite grid; preloaded palettes; slower combat.");
 })().catch(e=>{console.error(e);process.exitCode=1;});
