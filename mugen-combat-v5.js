@@ -158,9 +158,12 @@
   }
 
   function cameraZoom(distance, emphasis = 0) {
-    // Close combat stays fully framed. A subtle emphasis on specials does
-    // not recreate the old extreme close-up at point-blank range.
-    return 1 + .055 * clamp((distance - 160) / 550) + .012 * clamp(emphasis);
+    // Let fighters occupy more of the screen when exchanging blows.
+    // Pull back for chase / long-range attacks. Both fighters remain fully
+    // visible because the nearest allowed physical spacing is 168px,
+    // leaving over 800px of horizontal action room at this restrained zoom.
+    const far=clamp((distance-180)/800);
+    return 1.18 - .12*far + .018*clamp(emphasis);
   }
 
   root.MugenCombatV5 = Object.freeze({
