@@ -76,7 +76,7 @@ vm.runInNewContext(artSource,{window:artwork,Math});
 const sourceImage={naturalWidth:1536,naturalHeight:1024};
 const atlas=artwork.MugenExactYusuke.build(sourceImage);
 assert.ok(atlas);
-for(let i=0;i<55;i++){
+for(let i=0;i<112;i++){
   game.cpu.update(1/60,neutral,game.player,game);
   maxTravel=Math.max(maxTravel,game.cpu.x-startingX);
   if(!game.cpu.grounded)airTicks++;
@@ -87,15 +87,16 @@ for(let i=0;i<55;i++){
     flightAnimationChecked=true;
   }
   if(game.cpu._spiritPunchLaunch && game.cpu.grounded && game.cpu.stateTime>.1){
-    assert.equal(pose.clip,"knockback");
-    assert.equal(pose.index,15,"Landing advances into recovery cel");
+    assert.equal(pose.clip,"knockdown",
+      "V37 replaces the legacy grounded knockback with authored get-up");
+    assert.equal(pose.index,12,"Legacy no-assets fallback remains safe");
     landingChecked=true;
   }
 }
 assert.ok(maxTravel>320,"Opponent should fly visibly backward rather than stop on contact");
 assert.ok(airTicks>=20,"Spirit Punch should keep opponent visibly airborne");
 assert.ok(flightAnimationChecked,"Knockback flight animation must be reachable");
-assert.ok(landingChecked,"Knockback must recover after landing");
+assert.ok(landingChecked,"Landing must enter the new knockdown/get-up timeline");
 assert.equal(game.cpu._spiritPunchLaunch,false,"Flight flag must clear after hitstun");
 assert.equal(game.cpu.state,"idle","Victim should regain control after hitstun");
 
