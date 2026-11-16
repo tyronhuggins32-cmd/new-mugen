@@ -95,7 +95,7 @@ assert.equal(fx.stats(game).active,0);
 const html=fs.readFileSync("game-build-0009.html","utf8");
 assert.match(html,/yusuke-alpha-v9\.js\?v=1/);
 assert.match(html,/MugenAlphaMatte\?\.prepare/);
-assert.match(html,/mugen-vfx-v8\.js\?v=2/);
+assert.match(html,/mugen-vfx-v8\\.js\\?v=38/);
 assert.match(html,/mugen-fluid-v3\.js\?v=3/);
 assert.match(html,/const authoredImpact = Boolean\(window\.MugenVfxV8\?\.ready\(\)\)/);
 assert.match(html,/!this\._usingPremiumCel/);
