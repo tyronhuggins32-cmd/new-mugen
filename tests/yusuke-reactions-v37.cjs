@@ -1,8 +1,8 @@
 "use strict";
 const fs=require("node:fs"),vm=require("node:vm"),assert=require("node:assert/strict");
 const assets={
- stagger:["characters/yusuke/yusuke_hurt_stagger_v37_8frames.png",1774,887,8],
- knockback:["characters/yusuke/yusuke_knockback_v37_alpha_clean.png",1774,887,8],
+ stagger:["characters/yusuke/yusuke_hurt_v37_8frames.png",1024,512,8],
+ knockback:["characters/yusuke/yusuke_knockback_v37_8frames.png",1024,512,8],
  knockdown:["characters/yusuke/yusuke_knockdown_v37_10frames.png",1280,512,10]
 };
 for(const [kind,[path,w,h]] of Object.entries(assets)){
@@ -42,9 +42,9 @@ const canvas={
 class Img{
  set src(url){
   this._src=url;
-  if(url.includes("knockback_v37")){this.naturalWidth=1774;this.naturalHeight=887;}
+  if(url.includes("knockback_v37")){this.naturalWidth=1024;this.naturalHeight=512;}
   else if(url.includes("knockdown_v37")){this.naturalWidth=1280;this.naturalHeight=512;}
-  else if(url.includes("hurt_stagger_v37")){this.naturalWidth=1774;this.naturalHeight=887;}
+  else if(url.includes("hurt_v37")){this.naturalWidth=1024;this.naturalHeight=512;}
   else {this.naturalWidth=1536;this.naturalHeight=512;}
   this.onload?.();
  }
@@ -76,7 +76,7 @@ vm.runInNewContext(fs.readFileSync("mugen-yusuke-reactions-v37.js","utf8"),
  }
  const first=require("node:zlib").inflateSync(Buffer.concat(ids));
  assert.equal(first[4],0,"knockback sheet must have real transparent corners");
- assert.ok(png.length>500000,"full detailed sprite art retained");
+ assert.ok(png.length>250000,"full detailed sprite art retained");
  let primed=0;
  root.MugenYusukePaletteV30={prepare(image){primed++;return image;}};
  plugin.primePalette();
@@ -94,10 +94,10 @@ vm.runInNewContext(fs.readFileSync("mugen-yusuke-reactions-v37.js","utf8"),
    assert.equal(pose.source,"reaction-v37");
    assert.equal(pose.index,i);
    assert.equal(pose.frameCount,count);
-   const w=kind==="knockdown"?1280:1774,h=kind==="knockdown"?512:887;
+   const w=kind==="knockdown"?1280:1024,h=512;
    assert.ok(pose.frame.x>=0&&pose.frame.x+pose.frame.w<=w);
    assert.ok(pose.frame.y>=0&&pose.frame.y+pose.frame.h<=h);
-   assert.ok(pose.scale>=.44&&pose.scale<=.86);
+   assert.ok(pose.scale>=.84&&pose.scale<=.88);
    visited.add(i);
   }
   assert.equal(visited.size,count,kind+" every frame reachable");
