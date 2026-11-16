@@ -1,0 +1,368 @@
+{
+  "formatVersion": 1,
+  "character": "Yusuke Urameshi",
+  "animation": "Square Combo V34",
+  "file": "yusuke_square_master_v34_30frames.png",
+  "width": 1920,
+  "height": 1280,
+  "columns": 6,
+  "rows": 5,
+  "cellWidth": 320,
+  "cellHeight": 256,
+  "frames": 30,
+  "footPivotX": 160,
+  "footPivotY": 244,
+  "background": "transparent RGBA",
+  "stride": {
+    "light": [
+      0,
+      5
+    ],
+    "cross": [
+      6,
+      11
+    ],
+    "body": [
+      12,
+      17
+    ],
+    "upper": [
+      18,
+      29
+    ]
+  },
+  "recoveryVisibleHeight": 205,
+  "notes": "Rebuilt from two original in-repo V32 animations, with uniform non-stretched scaling, common foot pivots and matte cleanup. Video used for attack order, not generated from video pixels.",
+  "framesDetail": [
+    {
+      "index": 0,
+      "move": "light",
+      "sourceFrame": 0,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1037,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 1,
+      "move": "light",
+      "sourceFrame": 1,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1118,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 2,
+      "move": "light",
+      "sourceFrame": 2,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1095,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 3,
+      "move": "light",
+      "sourceFrame": 3,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1131,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 4,
+      "move": "light",
+      "sourceFrame": 4,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1151,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 5,
+      "move": "light",
+      "sourceFrame": 5,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1068,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 6,
+      "move": "cross",
+      "sourceFrame": 6,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1008,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 7,
+      "move": "cross",
+      "sourceFrame": 7,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1166,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 8,
+      "move": "cross",
+      "sourceFrame": 8,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1079,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 9,
+      "move": "cross",
+      "sourceFrame": 9,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1151,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 10,
+      "move": "cross",
+      "sourceFrame": 10,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1029,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 11,
+      "move": "cross",
+      "sourceFrame": 11,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1098,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 12,
+      "move": "body",
+      "sourceFrame": 12,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1074,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 13,
+      "move": "body",
+      "sourceFrame": 13,
+      "sourceVisibleHeight": 195,
+      "visibleHeight": 204,
+      "scale": 1.0513,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 972,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 14,
+      "move": "body",
+      "sourceFrame": 14,
+      "sourceVisibleHeight": 194,
+      "visibleHeight": 206,
+      "scale": 1.0567,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1016,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 15,
+      "move": "body",
+      "sourceFrame": 15,
+      "sourceVisibleHeight": 195,
+      "visibleHeight": 205,
+      "scale": 1.0513,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1082,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 16,
+      "move": "body",
+      "sourceFrame": 16,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1023,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 17,
+      "move": "body",
+      "sourceFrame": 17,
+      "sourceVisibleHeight": 205,
+      "visibleHeight": 205,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1090,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 18,
+      "move": "upper",
+      "sourceFrame": 0,
+      "sourceVisibleHeight": 207,
+      "visibleHeight": 207,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1695,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 19,
+      "move": "upper",
+      "sourceFrame": 1,
+      "sourceVisibleHeight": 207,
+      "visibleHeight": 207,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1902,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 20,
+      "move": "upper",
+      "sourceFrame": 2,
+      "sourceVisibleHeight": 208,
+      "visibleHeight": 208,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1674,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 21,
+      "move": "upper",
+      "sourceFrame": 3,
+      "sourceVisibleHeight": 207,
+      "visibleHeight": 207,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1857,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 22,
+      "move": "upper",
+      "sourceFrame": 4,
+      "sourceVisibleHeight": 207,
+      "visibleHeight": 207,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1512,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 23,
+      "move": "upper",
+      "sourceFrame": 5,
+      "sourceVisibleHeight": 207,
+      "visibleHeight": 207,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 52,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 24,
+      "move": "upper",
+      "sourceFrame": 6,
+      "sourceVisibleHeight": 209,
+      "visibleHeight": 209,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1296,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 25,
+      "move": "upper",
+      "sourceFrame": 7,
+      "sourceVisibleHeight": 209,
+      "visibleHeight": 209,
+      "scale": 1.0,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1120,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 26,
+      "move": "upper",
+      "sourceFrame": 8,
+      "sourceVisibleHeight": 207,
+      "visibleHeight": 205,
+      "scale": 0.9903,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1336,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 27,
+      "move": "upper",
+      "sourceFrame": 9,
+      "sourceVisibleHeight": 207,
+      "visibleHeight": 205,
+      "scale": 0.9903,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1219,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 28,
+      "move": "upper",
+      "sourceFrame": 10,
+      "sourceVisibleHeight": 207,
+      "visibleHeight": 205,
+      "scale": 0.9903,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1227,
+      "source": "v32-original-hand-authored"
+    },
+    {
+      "index": 29,
+      "move": "upper",
+      "sourceFrame": 11,
+      "sourceVisibleHeight": 207,
+      "visibleHeight": 206,
+      "scale": 0.9903,
+      "visibleBottom": 244,
+      "edgePixelsRemoved": 1475,
+      "source": "v32-original-hand-authored"
+    }
+  ]
+}
