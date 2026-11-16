@@ -72,6 +72,8 @@ jobs:
         run: node tests/yusuke-square-combo-v35.cjs
       - name: V36 reviewed Square body sprites, transparent 30-frame atlas, consistent uppercut recovery
         run: node tests/yusuke-square-combo-v36.cjs
+      - name: V37 cinematic hit, stagger, flight, knockdown and 5-move pacing
+        run: node tests/yusuke-reactions-v37.cjs
       - name: Twelve-frame Triangle Rising Launcher with preserved R2 Square Spirit Punch V31
         run: node tests/yusuke-triangle-launcher-v31.cjs
       - name: Recorded Yusuke V27 palette, body scale and close-combat collision fixes
