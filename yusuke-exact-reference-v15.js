@@ -372,6 +372,9 @@
   // costume, 320x256 tiles, one character at a time, no baked blue VFX.
   const V35_MASTER_SRC="characters/yusuke/yusuke_square_master_v35_30frames.png";
   let v35Master=null;
+  // V36: 30 separately inspected complete full-body sprites, rebuilt from the supplied gameplay recording.
+  const V36_MASTER_SRC="characters/yusuke/yusuke_square_master_v36_30frames.png";
+  let v36Master=null;
   let v34Master=null;
   const V32_ROWS=Object.freeze({light:0,cross:1,body:2});
   let v32Light=null,v32Upper=null,v32Requested=false;
@@ -391,6 +394,7 @@
     fetch(V32_UPPER_SRC,1280,768,image=>{v32Upper ||= image;});
     fetch(V34_MASTER_SRC,1920,1280,image=>{v34Master ||= image;});
     fetch(V35_MASTER_SRC,1920,1280,image=>{v35Master ||= image;});
+    fetch(V36_MASTER_SRC,1920,1280,image=>{v36Master ||= image;});
   }
   function v32SquarePose(clip,progress,fighter){
     if(!fighter?.grounded)return null;
@@ -398,7 +402,7 @@
     // All four Square moves share the SAME pixel palette, 194px render
     // height family, 320px crop width, and 244px painted foot baseline.
     // Never switch to a different atlas at the uppercut transition.
-    const master=v35Master||v34Master;
+    const master=v36Master||v35Master||v34Master;
     if(master && (clip==="upper" ||
         Object.prototype.hasOwnProperty.call(V32_ROWS,clip))){
       const first=clip==="upper"?18:V32_ROWS[clip]*6;
@@ -406,7 +410,8 @@
       index=first+Math.min(count-1,Math.floor(clamp(progress)*count));
       frame={x:(index%6)*320,y:Math.floor(index/6)*256,
         w:320,h:256,ax:160,key:index};
-      const version=master===v35Master?"square-combo-v35":"square-combo-v34";
+      const version=master===v36Master?"square-combo-v36":
+        master===v35Master?"square-combo-v35":"square-combo-v34";
       return {image:master,frame,index,clip,scale:.96,
         part:version,source:version,
         progress,frameCount:30};
@@ -876,7 +881,7 @@
       V17_IDLE_SRC,V17_BACK_TURN_SRC,V17_WALK_SRC,V17_RUN_DASH_SRC,
       V33_WALK_SRC,V22_WALK_SRC,V24_DASH_SRC,V25_LIGHT_COMBO_SRC,V26_HEAVY_SRC,
       V28_UPPERCUT_SRC,V32_COMBO_SRC,V32_UPPER_SRC,V34_MASTER_SRC,
-      V35_MASTER_SRC,
+      V35_MASTER_SRC,V36_MASTER_SRC,
       V18_CROUCH_SRC,V19_JUMP_SRC,V23_GUARD_SRC,
       V24_DODGE_SRC
     ];
@@ -919,6 +924,7 @@
       v32Upper ||= direct(V32_UPPER_SRC);
       v34Master ||= direct(V34_MASTER_SRC);
       v35Master ||= direct(V35_MASTER_SRC);
+      v36Master ||= direct(V36_MASTER_SRC);
       lightComboV25 ||= cleaned(V25_LIGHT_COMBO_SRC,"light-combo-v25");
       heavyV26 ||= cleaned(V26_HEAVY_SRC,"heavy-triangle-v26");
       launcherV28 ||= cleaned(V28_UPPERCUT_SRC,"launcher-v28");
@@ -938,6 +944,7 @@
         [dashV24,"movement-v24"],[lightComboV25,"light-combo-v25"],
         [v32Light,"square-combo-v32"],[v32Upper,"square-combo-v32"],
         [v34Master,"square-combo-v34"],[v35Master,"square-combo-v35"],
+        [v36Master,"square-combo-v36"],
         [heavyV26,"heavy-triangle-v26"],[launcherV28,"launcher-v28"],
         [guardV23,"guard-v23"],[jumpV19,"movement-v19"],
         [dodgeV24,"dodge-v24"]
