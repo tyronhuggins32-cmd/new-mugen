@@ -22,7 +22,7 @@ class FakeImage{
  set src(src){
    this._src=src;loads.push(src);
    // Verify backward compatibility when V34 is absent or fails to decode.
-   if(src.includes("square_master_v34")){this.onerror?.();return;}
+   if(src.includes("square_master_v34")||src.includes("square_master_v35")){this.onerror?.();return;}
    try{
      const data=fs.readFileSync(src);
      this.naturalWidth=data.readUInt32BE(16);
@@ -88,7 +88,7 @@ assert.notEqual(sprite.pose(fighter,atlas,.33).source,"square-combo-v32",
  "Triangle must keep its independently authored action");
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/squareCombo=34/,"browser cache must refresh replacement textures");
+assert.match(html,/squareCombo=35/,"browser cache must refresh replacement textures");
 assert.match(html,/type = \["light", "cross", "body", "upper"\]/,
  "Square combo input order remains unchanged");
 console.log("PASS: Yusuke V32 Square combo 18+12 authored RGBA frames, full-size 320px uppercut frames, single-body render and unchanged inputs.");
