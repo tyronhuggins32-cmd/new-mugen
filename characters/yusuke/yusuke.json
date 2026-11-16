@@ -650,9 +650,9 @@
     },
     "attacks": {
       "light": {
-        "duration": 0.28,
-        "activeStart": 0.056,
-        "activeEnd": 0.192,
+        "duration": 0.33,
+        "activeStart": 0.066,
+        "activeEnd": 0.226,
         "damage": 20,
         "range": 116,
         "height": 84,
@@ -663,9 +663,9 @@
         "airAnimation": "airKick"
       },
       "heavy": {
-        "duration": 0.46,
-        "activeStart": 0.122,
-        "activeEnd": 0.293,
+        "duration": 0.54,
+        "activeStart": 0.143,
+        "activeEnd": 0.344,
         "damage": 45,
         "range": 132,
         "height": 116,
@@ -697,9 +697,9 @@
         "animation": "spiritGun"
       },
       "cross": {
-        "duration": 0.33,
-        "activeStart": 0.091,
-        "activeEnd": 0.208,
+        "duration": 0.39,
+        "activeStart": 0.108,
+        "activeEnd": 0.246,
         "damage": 26,
         "range": 133,
         "height": 106,
@@ -711,9 +711,9 @@
         "heavyImpact": false
       },
       "body": {
-        "duration": 0.36,
-        "activeStart": 0.108,
-        "activeEnd": 0.251,
+        "duration": 0.43,
+        "activeStart": 0.129,
+        "activeEnd": 0.3,
         "damage": 30,
         "range": 120,
         "height": 74,
@@ -725,9 +725,9 @@
         "heavyImpact": false
       },
       "upper": {
-        "duration": 0.51,
-        "activeStart": 0.146,
-        "activeEnd": 0.322,
+        "duration": 0.6,
+        "activeStart": 0.172,
+        "activeEnd": 0.379,
         "damage": 42,
         "range": 132,
         "height": 106,
@@ -851,8 +851,8 @@
       "hitAnimationDuration": 0.3,
       "hitStop": {
         "block": 0.025,
-        "light": 0.055,
-        "heavy": 0.095
+        "light": 0.068,
+        "heavy": 0.115
       },
       "shake": {
         "block": 3,
