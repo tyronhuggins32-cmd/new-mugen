@@ -1,0 +1,36 @@
+name: Build Yusuke Square V34 master sprites
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/build_yusuke_square_v34.py
+      - .github/workflows/build-yusuke-square-v34.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install image processing library
+        run: python -m pip install --disable-pip-version-check pillow==11.3.0
+      - name: Build and validate all 30 transparent frames
+        run: python scripts/build_yusuke_square_v34.py
+      - name: Publish rebuilt atlas and frame manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters/yusuke/yusuke_square_master_v34_30frames.png characters/yusuke/square-combo-v34.json
+          if git diff --staged --quiet; then
+            echo "Square V34 atlas already current"
+          else
+            git commit -m "Publish Yusuke Square V34 unified 30-frame RGBA master atlas"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
