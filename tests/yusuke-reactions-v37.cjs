@@ -2,7 +2,7 @@
 const fs=require("node:fs"),vm=require("node:vm"),assert=require("node:assert/strict");
 const assets={
  stagger:["characters/yusuke/yusuke_hurt_stagger_v37_8frames.png",1774,887,8],
- knockback:["characters/yusuke/yusuke_knockback_v37_8frames_raw.png",1774,887,8],
+ knockback:["characters/yusuke/yusuke_knockback_v37_alpha_clean.png",1774,887,8],
  knockdown:["characters/yusuke/yusuke_knockdown_v37_10frames.png",1983,793,10]
 };
 for(const [kind,[path,w,h]] of Object.entries(assets)){
@@ -63,11 +63,20 @@ vm.runInNewContext(fs.readFileSync("mugen-yusuke-reactions-v37.js","utf8"),
   assert.equal(plugin.ready(kind),true,kind+" ready");
   assert.equal(plugin.frameCount(kind),count);
  }
- assert.equal(readbacks,1,"opaque knockback background cleaned exactly once");
- assert.equal(repaint,1);
- const idx=(y,x)=>(y*1774+x)*4+3;
- assert.equal(cleaned[idx(0,0)],0,"background border must be transparent");
- assert.equal(cleaned[idx(220,220)],255,"fighter body stays solid");
+ assert.equal(readbacks,0,"transparent knockback texture must not block gameplay with pixel readback");
+ assert.equal(repaint,0,"background already removed from committed PNG");
+ // The actual committed transparent source, not a mock canvas, has alpha 0
+ // on its first corner. PNG row 0 x=0 reconstructs without left/up neighbors
+ // under all five PNG filter types.
+ const png=fs.readFileSync(assets.knockback[0]);
+ const ids=[];for(let at=8;at+12<png.length;){
+   const n=png.readUInt32BE(at),kind=png.toString("ascii",at+4,at+8);
+   if(kind==="IDAT")ids.push(png.subarray(at+8,at+8+n));
+   at+=12+n;if(kind==="IEND")break;
+ }
+ const first=require("node:zlib").inflateSync(Buffer.concat(ids));
+ assert.equal(first[4],0,"knockback sheet must have real transparent corners");
+ assert.ok(png.length>500000,"full detailed sprite art retained");
  let primed=0;
  root.MugenYusukePaletteV30={prepare(image){primed++;return image;}};
  plugin.primePalette();
