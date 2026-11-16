@@ -733,7 +733,7 @@
       ["guard","guardRecover"].includes(fighter._exactPreviousClip)){
       clip="guardRecover";index=0;
     }else if(state==="idle"&&t<.13 &&
-      (fighter._exactPreviousClip==="knockback"||fighter._exactPreviousClip==="stagger")){
+      ["knockback","stagger","knockdown"].includes(fighter._exactPreviousClip)){
       clip="recovery";index=15;
     }else{
       clip="idle";index=0;
