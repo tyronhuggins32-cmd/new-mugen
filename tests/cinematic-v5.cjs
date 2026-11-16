@@ -81,9 +81,10 @@ assert.ok(g.sweepCircle(230,460,450,460,16,
   {x:205,y:406,width:76,height:178}).t===0,"starting inside hurtbox registers immediate contact");
 assert.equal(g.sweepCircle(100,460,160,460,16,
   {x:205,y:406,width:76,height:178}),null,"no phantom hit when shot falls short");
-assert.ok(g.cameraZoom(142)<g.cameraZoom(620),
-  "close combat must zoom OUT rather than hide contact");
-assert.ok(g.cameraZoom(142,1)<1.04 && g.cameraZoom(1000,1)<1.08,
+assert.ok(g.cameraZoom(142)>g.cameraZoom(620),
+  "camera now emphasizes readable close contact, then pulls back for spacing");
+assert.ok(g.cameraZoom(142,1)>1.17 && g.cameraZoom(142,1)<1.22 &&
+  g.cameraZoom(1000,1)<1.1,
   "cinematic focus must not crop fighter silhouettes");
 
 // Execute the procedural VFX with a fake canvas, tracking real draw calls.
