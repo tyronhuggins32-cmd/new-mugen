@@ -9,7 +9,7 @@
     charge:0,shot:1,blast:2,shotgun:3,punch:4,slash:5,dust:6,ring:7
   });
   const FX_TIME=Object.freeze({
-    punch:.16,heavy:.25,blast:.24,shotgun:.26,charge:.20,
+    punch:.13,heavy:.20,blast:.21,shotgun:.26,charge:.20,
     slash:.18,ring:.18,dust:.26
   });
   const instances=new WeakMap();
@@ -46,11 +46,11 @@
     const kind=blocked?"ring":heavy?"blast":"punch";
     append(game,kind,x,y,{
       direction:attacker.facing,cpu:attacker.cpu,
-      scale:blocked?.72:heavy?1.06:.84
+      scale:blocked?.63:heavy?.78:.65
     });
     // A restrained one-time directional accent for heavy contact only.
     if(heavy)append(game,"slash",x-(attacker.facing||1)*9,y+2,{
-      direction:attacker.facing,cpu:attacker.cpu,scale:.64
+      direction:attacker.facing,cpu:attacker.cpu,scale:.39
     });
   }
   function onShot(game,owner,x,y,shotgun=false){
@@ -104,9 +104,9 @@
       switch(e.kind){
         case "shotgun":w=270;h=165;break;
         case "charge":w=105;h=110;break;
-        case "slash":w=170;h=200;break;
-        case "punch":w=130;h=140;break;
-        case "blast":w=215;h=205;break;
+        case "slash":w=136;h=155;break;
+        case "punch":w=112;h=120;break;
+        case "blast":w=165;h=165;break;
         case "ring":w=190;h=180;break;
         default:w=150;h=100;break;
       }
@@ -114,7 +114,7 @@
       const fade=(1-t)**(isDust?1.9:1.55);
       const y=e.y+(isDust?5:0);
       paint(ctx,TYPES[e.kind],e.x,y,e.direction,
-        w*e.scale*growth,h*e.scale*growth,fade);
+        w*e.scale*growth,h*e.scale*growth,fade*.80);
     }
   }
   function drawBehind(game,ctx){drawLayer(game,ctx,false);}
