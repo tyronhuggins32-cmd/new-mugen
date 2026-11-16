@@ -112,7 +112,7 @@
       // Maintain one constant .96 body scale across *all* 30 punch poses.
       // Earlier per-family reduction from the opening jab made the final
       // guard frame 187px, recreating the exact shrink reported in the video.
-      base=pose.source==="square-combo-v35"?orig:
+      base=["square-combo-v35","square-combo-v36"].includes(pose.source)?orig:
         kind==="low"||kind==="dash"?orig:
         // Preserve crouch/dash compression while matching ALL standing
         // sources to ~194px even when original atlas art is smaller.
@@ -131,7 +131,9 @@
     // the corrected size instead of flashing a smaller fighter.
     const isUpperRecovery=pose.source==="launcher-v28" &&
       Number.isFinite(pose.index) && pose.index>=8;
-    if(isUpperRecovery){
+    const isV36Recovery=pose.source==="square-combo-v36" &&
+      pose.clip==="upper" && Number.isFinite(pose.index) && pose.index>=26;
+    if(isUpperRecovery || isV36Recovery){
       const recoveryHeight=194;
       const restore=recoveryHeight/m.height;
       scale=Math.min(BUDGET_HEIGHT/m.height,
@@ -141,7 +143,7 @@
     // size. Fade the correction into the final quarter of the attack so a
     // smaller anticipation pose is not blown up into a giant sprite.
     const finishClip=["light","cross","body","upper","heavy","spiritPunch"]
-      .includes(pose.clip) && pose.source!=="square-combo-v35";
+      .includes(pose.clip) && !["square-combo-v35","square-combo-v36"].includes(pose.source);
     const finish=Number(pose.progress);
     if(finishClip && Number.isFinite(finish) && finish>.72){
       const weight=bound((finish-.72)/.24,0,1);
