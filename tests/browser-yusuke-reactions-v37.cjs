@@ -49,9 +49,15 @@ const {chromium}=require("playwright");
     }
    }
    const back=reactions.pose(game.player,"knockback").image;
-   if(!(back instanceof HTMLCanvasElement))
-    throw Error("Knockback white backdrop did not generate a transparent canvas");
-   const ctx=back.getContext("2d"),w=back.width,h=back.height;
+   if(!(back instanceof HTMLImageElement||back instanceof HTMLCanvasElement))
+    throw Error("Uploaded V37 knockback art is not a renderable texture");
+   // Knockback is now a genuinely transparent committed PNG. Do not
+   // reprocess 1.6 million pixels in the browser on the first damage frame.
+   const testCanvas=document.createElement("canvas");
+   const w=back.naturalWidth||back.width,h=back.naturalHeight||back.height;
+   testCanvas.width=w;testCanvas.height=h;
+   const ctx=testCanvas.getContext("2d",{willReadFrequently:true});
+   ctx.drawImage(back,0,0);
    const alpha=(x,y)=>ctx.getImageData(x,y,1,1).data[3];
    if(alpha(0,0)!==0||alpha(w-1,h-1)!==0)
     throw Error("White box still present around knockback sprite");
