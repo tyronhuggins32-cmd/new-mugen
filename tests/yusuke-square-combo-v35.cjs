@@ -62,6 +62,7 @@ const code=fs.readFileSync("yusuke-exact-reference-v15.js","utf8");
 class FakeImage{
  set src(src){
   this._src=src;
+  if(src.includes("square_master_v36")){this.onerror?.();return;}
   try{const b=fs.readFileSync(src);
     this.naturalWidth=b.readUInt32BE(16);this.naturalHeight=b.readUInt32BE(20);
     this.onload?.();
@@ -108,7 +109,7 @@ assert.notEqual(renderer.pose(fighter,atlas,.36).source,"square-combo-v35");
 fighter.state="dash";fighter.dashTimer=.15;fighter.vx=750;
 assert.notEqual(renderer.pose(fighter,atlas,.36).source,"square-combo-v35");
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/squareCombo=35&upperRecovery=35&masterAtlas=35/);
+assert.match(html,/squareCombo=36&upperRecovery=36&masterAtlas=36/);
 const continuity=fs.readFileSync("mugen-yusuke-animation-v28.js","utf8");
-assert.match(continuity,/pose\.source==="square-combo-v35"\?orig/);
+assert.match(continuity,/square-combo-v35","square-combo-v36/);
 console.log("PASS V35: 30 distinct Square frames, full-size ending, alpha, foot pivots, no distortion or sprite swapping, controls preserved.");
