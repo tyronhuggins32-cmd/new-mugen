@@ -1777,7 +1777,8 @@
   <script src="mugen-yusuke-animation-v28.js?v=28"></script>
   <script src="mugen-yusuke-art-v29.js?v=29&preClean=1&unifiedPalette=30&squareFinish=30"></script>
   <script src="mugen-yusuke-palette-v30.js?v=30"></script>
-  <script src="yusuke-exact-reference-v15.js?v=22&walkIdle=16&runDash=20&walk24=22&crouch=18&jump=19&guard=23&dash18=24&dodge=24&lightCombo=25&heavyCombo=26&legacyFix=27&continuity=28&smoothWorld=28&walkFallback=28&artClean=29&warmVisuals=29&preClean=1&uppercut=28&spiritPunch=30&triangleLauncher=31&squareCombo=36&upperRecovery=36&masterAtlas=36"></script>
+  <script src="mugen-yusuke-reactions-v37.js?v=37"></script>
+  <script src="yusuke-exact-reference-v15.js?v=22&walkIdle=16&runDash=20&walk24=22&crouch=18&jump=19&guard=23&dash18=24&dodge=24&lightCombo=25&heavyCombo=26&legacyFix=27&continuity=28&smoothWorld=28&walkFallback=28&artClean=29&warmVisuals=29&preClean=1&uppercut=28&spiritPunch=30&triangleLauncher=31&squareCombo=36&upperRecovery=36&masterAtlas=36&hitReactions=37"></script>
   <script src="mugen-shotgun-v4.js?v=1"></script>
   <script src="yusuke-motion.js?v=5"></script>
   <script src="dualsense-controller.js?v=21"></script>
@@ -2814,6 +2815,8 @@
           this.stateTime = 0;
           this.hitstun = 0;
           this.hitReaction = "stagger";
+          this._reactionDuration = .32;
+          this._pendingKnockdown = false;
           this._spiritPunchLaunch = false;
           this.invulnerability = 0;
           this.attackConnected = false;
@@ -2982,9 +2985,16 @@
             if (this.state !== "block") this.setState("hit");
             this.vx *= Math.max(0, 1 - dt * (this.knockbackDrag || 5.2));
             if (this.hitstun <= 0) {
-              this.knockbackDrag = 5.2;
-              this._spiritPunchLaunch = false;
-              this.setState("idle");
+              // Stay visibly airborne after a launcher until the actual
+              // landing. Returning to idle mid-flight caused an old pose
+              // to flash during the most dramatic point of the combo.
+              if (this._pendingKnockdown && !this.grounded)
+                this.hitstun = .08;
+              else {
+                this.knockbackDrag = 5.2;
+                this._spiritPunchLaunch = false;
+                this.setState("idle");
+              }
             }
             this.applyPhysics(dt);
             return;
@@ -3189,6 +3199,16 @@
           if (this.y >= arena.floor) {
             this.y = arena.floor;
             this.vy = 0;
+            if (startedAirborne && this._pendingKnockdown && this.state === "hit") {
+              // V37: finish heavy launches with an authored 10-pose fall,
+              // floor impact, grounded recovery and return to ready stance.
+              this._pendingKnockdown = false;
+              this.hitReaction = "knockdown";
+              this._reactionDuration = .58;
+              this.hitstun = Math.max(this.hitstun, .58);
+              this.stateTime = 0;
+              this.vx *= .32;
+            }
             if (startedAirborne && landingSpeed > 450) window.MugenPlayCombatSfx?.("land", .42);
             this._crossOverActive = false;
             if (this.state === "jump") {
@@ -4259,7 +4279,8 @@
           if (!blocked && attacker.comboActive) attacker.comboBonusDamage += damage - baseDamage;
           defender.health = Math.max(0, defender.health - damage);
           defender.invulnerability = blocked ? .10 : .18;
-          defender.hitstun = blocked ? .12 : attack.hitstun;
+          defender.hitstun = blocked ? .12 : Math.max(
+            attack.hitstun || 0, attack.heavyImpact ? .46 : .30);
           // The blocking sprite reacts only to an actual guarded impact.
           // Keep original chip damage, block stun, pushback and hitboxes.
           if (blocked) {
@@ -4274,11 +4295,15 @@
           const forcedKnockback = !blocked && Boolean(attack.forceKnockback);
           defender._spiritPunchLaunch = forcedKnockback;
           defender.setState(blocked ? "block" : "hit");
-          if (forcedKnockback) defender.stateTime = 0;
+          if (!blocked) defender.stateTime = 0;
           defender.hitReaction = forcedKnockback
             ? (attack.knockbackAnimation || "knockback")
             : !blocked && (attack.heavyImpact || (attack.knockback || 0) >= 250)
               ? "knockback" : "stagger";
+          defender._reactionDuration = Math.max(.30,defender.hitstun);
+          defender._pendingKnockdown = !blocked &&
+            Boolean(attack.heavyImpact) &&
+            ((attack.launchVelocity || 0)<-150 || forcedKnockback);
           const direction = attack.facing || attacker.facing;
           defender.vx = direction * attack.knockback * (blocked ? .34 : 1);
           defender.knockbackDrag = !blocked ? (attack.knockbackDrag ?? 5.2) : 5.2;
@@ -4306,7 +4331,10 @@
           }
           const effects = yusukeCombat.effects;
           this.hitStop = blocked ? effects.hitStop.block : heavyHit ? effects.hitStop.heavy : effects.hitStop.light;
-          if (visualEffectsAllowed) this.shake = blocked ? effects.shake.block : heavyHit ? Math.max(12,effects.shake.heavy) : effects.shake.light;
+          // Keep both fighters readable: the old mandatory 12px camera
+          // shake hid contact and facial reactions under VFX.
+          if (visualEffectsAllowed) this.shake = blocked ? effects.shake.block :
+            heavyHit ? Math.min(8,effects.shake.heavy) : Math.min(4,effects.shake.light);
           const impactSound = blocked ? "block" : heavyHit ? "heavy" : "hit";
           if (!window.MugenPlayCombatSfx?.(impactSound, blocked ? .4 : heavyHit ? .88 : .6))
             if (!window.MugenSFX) playTone(blocked ? 120 : heavyHit ? 88 : 135, blocked ? .035 : .07);
