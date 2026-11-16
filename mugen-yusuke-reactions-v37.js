@@ -7,8 +7,8 @@
  const definitions=Object.freeze({
    stagger:{src:"characters/yusuke/yusuke_hurt_stagger_v37_8frames.png",
      width:1774,height:887,cols:4,rows:2,frames:8,scale:.45},
-   knockback:{src:"characters/yusuke/yusuke_knockback_v37_8frames_raw.png",
-     width:1774,height:887,cols:4,rows:2,frames:8,scale:.45,cleanWhite:true},
+   knockback:{src:"characters/yusuke/yusuke_knockback_v37_alpha_clean.png",
+     width:1774,height:887,cols:4,rows:2,frames:8,scale:.45},
    knockdown:{src:"characters/yusuke/yusuke_knockdown_v37_10frames.png",
      width:1983,height:793,cols:5,rows:2,frames:10,scale:.53}
  });
