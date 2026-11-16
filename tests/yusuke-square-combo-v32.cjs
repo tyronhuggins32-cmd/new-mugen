@@ -22,7 +22,7 @@ class FakeImage{
  set src(src){
    this._src=src;loads.push(src);
    // Verify backward compatibility when V34 is absent or fails to decode.
-   if(src.includes("square_master_v34")||src.includes("square_master_v35")){this.onerror?.();return;}
+   if(src.includes("square_master_v34")||src.includes("square_master_v35")||src.includes("square_master_v36")){this.onerror?.();return;}
    try{
      const data=fs.readFileSync(src);
      this.naturalWidth=data.readUInt32BE(16);
