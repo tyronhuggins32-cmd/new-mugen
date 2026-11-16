@@ -58,6 +58,24 @@
   // It overrides only the forward walk. Idle, run, backwalk and dash are preserved.
   const V21_WALK_SRC = "characters/yusuke/yusuke_walk_forward_v21_24frames.png";
   const V22_WALK_SRC = "characters/yusuke/yusuke_walk_forward_v22_24frames.png";
+  // V33: replacement 18-frame 6x3 atlas (256x256 per cel). Retain V22
+  // as fallback until the full-resolution transparent PNG is deployed.
+  const V33_WALK_SRC = "characters/yusuke/yusuke_walk_forward_v33_18frames.png";
+  let walkV33=null,walkV33Status="unrequested";
+  function loadV33Walk(){
+    if(walkV33Status!=="unrequested" || typeof root.Image!=="function")return;
+    walkV33Status="loading";
+    const image=new root.Image();
+    image.decoding="async";
+    image.onload=()=>{
+      if((image.naturalWidth||image.width)===1536 &&
+         (image.naturalHeight||image.height)===768){
+        walkV33=image;walkV33Status="ready";
+      }else walkV33Status="invalid";
+    };
+    image.onerror=()=>{walkV33Status="missing";};
+    image.src=V33_WALK_SRC;
+  }
   let walkV22=null,walkV22Status="unrequested";
   let walkSynthesizedV22=null;
   function maybeSynthesizeWalkFallback(){
@@ -159,12 +177,13 @@
     if(clip==="idle"){
       image=idleV17;count=12;
     }else if(clip==="forward"){
-      // Authoritative new art > prior V21 art > cached 24-step motion
-      // synthesis from the shipped 12-frame atlas > unmodified 12-frame.
-      image=walkV22||walkV21||walkSynthesizedV22||walkV17;
+      // New 18-frame heel-to-toe cycle takes priority once loaded.
+      // Unlike dash and run, forward walking stays tied to real travel.
+      image=walkV33||walkV22||walkV21||walkSynthesizedV22||walkV17;
+      const replacement=image===walkV33;
       const extended=image!==walkV17;
-      rate=extended?24:13;
-      count=extended?24:12;
+      rate=replacement?22:(extended?24:13);
+      count=replacement?18:(extended?24:12);
     }else if(clip==="retreat" || clip==="backdash"){
       image=backTurnV17;rate=clip==="backdash"?20:12;
     }else if(clip==="turn"){
@@ -208,7 +227,8 @@
     // Keep the illustrated body approximately the same height through walking,
     // sprinting and dashing. Previous .94 scaling made the run disproportionately small.
     const scale=dashOriginal?.815:Math.min(.96,MAX_RENDER_HEIGHT/220);
-    const source=dashOriginal?"movement-v24":image===walkV22?"movement-v22":
+    const source=dashOriginal?"movement-v24":image===walkV33?"movement-v33":
+      image===walkV22?"movement-v22":
       image===walkV21?"movement-v21":
       image===walkSynthesizedV22?"movement-v22-generated":"movement-v17";
     return {image,frame,index,clip,scale,
@@ -701,7 +721,7 @@
     // Never overlay a second fighter. Select ONE texture for this frame only.
     loadV17Movement();
     if(clip==="rush")loadV24Dash();
-    if(clip==="forward"){loadV21Walk();loadV22Walk();}
+    if(clip==="forward"){loadV33Walk();loadV21Walk();loadV22Walk();}
     if(clip==="crouch" || clip==="crouchWalk")loadV18Crouch();
     if(clip==="jumpRise" || clip==="jumpFall" || clip==="landing")loadV19Jump();
     if(clip==="guard" || clip==="guardRecover")loadV23Guard();
@@ -764,7 +784,7 @@
       Math.sin(Math.PI*progress)*Math.min(6,Math.max(0,20*progress)):0;
     // V21 cels already contain the head/hip rise of a planted heel-toe gait.
     // Do not add a second synthetic bob that makes the feet skate.
-    const bob=["movement-v21","movement-v22","movement-v22-generated"].includes(selected.source)?0:idle?
+    const bob=["movement-v21","movement-v22","movement-v22-generated","movement-v33"].includes(selected.source)?0:idle?
       Math.sin((time||0)*.005)*.7:clip==="forward"||clip==="retreat"?
       Math.sin(t*15)*1.15:0;
     const tilt=clip==="knockback" ? -.09 :
@@ -784,7 +804,7 @@
     // Every V17 cel has a 12px transparent gutter below its foot pivot.
     // Offset once at draw time rather than shifting world physics / hitboxes.
     const legacyOffset=selected.source==="movement-v17"?12*scale:
-      ["movement-v21","movement-v22","movement-v22-generated"].includes(selected.source)?8*scale:0;
+      ["movement-v21","movement-v22","movement-v22-generated","movement-v33"].includes(selected.source)?8*scale:0;
     const dy=beforeY+(worldY-beforeY)*blend+bob+
       (continuity?.measured?continuity.footOffset:legacyOffset);
     ctx.save();
@@ -814,6 +834,7 @@
     // Previously the first Square/Triangle/R1 tap could begin with fallback
     // art and then morph into a newly loaded sheet in the SAME move.
     loadV17Movement();
+    loadV33Walk();
     loadV22Walk();
     loadV24Dash();
     loadV25LightCombo();
@@ -825,7 +846,7 @@
     loadV23Guard();
     const essential=[
       V17_IDLE_SRC,V17_BACK_TURN_SRC,V17_WALK_SRC,V17_RUN_DASH_SRC,
-      V22_WALK_SRC,V24_DASH_SRC,V25_LIGHT_COMBO_SRC,V26_HEAVY_SRC,
+      V33_WALK_SRC,V22_WALK_SRC,V24_DASH_SRC,V25_LIGHT_COMBO_SRC,V26_HEAVY_SRC,
       V28_UPPERCUT_SRC,V32_COMBO_SRC,V32_UPPER_SRC,
       V18_CROUCH_SRC,V19_JUMP_SRC,V23_GUARD_SRC,
       V24_DODGE_SRC
@@ -860,6 +881,7 @@
       idleV17 ||= direct(V17_IDLE_SRC);
       backTurnV17 ||= direct(V17_BACK_TURN_SRC);
       walkV17 ||= direct(V17_WALK_SRC);
+      walkV33 ||= direct(V33_WALK_SRC);
       walkV22 ||= direct(V22_WALK_SRC);
       runDashV17 ||= direct(V17_RUN_DASH_SRC);
       if(runDashV17 && !runOnlyV20)splitRunDashV20(runDashV17);
@@ -876,7 +898,7 @@
       const idle=idleV17;
       root.MugenYusukePaletteV30?.setReference(idle);
       const images=[
-        idleV17,walkV17,walkV22,backTurnV17,runDashV17,runOnlyV20,
+        idleV17,walkV17,walkV33,walkV22,backTurnV17,runDashV17,runOnlyV20,
         dashOnlyV20,dashV24,lightComboV25,v32Light,v32Upper,heavyV26,launcherV28,
         guardV23,jumpV19,dodgeV24
       ];
