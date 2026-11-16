@@ -646,13 +646,13 @@
       "turnDuration": 0.085
     },
     "input": {
-      "attackBuffer": 0.16
+      "attackBuffer": 0.2
     },
     "attacks": {
       "light": {
-        "duration": 0.19,
-        "activeStart": 0.038,
-        "activeEnd": 0.133,
+        "duration": 0.28,
+        "activeStart": 0.056,
+        "activeEnd": 0.192,
         "damage": 20,
         "range": 116,
         "height": 84,
@@ -663,9 +663,9 @@
         "airAnimation": "airKick"
       },
       "heavy": {
-        "duration": 0.325,
-        "activeStart": 0.085,
-        "activeEnd": 0.198,
+        "duration": 0.46,
+        "activeStart": 0.122,
+        "activeEnd": 0.293,
         "damage": 45,
         "range": 132,
         "height": 116,
@@ -697,9 +697,9 @@
         "animation": "spiritGun"
       },
       "cross": {
-        "duration": 0.25,
-        "activeStart": 0.068,
-        "activeEnd": 0.158,
+        "duration": 0.33,
+        "activeStart": 0.091,
+        "activeEnd": 0.208,
         "damage": 26,
         "range": 133,
         "height": 106,
@@ -711,9 +711,9 @@
         "heavyImpact": false
       },
       "body": {
-        "duration": 0.29,
-        "activeStart": 0.085,
-        "activeEnd": 0.185,
+        "duration": 0.36,
+        "activeStart": 0.108,
+        "activeEnd": 0.251,
         "damage": 30,
         "range": 120,
         "height": 74,
@@ -725,9 +725,9 @@
         "heavyImpact": false
       },
       "upper": {
-        "duration": 0.39,
-        "activeStart": 0.112,
-        "activeEnd": 0.24,
+        "duration": 0.51,
+        "activeStart": 0.146,
+        "activeEnd": 0.322,
         "damage": 42,
         "range": 132,
         "height": 106,
@@ -851,13 +851,13 @@
       "hitAnimationDuration": 0.3,
       "hitStop": {
         "block": 0.025,
-        "light": 0.045,
-        "heavy": 0.075
+        "light": 0.055,
+        "heavy": 0.095
       },
       "shake": {
         "block": 3,
-        "light": 6,
-        "heavy": 12
+        "light": 4,
+        "heavy": 8
       }
     },
     "roundTime": 180,
