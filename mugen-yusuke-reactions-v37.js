@@ -104,7 +104,8 @@
    }
  }
  function pose(fighter,clip){
-   const phase=clip==="recovery"?"stagger":clip;
+   const phase=clip==="recovery"
+     ?fighter.hitReaction==="knockdown"?"knockdown":"stagger":clip;
    const kind=definitions[phase]?phase:null;
    if(!kind)return null;
    const img=images.get(kind);
