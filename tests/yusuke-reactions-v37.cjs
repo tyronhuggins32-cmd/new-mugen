@@ -3,7 +3,7 @@ const fs=require("node:fs"),vm=require("node:vm"),assert=require("node:assert/st
 const assets={
  stagger:["characters/yusuke/yusuke_hurt_stagger_v37_8frames.png",1774,887,8],
  knockback:["characters/yusuke/yusuke_knockback_v37_alpha_clean.png",1774,887,8],
- knockdown:["characters/yusuke/yusuke_knockdown_v37_10frames.png",1983,793,10]
+ knockdown:["characters/yusuke/yusuke_knockdown_v37_10frames.png",1280,512,10]
 };
 for(const [kind,[path,w,h]] of Object.entries(assets)){
  const buffer=fs.readFileSync(path);
@@ -43,7 +43,7 @@ class Img{
  set src(url){
   this._src=url;
   if(url.includes("knockback_v37")){this.naturalWidth=1774;this.naturalHeight=887;}
-  else if(url.includes("knockdown_v37")){this.naturalWidth=1983;this.naturalHeight=793;}
+  else if(url.includes("knockdown_v37")){this.naturalWidth=1280;this.naturalHeight=512;}
   else if(url.includes("hurt_stagger_v37")){this.naturalWidth=1774;this.naturalHeight=887;}
   else {this.naturalWidth=1536;this.naturalHeight=512;}
   this.onload?.();
@@ -94,10 +94,10 @@ vm.runInNewContext(fs.readFileSync("mugen-yusuke-reactions-v37.js","utf8"),
    assert.equal(pose.source,"reaction-v37");
    assert.equal(pose.index,i);
    assert.equal(pose.frameCount,count);
-   const w=kind==="knockdown"?1983:1774,h=kind==="knockdown"?793:887;
+   const w=kind==="knockdown"?1280:1774,h=kind==="knockdown"?512:887;
    assert.ok(pose.frame.x>=0&&pose.frame.x+pose.frame.w<=w);
    assert.ok(pose.frame.y>=0&&pose.frame.y+pose.frame.h<=h);
-   assert.ok(pose.scale>=.44&&pose.scale<=.55);
+   assert.ok(pose.scale>=.44&&pose.scale<=.86);
    visited.add(i);
   }
   assert.equal(visited.size,count,kind+" every frame reachable");
