@@ -796,9 +796,16 @@
     const selected=pose(fighter,atlas,attackDuration);
     if(!selected||!ctx?.drawImage)return false;
     const {image,frame,scale,clip,progress}=selected;
-    // Measured once per actual RGBA cel. Locks family proportions, aligns
-    // painted feet, and prevents different atlas gutters from lifting Yusuke.
-    const continuity=root.MugenYusukeAnimationV28?.resolve(selected);
+    // All drawing and alpha measurement must use THE SAME cleaned, canonical
+    // pixels. Previously dimensions were measured on a raw texture while
+    // the player was rendered from a different recolored alpha mask.
+    const art=root.MugenYusukeArtV29?.prepare(image,selected.source)||image;
+    const canonical=root.MugenYusukePaletteV30?.prepare(art)||art;
+    const director=root.MugenYusukeAnimationV28;
+    const measured=director?.resolve(canonical===image?selected:
+      {...selected,image:canonical});
+    const continuity=director?.stabilize?.(fighter,selected,measured,time)
+      ||measured;
     const renderScale=continuity?.measured?continuity.scale:scale;
     const face=fighter.facing<0?-1:1;
     const t=Math.max(0,Number(fighter.stateTime)||0);
@@ -841,13 +848,8 @@
     // precisely when transitioning into a newer crisp punch cel.
     ctx.imageSmoothingEnabled=false;
     if("imageSmoothingQuality" in ctx && ctx.imageSmoothingEnabled)ctx.imageSmoothingQuality="high";
-    // This is the ONLY full-body Yusuke draw for each game frame.
-    // V29 edits the actual attack/dash atlas pixels once, not the physics
-    // sprite position or the hitbox. No extra composited ghost body.
-    const art=root.MugenYusukeArtV29?.prepare(image,selected.source)||image;
-    // Every clothing/skin/hair shade comes from the SAME authored idle atlas.
-    // Transparent alpha is preserved; effects and geometry are not tinted.
-    const canonical=root.MugenYusukePaletteV30?.prepare(art)||art;
+    // This is the ONLY full-body draw. No double sprite, tint overlay or
+    // blurred in-between: every costume pixel is from the locked idle palette.
     ctx.drawImage(canonical,frame.x,frame.y,frame.w,frame.h,
       -frame.ax*renderScale,-frame.h*renderScale,
       frame.w*renderScale,frame.h*renderScale);
@@ -926,14 +928,23 @@
       // All 13 textures are now chosen and stable before user input starts.
       const idle=idleV17;
       root.MugenYusukePaletteV30?.setReference(idle);
+      // Prepare the color-matched *cleaned* atlas before gameplay, rather
+      // than doing a multi-megapixel palette conversion at the first punch.
       const images=[
-        idleV17,walkV17,walkV33,walkV22,backTurnV17,runDashV17,runOnlyV20,
-        dashOnlyV20,dashV24,lightComboV25,v32Light,v32Upper,v34Master,
-        v35Master,heavyV26,launcherV28,
-        guardV23,jumpV19,dodgeV24
+        [idleV17,"movement-v17"],[walkV17,"movement-v17"],
+        [walkV33,"movement-v33"],[walkV22,"movement-v22"],
+        [backTurnV17,"movement-v17"],[runDashV17,"movement-v17"],
+        [runOnlyV20,"movement-v17"],[dashOnlyV20,"movement-v17"],
+        [dashV24,"movement-v24"],[lightComboV25,"light-combo-v25"],
+        [v32Light,"square-combo-v32"],[v32Upper,"square-combo-v32"],
+        [v34Master,"square-combo-v34"],[v35Master,"square-combo-v35"],
+        [heavyV26,"heavy-triangle-v26"],[launcherV28,"launcher-v28"],
+        [guardV23,"guard-v23"],[jumpV19,"movement-v19"],
+        [dodgeV24,"dodge-v24"]
       ];
-      for(const img of images)if(img){
-        root.MugenYusukePaletteV30?.prepare(img);
+      for(const [img,source] of images)if(img){
+        const clean=root.MugenYusukeArtV29?.prepare(img,source)||img;
+        root.MugenYusukePaletteV30?.prepare(clean);
       }
       return assets;
     });
