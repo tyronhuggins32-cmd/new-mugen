@@ -8,6 +8,8 @@
   const bound=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
   const measured=new WeakMap();
   const scales=new WeakMap();
+  // Visual transform only; no changes to the physics or hitboxes.
+  const handoffs=new WeakMap();
   let scratch=null,reader=null;
   function getMetrics(image,frame){
     if(!image||!frame||!root.document?.createElement)return null;
@@ -101,7 +103,10 @@
       // guard frame 187px, recreating the exact shrink reported in the video.
       base=pose.source==="square-combo-v35"?orig:
         kind==="low"?orig:
-        bound(Math.min(orig,target/m.height),orig*.72,orig);
+        // Allow differently sized source atlases to reach the same apparent
+        // standing height. Earlier code only SHRANK and never upscaled,
+        // so the next sheet could permanently display a tiny Yusuke.
+        bound(target/m.height,orig*.70,orig*1.26);
       imageScales.set(key,base);
     }
     // Unusually tall action smears may hit a safety cap, but never upscale
@@ -120,7 +125,20 @@
       const recoveryHeight=194;
       const restore=recoveryHeight/m.height;
       scale=Math.min(BUDGET_HEIGHT/m.height,
-        Math.max(scale,Math.min(orig*1.15,restore)));
+        Math.max(scale,Math.min(orig*1.20,restore)));
+    }
+    // Finish all other authored ground attacks at the canonical standing
+    // size. Fade the correction into the final quarter of the attack so a
+    // smaller anticipation pose is not blown up into a giant sprite.
+    const finishClip=["light","cross","body","upper","heavy","spiritPunch"]
+      .includes(pose.clip) && pose.source!=="square-combo-v35";
+    const finish=Number(pose.progress);
+    if(finishClip && Number.isFinite(finish) && finish>.72){
+      const weight=bound((finish-.72)/.24,0,1);
+      const finalScale=bound(STAND_HEIGHT/m.height,
+        orig*.7,Math.min(orig*1.26,BUDGET_HEIGHT/m.height));
+      scale=Math.min(BUDGET_HEIGHT/m.height,
+        scale+(finalScale-scale)*weight);
     }
     const offset=bound(m.bottomGap*scale,0,36);
     const stable=["idle","forward","retreat","sprint","guard",
@@ -130,5 +148,34 @@
     return {scale,footOffset:offset,horizontalOffset,
       opaqueHeight:m.height*scale,measured:true};
   }
-  root.MugenYusukeAnimationV28=Object.freeze({getMetrics,resolve});
+  // During grounded atlas handoffs, ease the body transform, not the art:
+  // one sharp frame is painted at all times, never blended with another.
+  function stabilize(fighter,pose,layout,clockMs){
+    if(!fighter||!layout?.measured||!Number.isFinite(clockMs))return layout;
+    const group=family(pose?.clip);
+    let s=handoffs.get(fighter);
+    if(!s){
+      s={clip:pose.clip,source:pose.source,group,lastTime:clockMs,
+        scale:layout.scale,x:layout.horizontalOffset,
+        fromScale:layout.scale,fromX:layout.horizontalOffset,elapsed:1};
+      handoffs.set(fighter,s);
+      return layout;
+    }
+    const dt=bound((clockMs-s.lastTime)/1000,0,.05);
+    if(s.clip!==pose.clip||s.source!==pose.source){
+      s.fromScale=s.scale;s.fromX=s.x;
+      s.elapsed=(s.group==="ground"&&group==="ground")?0:1;
+      s.clip=pose.clip;s.source=pose.source;s.group=group;
+    }else if(s.elapsed<1){
+      s.elapsed=Math.min(1,s.elapsed+dt/.08);
+    }
+    const t=s.elapsed,weight=t*t*(3-2*t);
+    s.scale=s.fromScale+(layout.scale-s.fromScale)*weight;
+    s.x=s.fromX+(layout.horizontalOffset-s.fromX)*weight;
+    s.lastTime=clockMs;
+    const ratio=layout.scale>0?s.scale/layout.scale:1;
+    return {...layout,scale:s.scale,footOffset:layout.footOffset*ratio,
+      horizontalOffset:s.x};
+  }
+  root.MugenYusukeAnimationV28=Object.freeze({getMetrics,resolve,stabilize});
 })(typeof window==="undefined"?globalThis:window);
