@@ -95,7 +95,12 @@
     if(base===undefined){
       // A consistent size for the *whole sequence*, not a different scale
       // for every keyframe. Crouches intentionally stay shorter.
-      base=kind==="low"?orig:
+      // V35 Square art is authored on one consistent 320x256 cel grid.
+      // Maintain one constant .96 body scale across *all* 30 punch poses.
+      // Earlier per-family reduction from the opening jab made the final
+      // guard frame 187px, recreating the exact shrink reported in the video.
+      base=pose.source==="square-combo-v35"?orig:
+        kind==="low"?orig:
         bound(Math.min(orig,target/m.height),orig*.72,orig);
       imageScales.set(key,base);
     }
