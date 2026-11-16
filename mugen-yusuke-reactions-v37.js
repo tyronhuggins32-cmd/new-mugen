@@ -10,7 +10,7 @@
    knockback:{src:"characters/yusuke/yusuke_knockback_v37_alpha_clean.png",
      width:1774,height:887,cols:4,rows:2,frames:8,scale:.45},
    knockdown:{src:"characters/yusuke/yusuke_knockdown_v37_10frames.png",
-     width:1983,height:793,cols:5,rows:2,frames:10,scale:.53}
+     width:1280,height:512,cols:5,rows:2,frames:10,scale:.85}
  });
  const images=new Map();
  const promises=new Map();
