@@ -365,6 +365,10 @@
   // physics, move costs and real hitboxes remain independent and unchanged.
   const V32_COMBO_SRC="characters/yusuke/yusuke_square_3hit_v32.png";
   const V32_UPPER_SRC="characters/yusuke/yusuke_square_upper_v32.png";
+  // V34: ONE 30-frame RGBA atlas, six columns by five rows of 320x256.
+  // Original authored punches/uppercut, matched body size and planted feet.
+  const V34_MASTER_SRC="characters/yusuke/yusuke_square_master_v34_30frames.png";
+  let v34Master=null;
   const V32_ROWS=Object.freeze({light:0,cross:1,body:2});
   let v32Light=null,v32Upper=null,v32Requested=false;
   function loadV32Combo(){
@@ -381,10 +385,25 @@
     }
     fetch(V32_COMBO_SRC,1536,768,image=>{v32Light ||= image;});
     fetch(V32_UPPER_SRC,1280,768,image=>{v32Upper ||= image;});
+    fetch(V34_MASTER_SRC,1920,1280,image=>{v34Master ||= image;});
   }
   function v32SquarePose(clip,progress,fighter){
     if(!fighter?.grounded)return null;
     let image,index,frame,frameCount;
+    // All four Square moves share the SAME pixel palette, 194px render
+    // height family, 320px crop width, and 244px painted foot baseline.
+    // Never switch to a different atlas at the uppercut transition.
+    if(v34Master && (clip==="upper" ||
+        Object.prototype.hasOwnProperty.call(V32_ROWS,clip))){
+      const first=clip==="upper"?18:V32_ROWS[clip]*6;
+      const count=clip==="upper"?12:6;
+      index=first+Math.min(count-1,Math.floor(clamp(progress)*count));
+      frame={x:(index%6)*320,y:Math.floor(index/6)*256,
+        w:320,h:256,ax:160,key:index};
+      return {image:v34Master,frame,index,clip,scale:.96,
+        part:"square-combo-v34",source:"square-combo-v34",
+        progress,frameCount:30};
+    }
     if(clip==="upper"){
       image=v32Upper;
       if(!image)return null;
@@ -847,7 +866,7 @@
     const essential=[
       V17_IDLE_SRC,V17_BACK_TURN_SRC,V17_WALK_SRC,V17_RUN_DASH_SRC,
       V33_WALK_SRC,V22_WALK_SRC,V24_DASH_SRC,V25_LIGHT_COMBO_SRC,V26_HEAVY_SRC,
-      V28_UPPERCUT_SRC,V32_COMBO_SRC,V32_UPPER_SRC,
+      V28_UPPERCUT_SRC,V32_COMBO_SRC,V32_UPPER_SRC,V34_MASTER_SRC,
       V18_CROUCH_SRC,V19_JUMP_SRC,V23_GUARD_SRC,
       V24_DODGE_SRC
     ];
@@ -888,6 +907,7 @@
       dashV24 ||= cleaned(V24_DASH_SRC,"movement-v24");
       v32Light ||= direct(V32_COMBO_SRC);
       v32Upper ||= direct(V32_UPPER_SRC);
+      v34Master ||= direct(V34_MASTER_SRC);
       lightComboV25 ||= cleaned(V25_LIGHT_COMBO_SRC,"light-combo-v25");
       heavyV26 ||= cleaned(V26_HEAVY_SRC,"heavy-triangle-v26");
       launcherV28 ||= cleaned(V28_UPPERCUT_SRC,"launcher-v28");
@@ -899,7 +919,7 @@
       root.MugenYusukePaletteV30?.setReference(idle);
       const images=[
         idleV17,walkV17,walkV33,walkV22,backTurnV17,runDashV17,runOnlyV20,
-        dashOnlyV20,dashV24,lightComboV25,v32Light,v32Upper,heavyV26,launcherV28,
+        dashOnlyV20,dashV24,lightComboV25,v32Light,v32Upper,v34Master,heavyV26,launcherV28,
         guardV23,jumpV19,dodgeV24
       ];
       for(const img of images)if(img){
