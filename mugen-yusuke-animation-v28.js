@@ -158,34 +158,39 @@
     return {scale,footOffset:offset,horizontalOffset,
       opaqueHeight:m.height*scale,measured:true};
   }
-  // During grounded atlas handoffs, ease the body transform, not the art:
-  // one sharp frame is painted at all times, never blended with another.
+  // Scale values from different atlases are NOT comparable: 0.8 on a
+  // 240px drawing looks taller than 1.2 on a 130px drawing. Keep visible
+  // on-screen body HEIGHT stable across a source handoff, not raw scale.
   function stabilize(fighter,pose,layout,clockMs){
     if(!fighter||!layout?.measured||!Number.isFinite(clockMs))return layout;
     const group=family(pose?.clip);
     let s=handoffs.get(fighter);
     if(!s){
       s={clip:pose.clip,source:pose.source,group,lastTime:clockMs,
-        scale:layout.scale,x:layout.horizontalOffset,
-        fromScale:layout.scale,fromX:layout.horizontalOffset,elapsed:1};
+        height:layout.opaqueHeight,x:layout.horizontalOffset,
+        fromHeight:layout.opaqueHeight,fromX:layout.horizontalOffset,
+        elapsed:1};
       handoffs.set(fighter,s);
       return layout;
     }
     const dt=bound((clockMs-s.lastTime)/1000,0,.05);
     if(s.clip!==pose.clip||s.source!==pose.source){
-      s.fromScale=s.scale;s.fromX=s.x;
-      s.elapsed=(s.group==="ground"&&group==="ground")?0:1;
+      s.fromHeight=s.height;s.fromX=s.x;
+      // Leave intentional deep crouches and jump launches untouched.
+      const nearStanding=Math.abs(layout.opaqueHeight-s.height)<STAND_HEIGHT*.18;
+      s.elapsed=s.group==="ground"&&group==="ground"&&nearStanding?0:1;
       s.clip=pose.clip;s.source=pose.source;s.group=group;
     }else if(s.elapsed<1){
       s.elapsed=Math.min(1,s.elapsed+dt/.08);
     }
     const t=s.elapsed,weight=t*t*(3-2*t);
-    s.scale=s.fromScale+(layout.scale-s.fromScale)*weight;
+    s.height=s.fromHeight+(layout.opaqueHeight-s.fromHeight)*weight;
     s.x=s.fromX+(layout.horizontalOffset-s.fromX)*weight;
     s.lastTime=clockMs;
-    const ratio=layout.scale>0?s.scale/layout.scale:1;
-    return {...layout,scale:s.scale,footOffset:layout.footOffset*ratio,
-      horizontalOffset:s.x};
+    const ratio=layout.opaqueHeight>0?s.height/layout.opaqueHeight:1;
+    return {...layout,scale:layout.scale*ratio,
+      footOffset:layout.footOffset*ratio,
+      horizontalOffset:s.x,opaqueHeight:s.height};
   }
   root.MugenYusukeAnimationV28=Object.freeze({getMetrics,resolve,stabilize});
 })(typeof window==="undefined"?globalThis:window);
