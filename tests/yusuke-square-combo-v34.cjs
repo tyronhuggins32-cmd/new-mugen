@@ -28,7 +28,7 @@ class Image {
  set src(s){
   this._src=s;loaded.push(s);
   try{
-   if(s.includes("square_master_v35")){this.onerror?.();return;}
+   if(s.includes("square_master_v35")||s.includes("square_master_v36")){this.onerror?.();return;}
    const bytes=fs.readFileSync(s);
    this.naturalWidth=bytes.readUInt32BE(16);
    this.naturalHeight=bytes.readUInt32BE(20);
@@ -92,6 +92,6 @@ fighter.state="dash";fighter.dashTimer=.2;fighter.vx=780;
 assert.notEqual(sprite.pose(fighter,atlas,.36).source,"square-combo-v34",
  "R1 dash remains independent");
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/squareCombo=35&upperRecovery=35&masterAtlas=35/);
+assert.match(html,/squareCombo=36&upperRecovery=36&masterAtlas=36/);
 assert.match(html,/type = \["light", "cross", "body", "upper"\]/);
 console.log("PASS: one real 30-frame transparent Square master, identical pivots, full-size recovery, no distortion or texture swaps, controls intact.");
