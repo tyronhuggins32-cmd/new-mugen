@@ -11,6 +11,17 @@
   // Visual transform only; no changes to the physics or hitboxes.
   const handoffs=new WeakMap();
   let scratch=null,reader=null;
+  function bodyPixel(data,k){
+    if(data[k+3]<145)return false;
+    const r=data[k],g=data[k+1],b=data[k+2];
+    // Colored Spirit effects, neon green auras and bright speed trails are
+    // not part of the fighter silhouette when measuring body proportions.
+    if((b>145&&g>108&&b>r*1.50&&g>r*1.36)||
+       (g>176&&g>r*1.9&&g>b*1.40)||
+       (r>187&&r>g*2.20&&r>b*2.0)||
+       (r>225&&g>220&&b>210))return false;
+    return true;
+  }
   function getMetrics(image,frame){
     if(!image||!frame||!root.document?.createElement)return null;
     if(!Number.isFinite(frame.x)||!Number.isFinite(frame.y)||
@@ -38,7 +49,7 @@
       for(let y=0;y<h;y+=2){
         let hits=0,rowLeft=w,rowRight=-1;
         for(let x=0;x<w;x+=2){
-          if(rgba[(y*w+x)*4+3]<145)continue;
+          if(!bodyPixel(rgba,(y*w+x)*4))continue;
           hits++;rowLeft=Math.min(rowLeft,x);rowRight=Math.max(rowRight,x);
         }
         // Ignore lone sparkle pixels, speed streaks and antialias dust.
@@ -57,7 +68,7 @@
       let weight=0,totalX=0;
       for(let y=midY0;y<=midY1;y+=3){
         for(let x=torsoLo;x<torsoHi;x+=3){
-          if(rgba[(y*w+x)*4+3]<145)continue;
+          if(!bodyPixel(rgba,(y*w+x)*4))continue;
           weight++;totalX+=x;
         }
       }
@@ -102,11 +113,10 @@
       // Earlier per-family reduction from the opening jab made the final
       // guard frame 187px, recreating the exact shrink reported in the video.
       base=pose.source==="square-combo-v35"?orig:
-        kind==="low"?orig:
-        // Allow differently sized source atlases to reach the same apparent
-        // standing height. Earlier code only SHRANK and never upscaled,
-        // so the next sheet could permanently display a tiny Yusuke.
-        bound(target/m.height,orig*.70,orig*1.26);
+        kind==="low"||kind==="dash"?orig:
+        // Preserve crouch/dash compression while matching ALL standing
+        // sources to ~194px even when original atlas art is smaller.
+        bound(target/m.height,orig*.68,orig*1.55);
       imageScales.set(key,base);
     }
     // Unusually tall action smears may hit a safety cap, but never upscale
