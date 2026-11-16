@@ -123,7 +123,14 @@
       return image;
     }
   }
-  function resetReference(image){return fromReference(image);}
+  // One match, one palette. The idle sheet may load through both its normal
+  // Image request and the match preloader in either order. Recalibrating after
+  // some canvases have already been cached otherwise produces two slightly
+  // different costumes within a single fight.
+  function resetReference(image){
+    if(reference)return true;
+    return fromReference(image);
+  }
   root.MugenYusukePaletteV30=Object.freeze({
     setReference:resetReference,prepare,
     isReady:()=>!!reference,
