@@ -5,12 +5,12 @@
 (function(root){
  "use strict";
  const definitions=Object.freeze({
-   stagger:{src:"characters/yusuke/yusuke_hurt_stagger_v37_8frames.png",
-     width:1774,height:887,cols:4,rows:2,frames:8,scale:.45},
-   knockback:{src:"characters/yusuke/yusuke_knockback_v37_alpha_clean.png",
-     width:1774,height:887,cols:4,rows:2,frames:8,scale:.45},
+   stagger:{src:"characters/yusuke/yusuke_hurt_v37_8frames.png",
+     width:1024,height:512,cols:4,rows:2,frames:8,scale:.86},
+   knockback:{src:"characters/yusuke/yusuke_knockback_v37_8frames.png",
+     width:1024,height:512,cols:4,rows:2,frames:8,scale:.86},
    knockdown:{src:"characters/yusuke/yusuke_knockdown_v37_10frames.png",
-     width:1280,height:512,cols:5,rows:2,frames:10,scale:.85}
+     width:1280,height:512,cols:5,rows:2,frames:10,scale:.86}
  });
  const images=new Map();
  const promises=new Map();
