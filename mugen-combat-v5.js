@@ -158,12 +158,12 @@
   }
 
   function cameraZoom(distance, emphasis = 0) {
-    // Let fighters occupy more of the screen when exchanging blows.
-    // Pull back for chase / long-range attacks. Both fighters remain fully
-    // visible because the nearest allowed physical spacing is 168px,
-    // leaving over 800px of horizontal action room at this restrained zoom.
+    // The old camera zoomed IN when fighters collided, obscuring close
+    // punches and hurt sprites. Keep the full bodies readable at contact,
+    // with only a small zoom at distance and on a confirmed special impact.
+    // This intentionally matches the fluid camera's ease-OUT behavior.
     const far=clamp((distance-180)/800);
-    return 1.18 - .12*far + .018*clamp(emphasis);
+    return 1.005 + .065*far + .012*clamp(emphasis);
   }
 
   root.MugenCombatV5 = Object.freeze({
