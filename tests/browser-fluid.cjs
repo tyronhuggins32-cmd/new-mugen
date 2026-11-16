@@ -253,8 +253,8 @@ const path = require("node:path");
   assert.equal(result.backdashMirrored,true,"R1 + right must backdash when Yusuke faces left");
   assert.equal(result.airClip,"aerialForward","diagonal air direction art is active");
   assert.equal(result.crossClip,"cross","cross uses new combo transition cels");
-  assert.ok(result.after>result.before && result.after<1.23,
-    "cinematic camera should ease in slightly at point-blank range without cropping fighters");
+  assert.ok(result.after<result.before && result.after>=1,
+    "cinematic camera must pull back at point-blank range so both bodies remain readable");
   assert.equal(result.atlasFrameCount,24,"running uses 24 samples on a 40 FPS animation timeline");
   assert.equal(result.motionFPS,40,"Yusuke's movement animation runs at 40 FPS");
   assert.equal(result.derivedSpriteCount,28,"twelve new stagger/recoil/recovery sprites join the original 16");
