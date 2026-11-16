@@ -10,6 +10,9 @@ on:
       - "mugen-yusuke-animation-v28.js"
       - "mugen-yusuke-art-v29.js"
       - "mugen-yusuke-palette-v30.js"
+      - "mugen-yusuke-reactions-v37.js"
+      - "tests/yusuke-reactions-v37.cjs"
+      - "tests/browser-yusuke-reactions-v37.cjs"
       - "tests/yusuke-palette-v30.cjs"
       - "tests/yusuke-art-v29.cjs"
       - "tests/yusuke-animation-v28.cjs"
@@ -75,6 +78,8 @@ jobs:
         run: node tests/combat.cjs
       - name: Check Yusuke V28 actual PNG silhouettes, pose continuity and foot anchors
         run: node tests/browser-yusuke-animation-v28.cjs
+      - name: Verify Yusuke V37 reaction sprites, white-background cleanup and cinematic hit timings
+        run: node tests/browser-yusuke-reactions-v37.cjs
       - name: Play Thorfinn sprite and dagger moves in Chromium
         run: node tests/thorfinn-browser.cjs
       - name: Verify fluid render updates in Chromium
