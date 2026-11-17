@@ -71,7 +71,7 @@ const {chromium}=require("playwright");
    game.reset();game.state="play";game.player.x=420;game.cpu.x=640;
    game.cpu.facing=-1;game.player.facing=1;
    game.damageFighter(game.player,game.cpu,attacks.heavyLauncher,game.cpu.x,game.cpu.y-108);
-   if(game.cpu.hitReaction!=="knockback"||!game.cpu._pendingKnockdown)
+   if(game.cpu.hitReaction!=="upward"||!game.cpu._pendingKnockdown)
     throw Error("Fourth Triangle launcher failed to start knockback");
    let groundedGetup=false;
    const neutral={left:false,right:false,block:false};
@@ -90,7 +90,7 @@ const {chromium}=require("playwright");
    game.reset();game.state="play";game.cpu.setState("block");
    game.cpu.facing=-1;game.player.facing=1;
    game.damageFighter(game.player,game.cpu,attacks.heavyLauncher,game.cpu.x,game.cpu.y-105);
-   if(game.cpu.hitReaction==="knockback"||game.cpu._pendingKnockdown)
+   if(game.cpu.hitReaction==="upward"||game.cpu._pendingKnockdown)
      throw Error("Successful guard incorrectly launches fighter");
    return {frameCount:result.length,transparent,opaque,groundedGetup,
      first:result[0],last:result[result.length-1]};
