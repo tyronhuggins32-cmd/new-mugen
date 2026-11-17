@@ -302,38 +302,27 @@
     ctx.restore();
   }
 
+  // Spirit energy belongs in the HUD, not a translucent circle drawn
+  // around the fighter for the entire time the meter is full. Charging gets
+  // just a few short directional hand sparks; no ellipse, halo or bubble.
   function drawCharge(fighter,ctx,time) {
-    if(!fighter || (fighter.state!=="charge"&&fighter.energy<99.7))return;
-    const charging=fighter.state==="charge";
-    const wave=time*.001;
-    const c=fighter.cpu?enemyRed:heroBlue;
-    const x=fighter.x, y=fighter.y-103;
-    const intensity=charging?1:.35;
+    if (!fighter || fighter.state !== "charge") return;
+    const x=fighter.x+(fighter.facing<0?-32:32),y=fighter.y-133;
+    const pulse=.52+.14*Math.sin(time*.015);
     ctx.save();
     ctx.globalCompositeOperation="lighter";
-    const rad=charging?105:72;
-    const light=ctx.createRadialGradient(x,y,10,x,y,rad);
-    light.addColorStop(0,"rgba(206,249,255,"+(.19*intensity)+")");
-    light.addColorStop(.5,"rgba(79,210,255,"+(.13*intensity)+")");
-    light.addColorStop(1,"rgba(54,175,255,0)");
-    ctx.fillStyle=light;ctx.fillRect(x-rad,y-rad,rad*2,rad*2);
-    ctx.lineWidth=charging?3:1.5;ctx.strokeStyle=c;
-    ctx.globalAlpha=.5*intensity;
-    ctx.beginPath();
-    ctx.ellipse(x,y,50+8*Math.sin(wave*9),108+8*Math.sin(wave*7),0,0,TAU);
-    ctx.stroke();
-    if(charging){
-      for(let i=0;i<12;i++){
-        const phase=(i/12)*TAU+wave*2.8;
-        const cy=y+Math.sin(phase)*99;
-        const cx=x+Math.cos(phase)*48;
-        ctx.strokeStyle=i%3===0?"#f2fdff":c;
-        ctx.lineWidth=i%3===0?2.5:1.5;
-        ctx.beginPath();
-        ctx.moveTo(cx,cy);
-        ctx.lineTo(cx+Math.sin(phase)*12,cy-23);
-        ctx.stroke();
-      }
+    ctx.globalAlpha=pulse;
+    ctx.strokeStyle=fighter.cpu?"#ff799b":"#9aeaff";
+    ctx.lineWidth=2.2;
+    for(let i=0;i<4;i++){
+      const side=fighter.facing<0?-1:1;
+      const jitter=Math.sin(time*.017+i*2.3)*4;
+      const ox=side*(8+i*6),oy=(i-1.5)*10+jitter;
+      ctx.beginPath();
+      ctx.moveTo(x+ox-side*5,y+oy-5);
+      ctx.lineTo(x+ox+side*2,y+oy-11);
+      ctx.lineTo(x+ox+side*9,y+oy-3);
+      ctx.stroke();
     }
     ctx.restore();
   }
