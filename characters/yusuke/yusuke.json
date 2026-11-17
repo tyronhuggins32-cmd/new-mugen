@@ -889,7 +889,7 @@
       "maxMultiplier": 2.6
     },
     "spacing": 168,
-    "punchAssist": 25,
+    "punchAssist": 32,
     "collision": {
       "groundedCenterSpacing": 142,
       "crossoverHeightAboveHead": 61,
