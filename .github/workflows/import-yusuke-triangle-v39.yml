@@ -18,11 +18,11 @@ jobs:
           mkdir -p characters/yusuke
           curl -fsSL --retry 3 --max-time 90 'https://at.adobe.com/jmLzmxDu3U7441RF' -o characters/yusuke/yusuke_triangle_heavy_chain_v39_12frames.png
           curl -fsSL --retry 3 --max-time 90 'https://at.adobe.com/NbmN7mrAypuuJDEg' -o characters/yusuke/yusuke_triangle_uppercut_v39_12frames.png
-          curl -fsSL --retry 3 --max-time 90 'https://at.adobe.com/MtUg1XfzHwxifCen' -o characters/yusuke/yusuke_upward_knockback_v39_8frames.png
+          curl -fsSL --retry 3 --max-time 90 'https://at.adobe.com/wEvl7yutoIgsBBHt' -o characters/yusuke/yusuke_upward_knockback_v39_8frames.png
           cat >/tmp/triangle-v39.sha256 <<'SHA'
           830ce0b25d6e58f680e521b97781023455dedbb4556109058c6cfa6e943c894d  characters/yusuke/yusuke_triangle_heavy_chain_v39_12frames.png
           f97295d02619e42f72d96d87f680f2fa9a25ed540706f7eb8f51bc8d36e5cb9a  characters/yusuke/yusuke_triangle_uppercut_v39_12frames.png
-          031eeaf674f168823ae1a2f4af2eaec6a14def0a63e2d6628d16630dcc4f1230  characters/yusuke/yusuke_upward_knockback_v39_8frames.png
+          8f491bb9ebc9ef4a31f5ae7f59a87c08e004b5007c3c6981908ed2c663e7389e  characters/yusuke/yusuke_upward_knockback_v39_8frames.png
           SHA
           sha256sum -c /tmp/triangle-v39.sha256
           python3 - <<'PY'
