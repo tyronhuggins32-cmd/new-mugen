@@ -492,6 +492,43 @@
       part:"heavy-triangle-v26",source:"heavy-triangle-v26",
       progress,frameCount:16};
   }
+  // V39: first three Triangle hits share one 12-frame navy-costume family.
+  // Fourth Triangle alone selects a separate 12-frame rising uppercut.
+  const V39_HEAVY_SRC="characters/yusuke/yusuke_triangle_heavy_chain_v39_12frames.png";
+  const V39_UPPER_SRC="characters/yusuke/yusuke_triangle_uppercut_v39_12frames.png";
+  let heavyV39=null,uppercutV39=null,v39Requested=false;
+  function loadV39Triangle(){
+    if(v39Requested || typeof root.Image!=="function")return;
+    v39Requested=true;
+    const load=(src,w,h,store)=>{
+      const img=new root.Image();img.decoding="async";
+      img.onload=()=>{if((img.naturalWidth||img.width)===w &&
+        (img.naturalHeight||img.height)===h)store(img);};
+      img.onerror=()=>{};img.src=src;
+    };
+    load(V39_HEAVY_SRC,1280,768,img=>{heavyV39=img;});
+    load(V39_UPPER_SRC,1920,512,img=>{uppercutV39=img;});
+  }
+  function v39TrianglePose(clip,progress,fighter){
+    if(!fighter?.grounded)return null;
+    const p=clamp(progress);
+    if(clip==="heavy" && heavyV39){
+      const stage=Math.max(0,Math.min(2,Math.floor(fighter.heavyChainStage||0)));
+      const index=stage*4+Math.min(3,Math.floor(p*4));
+      const frame={x:(index%4)*320,y:Math.floor(index/4)*256,
+        w:320,h:256,ax:160,key:index};
+      return {image:heavyV39,frame,index,clip,scale:.96,
+        part:"triangle-heavy-v39",source:"triangle-heavy-v39",progress:p,frameCount:12};
+    }
+    if(clip==="heavyLauncher" && uppercutV39){
+      const index=Math.min(11,Math.floor(p*12));
+      const frame={x:(index%6)*320,y:Math.floor(index/6)*256,
+        w:320,h:256,ax:160,key:index};
+      return {image:uppercutV39,frame,index,clip,scale:.96,
+        part:"triangle-launcher-v39",source:"triangle-launcher-v39",progress:p,frameCount:12};
+    }
+    return null;
+  }
   // V28: 12-frame Launcher / Uppercut. Only the fourth Square attack
   // changes its visible pose; hit timing, physics and Triangle remain intact.
   const V28_UPPERCUT_SRC="characters/yusuke/yusuke_launcher_uppercut_12frames.png";
@@ -534,7 +571,7 @@
     image.src=V31_TRIANGLE_LAUNCHER_SRC;
   }
   function v31TriangleLauncherPose(clip,progress,fighter){
-    if(clip!=="heavy" || !fighter?.grounded || !triangleLauncherV31)return null;
+    if(clip!=="heavyLauncher" || !fighter?.grounded || !triangleLauncherV31)return null;
     const p=clamp(progress);
     // Heavy active window (.085-.198 of .325s) overlaps frames 5-8:
     // anticipation, rising contact, finishing uppercut, then replant.
@@ -628,6 +665,7 @@
     body:Object.freeze([8,9,10,11]),
     upper:Object.freeze([12,13,14,15]),
     heavy:Object.freeze([1,7,12,14,15]),
+    heavyLauncher:Object.freeze([1,8,12,14,15]),
     spiritPunch:Object.freeze([1,7,12,14,15]),
     powerKick:Object.freeze([4,7,12,14,15]),
     gun:Object.freeze([0,9,11,15]),
@@ -690,7 +728,8 @@
       progress=p;
       index=frameAt(seq,p);
     }else if(state==="hit" || (fighter.hitstun||0)>0){
-      clip=["knockback","knockdown"].includes(fighter.hitReaction)
+      clip=fighter._upwardLaunch?"upward":
+        ["knockback","knockdown"].includes(fighter.hitReaction)
         ?fighter.hitReaction:"stagger";
       const seq=movementClips[clip];
       if(clip==="knockback" && fighter._spiritPunchLaunch){
@@ -752,7 +791,7 @@
     fighter._exactPreviousClip=clip;
     // Dedicated V37 hit, airborne recoil and get-up sprites replace the
     // old two-frame fallback on BOTH player and CPU damage reactions.
-    if(["stagger","knockback","knockdown","recovery"].includes(clip)){
+    if(["stagger","knockback","knockdown","upward","recovery"].includes(clip)){
       const authored=root.MugenYusukeReactionV37?.pose(fighter,clip);
       if(authored)return authored;
     }
@@ -768,12 +807,15 @@
       loadV32Combo();
     if(fighter.grounded && Object.prototype.hasOwnProperty.call(V25_ATTACK_ROWS,clip))
       loadV25LightCombo();
+    if((clip==="heavy" || clip==="heavyLauncher") && fighter.grounded)
+      loadV39Triangle();
     if(clip==="heavy" && fighter.grounded)loadV26Heavy();
-    if(clip==="heavy" && fighter.grounded)loadV31TriangleLauncher();
+    if(clip==="heavyLauncher" && fighter.grounded)loadV31TriangleLauncher();
     if((clip==="heavy" || clip==="spiritPunch") && fighter.grounded)
       loadV30SpiritPunch();
     if(clip==="upper" && fighter.grounded)loadV28Uppercut();
-    const expanded=v32SquarePose(clip,progress,fighter)||
+    const expanded=v39TrianglePose(clip,progress,fighter)||
+      v32SquarePose(clip,progress,fighter)||
       v31TriangleLauncherPose(clip,progress,fighter)||
       v30SpiritPunchPose(clip,progress,fighter)||
       v28UppercutPose(clip,progress,fighter)||
@@ -880,6 +922,7 @@
     loadV25LightCombo();
     loadV32Combo();
     loadV26Heavy();
+    loadV39Triangle();
     loadV28Uppercut();
     loadV18Crouch();
     loadV19Jump();
@@ -889,7 +932,8 @@
     const essential=[
       V17_IDLE_SRC,V17_BACK_TURN_SRC,V17_WALK_SRC,V17_RUN_DASH_SRC,
       V33_WALK_SRC,V22_WALK_SRC,V24_DASH_SRC,V25_LIGHT_COMBO_SRC,V26_HEAVY_SRC,
-      V28_UPPERCUT_SRC,V32_COMBO_SRC,V32_UPPER_SRC,V34_MASTER_SRC,
+      V28_UPPERCUT_SRC,V39_HEAVY_SRC,V39_UPPER_SRC,
+      V32_COMBO_SRC,V32_UPPER_SRC,V34_MASTER_SRC,
       V35_MASTER_SRC,V36_MASTER_SRC,
       V18_CROUCH_SRC,V19_JUMP_SRC,V23_GUARD_SRC,
       V24_DODGE_SRC
@@ -936,6 +980,8 @@
       v36Master ||= direct(V36_MASTER_SRC);
       lightComboV25 ||= cleaned(V25_LIGHT_COMBO_SRC,"light-combo-v25");
       heavyV26 ||= cleaned(V26_HEAVY_SRC,"heavy-triangle-v26");
+      heavyV39 ||= direct(V39_HEAVY_SRC);
+      uppercutV39 ||= direct(V39_UPPER_SRC);
       launcherV28 ||= cleaned(V28_UPPERCUT_SRC,"launcher-v28");
       guardV23 ||= cleaned(V23_GUARD_SRC,"guard-v23");
       jumpV19 ||= direct(V19_JUMP_SRC);
@@ -954,7 +1000,9 @@
         [v32Light,"square-combo-v32"],[v32Upper,"square-combo-v32"],
         [v34Master,"square-combo-v34"],[v35Master,"square-combo-v35"],
         [v36Master,"square-combo-v36"],
-        [heavyV26,"heavy-triangle-v26"],[launcherV28,"launcher-v28"],
+        [heavyV26,"heavy-triangle-v26"],
+        [heavyV39,"triangle-heavy-v39"],[uppercutV39,"triangle-launcher-v39"],
+        [launcherV28,"launcher-v28"],
         [guardV23,"guard-v23"],[jumpV19,"movement-v19"],
         [dodgeV24,"dodge-v24"]
       ];
