@@ -8,7 +8,7 @@
   const MIN_SPACING = 168;
   const CONTACT_ASSIST = 32;
   const PUNCHES = new Set(["light", "cross", "body", "upper", "heavy",
-    "triangle", "spiritPunch", "powerKick"]);
+    "triangle", "heavyLauncher", "spiritPunch", "powerKick"]);
   // Body hurtboxes follow the actual stance. Pushbox rules below are
   // deliberately separate: an airborne fighter must be able to cross over
   // an opponent's head without disappearing into their body.
@@ -34,6 +34,7 @@
     // Authored V39 Triangle launcher and R2+Square Spirit Punch also need
     // precise limb boxes and short-range contact assistance.
     triangle:  {forward:28, reach:124, above:215, height:161},
+    heavyLauncher:{forward:28, reach:130, above:215, height:165},
     spiritPunch:{forward:35, reach:118, above:180, height:115}
   });
   function attackHitbox(f, attack, type) {
