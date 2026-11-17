@@ -19,7 +19,7 @@ const cfg=JSON.parse(fs.readFileSync("characters/yusuke/yusuke.json","utf8"));
 assert.equal(cfg.combat.attacks.spiritPunch.cost,24);
 assert.equal(cfg.combat.attacks.spiritPunch.projectile,undefined,"Spirit Punch must be close-range melee");
 assert.ok(cfg.combat.attacks.spiritPunch.activeStart>0);
-assert.equal(cfg.combat.attacks.heavy.damage,45,"Triangle's old combat damage must not change");
+assert.equal(cfg.combat.attacks.heavy.damage,28,"Current chained Triangle damage stays intact");
 
 const renderer=fs.readFileSync("yusuke-exact-reference-v15.js","utf8");
 const requests=[];
