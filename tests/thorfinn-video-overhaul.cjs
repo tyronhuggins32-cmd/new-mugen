@@ -11,7 +11,7 @@ assert.match(disconnect,/Controller signal lost/);
 assert.doesNotMatch(disconnect,/setPaused\(/,'Bluetooth poll loss must not freeze play');
 assert.match(html,/WHIRLWIND BLADES ·/);
 assert.match(html,/LAUNCHING SLASH ·/);
-assert.match(html,/HEAVY COMBO · NO SPIRIT COST/,'Yusuke Triangle UI reflects heavy combo, Thorfinn slash UI stays intact');
+assert.match(html,/HEAVY COMBO ×4 · 4TH HIT UPPERCUT · NO SPIRIT COST/,'Yusuke four-hit Triangle launcher UI reflects latest combat, Thorfinn slash UI stays intact');
 assert.match(html,/usesExtraArt \? \.79 : usesCombatArt \? \.87 : 1/);
 assert.match(html,/animName === "dodge" \? "sprint"/);
 assert.match(html,/BLADE COMBO/);
