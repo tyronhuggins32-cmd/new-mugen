@@ -121,12 +121,46 @@ const assert = require('node:assert/strict');
   // Browser-accurate overlap protection, punch magnetism and gun impact.
   g.reset();g.state='play';g.player.x=550;g.cpu.x=568;g.separateFighters();
   ok(Math.abs(g.cpu.x-g.player.x)>=142-0.01,'readable close-fighter spacing');
-  g.reset();g.state='play';g.player.x=400;g.cpu.x=585;
+  g.reset();g.state='play';g.player.x=400;g.cpu.x=625;
   g.player.facing=1;g.player.setState('attack-light');
   g.player.stateTime=.08;
   const contact=g.prepareMelee(g.player,g.cpu);
-  ok(typeof contact==='function' && g.player.x>400,'jab snaps into its active hit range');
+  ok(typeof contact==='function' && g.player.x>400,
+    'jab closes a near-range gap and registers an actual body intersection');
   contact();ok(g.cpu.health<g.cpu.maxHealth,'assisted jab registers actual damage');
+  // Test input-to-impact, not manual HP reduction. Neutral stick punches
+  // should face a nearby enemy on either side, and distant swings must whiff.
+  g.reset();g.state='play';g.player.x=450;g.cpu.x=660;
+  g.player.facing=-1;
+  g.player.update(1/60,{...neutral,lightPressed:true},g.cpu,g);
+  ok(g.player.facing===1,'Square faces a nearby opponent when stick is neutral');
+  g.player.stateTime=g.config.attacks.light.activeStart+.015;
+  const rightContact=g.prepareMelee(g.player,g.cpu);
+  ok(typeof rightContact==='function','right-facing neutral Square connects');
+  rightContact();
+  ok(g.cpu.health<g.cpu.maxHealth,'right-facing hit applies real HP damage');
+  g.reset();g.state='play';g.player.x=710;g.cpu.x=495;
+  g.player.facing=1;
+  g.player.update(1/60,{...neutral,lightPressed:true},g.cpu,g);
+  ok(g.player.facing===-1,'Square turns toward opponent on the left');
+  g.player.stateTime=g.config.attacks.light.activeStart+.015;
+  const leftContact=g.prepareMelee(g.player,g.cpu);
+  ok(typeof leftContact==='function','left-facing Square connects');
+  leftContact();
+  ok(g.cpu.health<g.cpu.maxHealth,'left-facing hit applies real HP damage');
+  g.reset();g.state='play';g.player.x=400;g.cpu.x=780;
+  g.player.facing=1;g.player.setState('attack-light');
+  g.player.stateTime=g.config.attacks.light.activeStart+.015;
+  ok(!g.prepareMelee(g.player,g.cpu),'out-of-range Square cannot damage at distance');
+  ok(g.cpu.health===g.cpu.maxHealth,'whiff cannot reduce enemy health');
+  g.reset();g.state='play';g.player.x=500;g.cpu.x=668;
+  g.player.facing=1;g.cpu.setState('crouch');
+  g.player.setState('attack-light');
+  g.player.stateTime=g.config.attacks.light.activeStart+.015;
+  ok(!g.prepareMelee(g.player,g.cpu),'high jab misses a genuinely crouching fighter');
+  g.player.setState('attack-body');g.player.stateTime=g.config.attacks.body.activeStart+.015;
+  ok(typeof g.prepareMelee(g.player,g.cpu)==='function',
+    'body blow contacts the crouching hurtbox');
 
   g.reset();g.state='play';g.player.x=350;g.cpu.x=740;
   g.player.facing=1;g.player.energy=100;
