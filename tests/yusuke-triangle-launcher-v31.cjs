@@ -13,7 +13,7 @@ assert.equal(crypto.createHash("sha256").update(buf).digest("hex"),
  "fc9d254538c3981313767a691287423867f12de5a2878a600deca21dd8cc4c1d");
 const cfg=JSON.parse(fs.readFileSync("characters/yusuke/yusuke.json","utf8"));
 const manifest=JSON.parse(fs.readFileSync("characters/yusuke/triangle-launcher-v31.json","utf8"));
-assert.equal(cfg.combat.attacks.heavy.damage,45,"Original Triangle damage retained");
+assert.equal(cfg.combat.attacks.heavy.damage,28,"Current Triangle chain damage retained");
 assert.equal(cfg.combat.attacks.heavy.launchVelocity,-440);
 assert.equal(cfg.combat.attacks.heavy.cost,undefined,"Triangle remains Spirit-free");
 assert.equal(cfg.combat.attacks.spiritPunch.cost,24);
