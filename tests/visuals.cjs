@@ -56,13 +56,36 @@ assert.ok(game.visualEchoes.some(e=>e.fighter===player),"fast movements create a
 assert.ok(game.visualHits[0].life<game.visualHits[0].maxLife);
 visual.drawHits(game,canvas,1100);
 visual.drawCharge({...player,state:"charge"},canvas,1200);
+const circles={arc:0,ellipse:0,strokes:0,glow:0};
+const ringCanvas=new Proxy({},{
+  get(obj,key){
+    if(key==="arc"||key==="ellipse")
+      return ()=>{circles[key]++;};
+    if(key==="stroke")return ()=>{circles.strokes++;};
+    if(key==="createRadialGradient")return ()=>{
+      circles.glow++;return gradient();
+    };
+    return ()=>{};
+  },
+  set(obj,key,val){obj[key]=val;return true;}
+});
+visual.drawCharge({...player,energy:100,state:"idle"},ringCanvas,1100);
+assert.deepEqual(circles,{arc:0,ellipse:0,strokes:0,glow:0},
+  "full Spirit meter must not draw a transparent circle around Yusuke");
+visual.drawCharge({...player,energy:80,state:"charge"},ringCanvas,1200);
+assert.equal(circles.arc+circles.ellipse+circles.glow,0,
+  "charging must use localized sparks, not a bubble or aura ring");
+assert.ok(circles.strokes>0,"charging retains a visible hand effect");
+assert.ok(!html.includes("context.arc(8, -82, 65") &&
+  !html.includes("context.arc(14, -94, 70"),
+  "legacy block rings must be removed");
 visual.drawProjectileFX(canvas,{owner:player,kind:"spiritGun",radius:16,age:.2,vx:920,vy:0},400,300,1234);
 assert.ok(stats.drawImages>=2,"cached stage must be drawn every frame");
 
 assert.ok(html.includes("this.renderAlpha = this.paused ? 1"),"render interpolation must be used");
 assert.ok(html.includes("this.cpu.draw(context, time, this.renderAlpha"),"CPU must use interpolated sprites");
 assert.ok(html.includes("window.MugenVisuals.drawProjectileFX"),"engine should route projectiles to v2");
-assert.ok(html.includes("mugen-visuals-v2.js?v=2"),"visual pipeline must load before main engine");
+assert.ok(html.includes("mugen-visuals-v2.js?v=3"),"visual pipeline must load before main engine");
 const css=fs.readFileSync(path.join(root,"arcade-layout.css"),"utf8");
 assert.ok(css.includes("transform: rotate(90deg)"),"portrait fighter should rotate rather than shrink");
 assert.ok(css.includes(".touch-controls { display: none !important; }"),"fight screen should have no touch buttons");
