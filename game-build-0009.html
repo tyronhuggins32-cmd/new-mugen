@@ -1758,9 +1758,9 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="mugen-cinematics.js?v=1"></script>
-  <script src="mugen-visuals-v2.js?v=2"></script>
+  <script src="mugen-visuals-v2.js?v=3&noBubble=1"></script>
   <script src="mugen-fluid-v3.js?v=3"></script>
-  <script src="mugen-combat-v5.js?v=2&spacing=168&camera=38"></script>
+  <script src="mugen-combat-v5.js?v=3&spacing=168&contact=1"></script>
   <script src="mugen-spiritgun-v5.js?v=1"></script>
   <script src="mugen-vfx-v8.js?v=38&clarity=1"></script>
   <script src="mugen-combo-fx-v9.js?v=1"></script>
@@ -3436,16 +3436,8 @@
             context.globalAlpha = 1;
           }
 
-          if (!ghost && this.state === "block") {
-            context.strokeStyle = this.cpu ? "rgba(255,80,120,.78)" : "rgba(90,231,255,.76)";
-            context.lineWidth = 5;
-            context.shadowColor = "#5ae7ff";
-            context.shadowBlur = 18;
-            context.beginPath();
-            context.arc(8, -82, 65, -1.2, 1.2);
-            context.stroke();
-            context.shadowBlur = 0;
-          }
+          // Guard uses its actual block sprite, not a translucent arc
+          // drawn around the entire fighter.
 
           if (!ghost && attackData[attackType]?.projectile &&
               !window.MugenVfxV8?.ready()) {
@@ -3752,16 +3744,8 @@
           context.translate(this.x + recoil, this.y + crouch);
           context.scale(this.facing * turnCompression, 1);
 
-          if (this.state === "block") {
-            context.strokeStyle = this.cpu ? "rgba(255,53,93,.68)" : "rgba(90,231,255,.78)";
-            context.lineWidth = 5;
-            context.shadowColor = this.cpu ? "#ff355d" : "#5ae7ff";
-            context.shadowBlur = 16;
-            context.beginPath();
-            context.arc(14, -94, 70, -1.1, 1.1);
-            context.stroke();
-            context.shadowBlur = 0;
-          }
+          // The blocking stance itself remains visible; the old circular
+          // overlay has been removed from the fallback renderer.
 
           if (attackType === "gun") {
             const pulse = 14 + Math.sin(time * .025) * 4;
