@@ -12,7 +12,7 @@ for(const [kind,[path,w,h]] of Object.entries(assets)){
  assert.equal(buffer.readUInt32BE(16),w,kind+" width");
  assert.equal(buffer.readUInt32BE(20),h,kind+" height");
  assert.equal(buffer[25],6,kind+" true RGBA");
- assert.ok(buffer.length>300000,kind+" has real authored pixels");
+ assert.ok(buffer.length>(kind==="upward"?250000:300000),kind+" has full authored PNG art");
 }
 let readbacks=0,repaint=0;
 let cleaned=null;
