@@ -3175,6 +3175,14 @@
             this.applyPhysics(dt);
             return;
           }
+          // Neutral-stick melee attacks face the nearby rival at startup.
+          // Movement, held-direction attacks and R1 backdash keep their own
+          // facing rules. Never flip midway through an active punch.
+          if (!this.cpu && !direction && this.grounded &&
+              (input.lightPressed || input.heavyPressed) &&
+              opponent && Math.abs(opponent.x-this.x)<320) {
+            this.setFacing(opponent.x>=this.x?1:-1);
+          }
           if (input.heavyPressed && this.beginAttack("heavy", energyAtInput)) {
             this.applyPhysics(dt);
             return;
@@ -4151,11 +4159,20 @@
           // stage edges and readable fighter spacing allow.
           window.MugenCombatV5?.assistPunch(attacker, defender, attack, arena);
           const hitbox = attacker.activeHitbox();
-          if (!hitbox || !rectanglesOverlap(hitbox, defender.hurtbox)) return;
+          const targetBox = defender.hurtbox;
+          if (!hitbox || !rectanglesOverlap(hitbox, targetBox)) return;
+          // Put the strike spark at the actual intersection of fist and
+          // defender rather than a fixed point on the defender's torso.
+          const impact = window.MugenCombatV5?.meleeImpact(
+            hitbox, targetBox, attacker.facing
+          ) || {
+            x: attacker.facing > 0 ? targetBox.x + 8 :
+              targetBox.x + targetBox.width - 8,
+            y: (Math.max(hitbox.y,targetBox.y) +
+                Math.min(hitbox.y+hitbox.height,targetBox.y+targetBox.height))*.5
+          };
           attacker.attackConnected = true;
-          const impactX = attacker.facing > 0 ? defender.hurtbox.x + 8
-            : defender.hurtbox.x + defender.hurtbox.width - 8;
-          return () => this.damageFighter(attacker, defender, attack, impactX, defender.y - 105);
+          return () => this.damageFighter(attacker, defender, attack, impact.x, impact.y);
         }
 
         spawnProjectile(owner, kind = "spiritGun") {
