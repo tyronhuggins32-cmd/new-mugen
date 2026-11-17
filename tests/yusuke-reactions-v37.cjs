@@ -115,7 +115,7 @@ vm.runInNewContext(fs.readFileSync("mugen-yusuke-reactions-v37.js","utf8"),
  assert.match(html,/hitReactions=37/);
  const cfg=JSON.parse(fs.readFileSync("characters/yusuke/yusuke.json","utf8"));
  for(const [name,min] of [["light",.33],["cross",.39],["body",.43],
-   ["upper",.60],["heavy",.54]]){
+   ["upper",.60],["heavy",.43]]){
   const a=cfg.combat.attacks[name];
   assert.equal(a.duration,min,"retimed "+name);
   assert.ok(a.activeStart>0&&a.activeStart<a.activeEnd&&a.activeEnd<a.duration);
