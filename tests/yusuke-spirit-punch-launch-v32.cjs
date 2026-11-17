@@ -59,7 +59,7 @@ function landPunch(){
   hit();
   assert.equal(game.player.attackConnected,true);
   assert.equal(game.cpu.state,"hit");
-  assert.equal(game.cpu.hitReaction,"knockback");
+  assert.equal(game.cpu.hitReaction,"stagger","Current chained-heavy jabs cause stagger, unlike Spirit Punch");
   assert.equal(game.cpu._spiritPunchLaunch,true);
   assert.equal(game.cpu.stateTime,0,"New hit must restart the knockback animation");
 }
@@ -130,4 +130,4 @@ assert.equal(game.cpu._spiritPunchLaunch,false,"Normal Triangle must not inherit
 assert.equal(game.cpu.hitReaction,"knockback");
 assert.equal(game.cpu.knockbackDrag,5.2);
 
-console.log("PASS: R2+Square sends opponents flying both directions with actual knockback, landing recovery, collision, guard and heavy-attack safety.");
+console.log("PASS: R2+Square launches on actual contact in both directions, with guarded recovery and separate normal-heavy stagger.");
