@@ -2818,6 +2818,7 @@
           this._reactionDuration = .32;
           this._pendingKnockdown = false;
           this._spiritPunchLaunch = false;
+          this._upwardLaunch = false;
           this.invulnerability = 0;
           this.attackConnected = false;
           this.projectileSpawned = false;
@@ -2828,6 +2829,9 @@
           this.turnTimer = 0;
           this.lastSpiritVolley = null;
           this.punchStep = 0;
+          this.heavyStep = 0;
+          this.heavyWindow = 0;
+          this.heavyChainStage = 0;
           this.squarePresses = 0;
           this.punchWindow = 0;
           this.comboActive = false;
@@ -2883,12 +2887,35 @@
           this.comboBonusDamage = 0;
         }
 
+        resetHeavyCombo() {
+          this.heavyStep = 0;
+          this.heavyWindow = 0;
+        }
+
         beginAttack(type, energyAtPress = this.energy) {
+          // Triangle: hits 1-3 are three DIFFERENT grounded heavy attacks;
+          // the fourth press alone becomes a real uppercut launcher.
+          // Respect the combo window and existing input buffer. Spirit Punch
+          // R2+Square is intentionally separate and resets this chain.
+          if (type === "heavy" && this.grounded) {
+            if (this.heavyWindow <= 0) this.heavyStep = 0;
+            const stage = this.heavyStep;
+            this.heavyChainStage = stage;
+            if (stage >= 3) {
+              type = "heavyLauncher";
+              this.heavyStep = 0;
+              this.heavyWindow = 0;
+            } else {
+              this.heavyStep = stage + 1;
+              this.heavyWindow = yusukeCombat.heavyChain?.window ?? 1.15;
+            }
+          } else {
+            this.resetHeavyCombo();
+          }
           // Square punches create a real chain. The first two are normal;
           // only the THIRD valid Square press unlocks the combo multiplier.
-          // Triangle now directly executes the authored heavy combo,
-          // regardless of Spirit energy. Shotgun and powerKick remain
-          // separate special moves, but are no longer mapped to Triangle.
+          // Triangle executes 3 grounded heavy strikes, then a fourth-hit
+          // launcher; Spirit Punch stays exclusively on R2+Square.
           if (type === "light" && !this.cpu && this.grounded) {
             if (this.punchWindow <= 0) this.resetCombo();
             type = ["light", "cross", "body", "upper"][this.punchStep];
@@ -2957,6 +2984,9 @@
           const movement = yusukeCombat.movement;
           const energyAtInput = this.energy;
           this.punchWindow = Math.max(0, this.punchWindow - dt);
+          this.heavyWindow = Math.max(0, this.heavyWindow - dt);
+          if (this.heavyWindow <= 0 && this.heavyStep && this.state !== "attack-heavy")
+            this.resetHeavyCombo();
           this.comboTime = Math.max(0, this.comboTime - dt);
           if (this.comboTime === 0 && this.comboActive) this.resetCombo();
           if (this.punchWindow === 0 && !this.comboActive) {
@@ -2981,6 +3011,7 @@
 
           if (this.hitstun > 0) {
             this.resetCombo();
+            this.resetHeavyCombo();
             this.hitstun -= dt;
             if (this.state !== "block") this.setState("hit");
             this.vx *= Math.max(0, 1 - dt * (this.knockbackDrag || 5.2));
@@ -2993,6 +3024,7 @@
               else {
                 this.knockbackDrag = 5.2;
                 this._spiritPunchLaunch = false;
+                this._upwardLaunch = false;
                 this.setState("idle");
               }
             }
@@ -3204,6 +3236,7 @@
               // floor impact, grounded recovery and return to ready stance.
               this._pendingKnockdown = false;
               this.hitReaction = "knockdown";
+              this._upwardLaunch = false;
               this._reactionDuration = .58;
               this.hitstun = Math.max(this.hitstun, .58);
               this.stateTime = 0;
@@ -3238,7 +3271,7 @@
             const progress = Math.min(1, this.stateTime / attack.duration);
             let animationName = attack.animation;
             if (!this.grounded && attack.airAnimation) animationName = attack.airAnimation;
-            else if (attackType === "heavy") animationName = attack.animations[this.attackVariant];
+            else if (attackType === "heavy") animationName = attack.animations?.[this.heavyChainStage] || "heavy";
             return animationFrame(animationName, this.stateTime, progress);
           }
           if (!this.grounded || this.state === "jump") {
@@ -4274,7 +4307,9 @@
               + (attacker.comboHits - 1) * (yusukeCombat.combo?.extraPerHit ?? .2));
             attacker.comboMultiplier = Math.round(multiplier * 100) / 100;
           }
-          const baseDamage = attack.damage * instinctBoost;
+          const stageBonus = attacker.currentAttack?.() === "heavy"
+            ? Math.max(0,Math.min(2,attacker.heavyChainStage||0))*4 : 0;
+          const baseDamage = (attack.damage + stageBonus) * instinctBoost;
           const damage = baseDamage * multiplier * (blocked ? .25 : 1);
           if (!blocked && attacker.comboActive) attacker.comboBonusDamage += damage - baseDamage;
           defender.health = Math.max(0, defender.health - damage);
@@ -4294,9 +4329,10 @@
           // A successful guard still receives block stun and chip damage only.
           const forcedKnockback = !blocked && Boolean(attack.forceKnockback);
           defender._spiritPunchLaunch = forcedKnockback;
+          defender._upwardLaunch = !blocked && Boolean(attack.upwardLaunch);
           defender.setState(blocked ? "block" : "hit");
           if (!blocked) defender.stateTime = 0;
-          defender.hitReaction = forcedKnockback
+          defender.hitReaction = defender._upwardLaunch ? "upward" : forcedKnockback
             ? (attack.knockbackAnimation || "knockback")
             : !blocked && (attack.heavyImpact || (attack.knockback || 0) >= 250)
               ? "knockback" : "stagger";
