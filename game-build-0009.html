@@ -1620,7 +1620,7 @@
           <p class="move-heading">SPECIAL MOVES</p>
           <ul class="move-list" id="character-moves">
             <li><span>3-Square Combo · Damage Multiplier</span><span class="move-input">□ ×3</span></li>
-            <li><span>Heavy Combo · 16-frame finisher</span><span class="move-input">△</span></li>
+            <li><span>Heavy Combo · 3 hits + airborne uppercut finisher</span><span class="move-input">△ ×4</span></li>
             <li><span>Spirit Gun</span><span class="move-input">○</span></li>
             <li><span>Forward Dash / Backdash</span><span class="move-input">R1 + direction</span></li>
             <li><span>Spirit Charge</span><span class="move-input">L2</span></li>
@@ -1689,7 +1689,7 @@
           <span id="run-mode-indicator" class="run-mode-indicator" data-active="false" aria-live="polite">L3 RUN OFF</span>
         </div>
 
-        <div class="triangle-action" id="triangle-action" aria-live="polite">△ TRIANGLE · HEAVY COMBO</div>
+        <div class="triangle-action" id="triangle-action" aria-live="polite">△ TRIANGLE · HEAVY COMBO ×4</div>
         <div class="combo-panel" hidden aria-live="polite"><strong id="combo-label">3 SQUARES · COMBO ×1.20</strong><div class="combo-track"><span id="combo-fill"></span></div><div class="combo-time"><span id="combo-window"></span></div><small id="shotgun-ready">COMBO 5 UNLOCKS PUNCH VFX</small></div>
         <div class="round-banner" id="round-banner" aria-hidden="true"><strong id="round-banner-text">Fight!</strong></div>
 
@@ -2092,7 +2092,7 @@
           `${character.shortName} <span>Player 1</span>`;
         document.querySelector("#triangle-action").textContent = character.id === "thorfinn_karlsefni"
           ? "△ TRIANGLE · WHIRLWIND BLADES / LAUNCHING SLASH"
-          : "△ TRIANGLE · HEAVY COMBO";
+          : "△ TRIANGLE · HEAVY COMBO ×4 · UPPERCUT";
         rosterPortrait.src = yusukePortraitUrl;
         selectedCharacterName.textContent = character.shortName;
         selectedCharacterTitle.textContent = profile.title;
@@ -4492,7 +4492,7 @@
               ? `△ WHIRLWIND BLADES · ${Math.ceil(player.energy)}% FOCUS`
               : `△ LAUNCHING SLASH · ${Math.ceil(player.energy)}% FOCUS`;
           } else {
-            triangleHint.textContent = "△ HEAVY COMBO · NO SPIRIT COST";
+            triangleHint.textContent = "△ HEAVY COMBO ×4 · 4TH HIT UPPERCUT · NO SPIRIT COST";
           }
           if (triangleHint.dataset) triangleHint.dataset.mode = isThorfinnSelected()
             ? (shotgunAvailable ? "shotgun" : "kick") : "heavy";
