@@ -36,7 +36,7 @@ assert.ok(jab.x>500 && jab.width>80,"jab extends from the attacking hand");
 assert.ok(body.y>jab.y,"body blow targets lower than a face jab");
 assert.ok(jab.width>=cfg.combat.attacks.light.range,
   "jab must reach its authored fist extent, not the shorter legacy box");
-const standingVictim=g.hurtbox({x:710,y:600,width:84,height:194,state:"idle",grounded:true});
+const standingVictim=g.hurtbox({x:690,y:600,width:84,height:194,state:"idle",grounded:true});
 const contact=g.meleeImpact(jab,standingVictim,1);
 assert.ok(contact && contact.x>=standingVictim.x &&
   contact.y>=jab.y && contact.y<=jab.y+jab.height,
