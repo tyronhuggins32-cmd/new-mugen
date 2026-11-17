@@ -34,6 +34,15 @@ const body=g.attackHitbox({x:500,y:600,facing:1,grounded:true},cfg.combat.attack
 const upper=g.attackHitbox({x:500,y:600,facing:-1,grounded:true},cfg.combat.attacks.upper,"upper");
 assert.ok(jab.x>500 && jab.width>80,"jab extends from the attacking hand");
 assert.ok(body.y>jab.y,"body blow targets lower than a face jab");
+assert.ok(jab.width>=cfg.combat.attacks.light.range,
+  "jab must reach its authored fist extent, not the shorter legacy box");
+const standingVictim=g.hurtbox({x:710,y:600,width:84,height:194,state:"idle",grounded:true});
+const contact=g.meleeImpact(jab,standingVictim,1);
+assert.ok(contact && contact.x>=standingVictim.x &&
+  contact.y>=jab.y && contact.y<=jab.y+jab.height,
+  "impact spark must sit in the actual intersection of fist and body");
+const noContact=g.meleeImpact(jab,{x:100,y:100,width:60,height:50},1);
+assert.equal(noContact,null,"distant swings cannot create fake impact sparks");
 assert.ok(upper.x<500 && upper.x+upper.width<500,"left-facing hitbox tracks mirrored arm");
 assert.equal(g.attackHitbox({x:500,y:600},cfg.combat.attacks.gun,"gun"),null,
   "projectile moves never gain additional phantom melee hitboxes");
@@ -57,7 +66,7 @@ assert.ok(b.x-a.x>=142-1e-6,"spacing still holds at the stage edge");
 a=fighter(480,230);b=fighter(490,600);
 assert.equal(g.separate(a,b,arena),false,"jump-over crossups are not obstructed");
 assert.equal(a.x,480);assert.equal(b.x,490);
-a=fighter(500);b=fighter(685,600,76,178);
+a=fighter(500);b=fighter(730,600,76,178);
 a.attackType="light";
 const before=b.x-a.x;
 assert.equal(g.assistPunch(a,b,cfg.combat.attacks.light,arena),true);
@@ -120,7 +129,7 @@ assert.equal(game.cinematicImpact,null,"cinematic camera returns to normal");
 v.reset(game);assert.equal(v.stats(game).shotsFired,0);
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
-assert.match(html,/mugen-combat-v5\.js\?v=2/);
+assert.match(html,/mugen-combat-v5\.js\?v=3/);
 assert.match(html,/mugen-spiritgun-v5\.js\?v=1/);
 assert.match(html,/MugenCombatV5\.separate\(this\.player, this\.cpu, arena\)/);
 assert.match(html,/MugenCombatV5\?\.assistPunch\(attacker, defender, attack, arena\)/);
