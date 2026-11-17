@@ -9,6 +9,10 @@
      width:1024,height:512,cols:4,rows:2,frames:8,scale:.86},
    knockback:{src:"characters/yusuke/yusuke_knockback_v37_8frames.png",
      width:1024,height:512,cols:4,rows:2,frames:8,scale:.86},
+   // V39 rising knockback: one full-body sprite for each stage of an
+   // unblocked fourth-Triangle uppercut. World height comes from physics.
+   upward:{src:"characters/yusuke/yusuke_upward_knockback_v39_8frames.png",
+     width:1024,height:512,cols:4,rows:2,frames:8,scale:.96},
    knockdown:{src:"characters/yusuke/yusuke_knockdown_v37_10frames.png",
      width:1280,height:512,cols:5,rows:2,frames:10,scale:.86}
  });
@@ -122,7 +126,8 @@
    const nextX=Math.round((c+1)*cfg.width/cfg.cols);
    const y=Math.round(r*cfg.height/cfg.rows);
    const nextY=Math.round((r+1)*cfg.height/cfg.rows);
-   const frame={x,y,w:nextX-x,h:nextY-y,ax:(nextX-x)/2,key:index};
+   const frame={x,y,w:nextX-x,h:kind==="upward"?242:nextY-y,
+     ax:(nextX-x)/2,key:index};
    return {image:img,frame,index,clip,scale:cfg.scale,part:"reaction-v37",
      source:"reaction-v37",frameCount:cfg.frames,progress:Math.min(1,t)};
  }
