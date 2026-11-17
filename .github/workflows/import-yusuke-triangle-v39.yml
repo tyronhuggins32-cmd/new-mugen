@@ -1,0 +1,56 @@
+name: Import Yusuke Triangle chain PNGs V39
+on:
+  push:
+    paths:
+      - '.github/workflows/import-yusuke-triangle-v39.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import-authored-art:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and check all 3 transparent sprite atlases
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p characters/yusuke
+          curl -fsSL --retry 3 --max-time 90 'https://at.adobe.com/jmLzmxDu3U7441RF' -o characters/yusuke/yusuke_triangle_heavy_chain_v39_12frames.png
+          curl -fsSL --retry 3 --max-time 90 'https://at.adobe.com/NbmN7mrAypuuJDEg' -o characters/yusuke/yusuke_triangle_uppercut_v39_12frames.png
+          curl -fsSL --retry 3 --max-time 90 'https://at.adobe.com/MtUg1XfzHwxifCen' -o characters/yusuke/yusuke_upward_knockback_v39_8frames.png
+          cat >/tmp/triangle-v39.sha256 <<'SHA'
+          830ce0b25d6e58f680e521b97781023455dedbb4556109058c6cfa6e943c894d  characters/yusuke/yusuke_triangle_heavy_chain_v39_12frames.png
+          f97295d02619e42f72d96d87f680f2fa9a25ed540706f7eb8f51bc8d36e5cb9a  characters/yusuke/yusuke_triangle_uppercut_v39_12frames.png
+          031eeaf674f168823ae1a2f4af2eaec6a14def0a63e2d6628d16630dcc4f1230  characters/yusuke/yusuke_upward_knockback_v39_8frames.png
+          SHA
+          sha256sum -c /tmp/triangle-v39.sha256
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct
+          req={"yusuke_triangle_heavy_chain_v39_12frames.png":(1280,768),
+               "yusuke_triangle_uppercut_v39_12frames.png":(1920,512),
+               "yusuke_upward_knockback_v39_8frames.png":(1024,512)}
+          for name,size in req.items():
+            b=(Path("characters/yusuke")/name).read_bytes()
+            assert b[:8]==bytes.fromhex("89504e470d0a1a0a"),name
+            assert struct.unpack(">II",b[16:24])==size,name
+            assert b[25]==6,"RGBA required for "+name
+            print("PASS",name,size,"RGBA",len(b))
+          PY
+      - name: Commit PNG sprite assets to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add characters/yusuke/yusuke_triangle_heavy_chain_v39_12frames.png characters/yusuke/yusuke_triangle_uppercut_v39_12frames.png characters/yusuke/yusuke_upward_knockback_v39_8frames.png
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Import transparent Yusuke Triangle 3-hit, launcher and rising recoil sprites'
+          for attempt in 1 2 3 4 5 6; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
