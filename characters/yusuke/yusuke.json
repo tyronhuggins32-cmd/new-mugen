@@ -663,24 +663,25 @@
         "airAnimation": "airKick"
       },
       "heavy": {
-        "duration": 0.54,
-        "activeStart": 0.143,
-        "activeEnd": 0.344,
-        "damage": 45,
+        "duration": 0.43,
+        "activeStart": 0.12,
+        "activeEnd": 0.28,
+        "damage": 28,
         "range": 132,
-        "height": 116,
-        "knockback": 485,
-        "hitstun": 0.34,
-        "energyGain": 14,
-        "spiritCoated": true,
+        "height": 112,
+        "knockback": 115,
+        "hitstun": 0.28,
+        "energyGain": 9,
+        "spiritCoated": false,
         "animations": [
-          "heavyUppercut",
-          "heavyKick"
+          "heavyJab",
+          "heavyCross",
+          "heavyHook"
         ],
         "airAnimation": "airKick",
-        "heavyImpact": true,
-        "launchVelocity": -440,
-        "animation": "upper"
+        "heavyImpact": false,
+        "launchVelocity": 0,
+        "animation": "heavy"
       },
       "gun": {
         "duration": 0.6,
@@ -776,6 +777,24 @@
         "heavyImpact": true,
         "referenceHit": true,
         "groundedOnly": true
+      },
+      "heavyLauncher": {
+        "duration": 0.58,
+        "activeStart": 0.175,
+        "activeEnd": 0.36,
+        "damage": 56,
+        "range": 140,
+        "height": 155,
+        "knockback": 145,
+        "knockbackDrag": 3,
+        "hitstun": 0.68,
+        "energyGain": 12,
+        "heavyImpact": true,
+        "forceKnockback": true,
+        "upwardLaunch": true,
+        "launchVelocity": -730,
+        "groundedOnly": true,
+        "animation": "upper"
       }
     },
     "projectile": {
@@ -877,6 +896,19 @@
       "crouchHeightFactor": 0.57,
       "airHeightFactor": 0.72,
       "note": "Ground pushboxes prevent stacking, airborne cross-over is legal once feet rise above opponent's shoulder line; hurtboxes and move hitboxes use pose-specific bounds."
+    },
+    "heavyChain": {
+      "hits": 4,
+      "window": 1.15,
+      "firstThree": "heavy",
+      "last": "heavyLauncher",
+      "groundedOnly": true,
+      "stages": [
+        0,
+        1,
+        2,
+        3
+      ]
     }
   },
   "passives": {
@@ -897,10 +929,10 @@
     },
     {
       "id": "heavy_triangle_v26",
-      "name": "Rising Launcher Uppercut (12 Frames)",
+      "name": "Four-Hit Heavy Chain: Rising Uppercut Finisher",
       "input": "△ / Triangle",
       "type": "heavy",
-      "description": "Triangle launches the opponent with a new 12-frame rising uppercut and brief cyan arc. Grounded heavy strike with 45 base damage, unchanged hit timing, no Spirit cost, and stronger upward launch for aerial follow-ups. R2 + Square still performs metered Spirit Punch."
+      "description": "Press Triangle three times for three different grounded heavy strikes. The fourth Triangle press triggers the 12-frame uppercut launcher. A successful unblocked fourth hit launches upward for aerial follow-ups; 8-frame rising knockback plays on the defender. R2 + Square remains metered Spirit Punch. Chain resets when its input window expires."
     },
     {
       "id": "spirit_punch_overdrive_v30",
