@@ -604,8 +604,8 @@
     image.src=V30_SPIRIT_PUNCH_SRC;
   }
   function v30SpiritPunchPose(clip,progress,fighter){
-    if(!spiritPunchV30 || !fighter?.grounded ||
-      (clip!=="heavy" && clip!=="spiritPunch"))return null;
+    // Charged Spirit Punch is exclusive to R2+Square, not a Triangle fallback.
+    if(!spiritPunchV30 || !fighter?.grounded || clip!=="spiritPunch")return null;
     const p=clamp(progress);
     let index;
     if(clip==="heavy"){
