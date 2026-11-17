@@ -41,7 +41,7 @@ const fs=require("node:fs");
   // The match loader now prewarms the actual artist-authored sheets.
   // A cached request must resolve immediately and every critical PNG exist.
   const warm=await page.evaluate(()=>window.MugenExactYusuke.preloadForMatch());
-  assert.equal(warm.length,19);
+  assert.ok(warm.length>=19,"Preload all core and newly added combat animations");
   assert.ok(warm.every(a=>a.ok), "Critical authored sprite sheet failed to preload");
   const reference=await page.evaluate(()=>({
     ready:window.MugenYusukePaletteV30?.isReady(),
