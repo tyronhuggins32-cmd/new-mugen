@@ -3,6 +3,7 @@ const fs=require("node:fs"),vm=require("node:vm"),assert=require("node:assert/st
 const assets={
  stagger:["characters/yusuke/yusuke_hurt_v37_8frames.png",1024,512,8],
  knockback:["characters/yusuke/yusuke_knockback_v37_8frames.png",1024,512,8],
+ upward:["characters/yusuke/yusuke_upward_knockback_v39_8frames.png",1024,512,8],
  knockdown:["characters/yusuke/yusuke_knockdown_v37_10frames.png",1280,512,10]
 };
 for(const [kind,[path,w,h]] of Object.entries(assets)){
@@ -43,6 +44,7 @@ class Img{
  set src(url){
   this._src=url;
   if(url.includes("knockback_v37")){this.naturalWidth=1024;this.naturalHeight=512;}
+  else if(url.includes("upward_knockback_v39")){this.naturalWidth=1024;this.naturalHeight=512;}
   else if(url.includes("knockdown_v37")){this.naturalWidth=1280;this.naturalHeight=512;}
   else if(url.includes("hurt_v37")){this.naturalWidth=1024;this.naturalHeight=512;}
   else {this.naturalWidth=1536;this.naturalHeight=512;}
@@ -58,7 +60,7 @@ vm.runInNewContext(fs.readFileSync("mugen-yusuke-reactions-v37.js","utf8"),
 (async()=>{
  const plugin=root.MugenYusukeReactionV37;
  assert.ok(plugin);
- assert.equal(await plugin.preload(),true,"all 3 reaction atlases ready");
+ assert.equal(await plugin.preload(),true,"all 4 reaction atlases ready");
  for(const [kind,[,w,h,count]] of Object.entries(assets)){
   assert.equal(plugin.ready(kind),true,kind+" ready");
   assert.equal(plugin.frameCount(kind),count);
@@ -80,10 +82,10 @@ vm.runInNewContext(fs.readFileSync("mugen-yusuke-reactions-v37.js","utf8"),
  let primed=0;
  root.MugenYusukePaletteV30={prepare(image){primed++;return image;}};
  plugin.primePalette();
- assert.equal(primed,3,"match each reaction family to the idle palette");
+ assert.equal(primed,4,"match every reaction family to the idle palette");
  const fighter={state:"hit",stateTime:0,hitstun:.48,hitReaction:"stagger",
   _reactionDuration:.48,facing:1};
- for(const kind of ["stagger","knockback","knockdown"]){
+ for(const kind of ["stagger","knockback","upward","knockdown"]){
   const count=assets[kind][3];
   fighter.hitReaction=kind;
   fighter._reactionDuration=.48;
@@ -97,7 +99,7 @@ vm.runInNewContext(fs.readFileSync("mugen-yusuke-reactions-v37.js","utf8"),
    const w=kind==="knockdown"?1280:1024,h=512;
    assert.ok(pose.frame.x>=0&&pose.frame.x+pose.frame.w<=w);
    assert.ok(pose.frame.y>=0&&pose.frame.y+pose.frame.h<=h);
-   assert.ok(pose.scale>=.84&&pose.scale<=.88);
+   assert.ok(kind==="upward" ? pose.scale===.96 : pose.scale>=.84&&pose.scale<=.88);
    visited.add(i);
   }
   assert.equal(visited.size,count,kind+" every frame reachable");
@@ -129,5 +131,5 @@ vm.runInNewContext(fs.readFileSync("mugen-yusuke-reactions-v37.js","utf8"),
    assert.ok(a.activeStart/a.duration>=.16 && a.activeStart/a.duration<=.32);
    assert.ok(a.activeEnd/a.duration>.52 && a.activeEnd/a.duration<.75);
  }
- console.log("PASS: 26 authored hit/flight/knockdown poses; true knockback alpha; full sprite grid; preloaded palettes; slower combat.");
+ console.log("PASS: 34 authored hit/flight/upward/knockdown poses; true knockback alpha; full sprite grid and preloaded palettes.");
 })().catch(e=>{console.error(e);process.exitCode=1;});
