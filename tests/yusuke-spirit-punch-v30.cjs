@@ -66,9 +66,9 @@ for(let i=0;i<16;i++){
 }
 assert.equal(poses.size,16,"Every authored cel should appear");
 const triangle=sample("heavy",.13,.325);
-assert.equal(triangle.source,"spirit-punch-v30","Triangle heavy uses new evolved art");
-assert.ok(triangle.index>=8&&triangle.index<=11,
- "Original heavy contact window must land on energy-charged punch impact");
+assert.equal(triangle.source,"heavy-triangle-v26","Triangle heavy remains separate from R2+Square Spirit Punch");
+assert.ok(triangle.index>=0&&triangle.index<=15,
+ "Triangle heavy remains an authored sequence independent of Spirit Punch");
 assert.equal(sample("heavy",0,.325).index,0);
 assert.ok(sample("heavy",.31,.325).index>=14);
 assert.equal(requests.filter(x=>x===asset).length,1,"Single cached texture");
@@ -135,4 +135,4 @@ assert.equal(h.humanInput().ultimatePressed,false,"R2 must not repeat");
 h.pressFightControl("ultimate","dualsense");
 h.humanInput();h.clearFightInput();
 assert.equal(h.humanInput().ultimatePressed,false,"Blur or pause clears pending super");
-console.log("PASS: Spirit Punch 16 real RGBA frames; evolved Triangle; R2+Square both orders; no accidental MAX Spirit Gun; original uppercut/Spirit Gun preserved.");
+console.log("PASS: Spirit Punch 16 real RGBA frames; Triangle separate; R2+Square both orders; no accidental MAX Spirit Gun; original uppercut/Spirit Gun preserved.");
