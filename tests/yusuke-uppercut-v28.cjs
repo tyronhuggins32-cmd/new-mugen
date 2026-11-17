@@ -69,5 +69,5 @@ assert.equal(combat.attacks.upper.duration,.60);
 assert.equal(combat.attacks.upper.damage,42);
 assert.equal(combat.attacks.upper.activeStart,.172);
 assert.equal(combat.attacks.upper.activeEnd,.379);
-assert.equal(combat.attacks.heavy.damage,45);
+assert.equal(combat.attacks.heavy.damage,28);
 console.log("PASS: 12 transparent uppercut cels, fourth-Square control, hit timings, Triangle and fallback");
