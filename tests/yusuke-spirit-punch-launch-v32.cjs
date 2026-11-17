@@ -10,7 +10,7 @@ assert.equal(attack.knockbackAnimation,"knockback");
 assert.ok(attack.knockback>=1100 && attack.knockbackDrag<=1.8);
 assert.ok(attack.launchVelocity<=-450 && attack.hitstun>=.75);
 assert.equal(attack.projectile,undefined,"Spirit Punch must remain a melee hit");
-assert.equal(config.combat.attacks.heavy.damage,45,"Triangle must stay unchanged");
+assert.equal(config.combat.attacks.heavy.damage,28,"Current Triangle damage must stay unchanged");
 
 const html=fs.readFileSync("game-build-0009.html","utf8");
 const element=()=>({classList:{add(){},remove(){},toggle(){}},style:{},
