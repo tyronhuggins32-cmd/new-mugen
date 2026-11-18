@@ -2832,6 +2832,9 @@
           this.heavyStep = 0;
           this.heavyWindow = 0;
           this.heavyChainStage = 0;
+          // Count distinct Triangle taps made during heavy attack recovery.
+          // A single generic buffer used to overwrite rapid 2nd/3rd/4th taps.
+          this.heavyQueuedInputs = 0;
           this.squarePresses = 0;
           this.punchWindow = 0;
           this.comboActive = false;
@@ -2890,6 +2893,7 @@
         resetHeavyCombo() {
           this.heavyStep = 0;
           this.heavyWindow = 0;
+          this.heavyQueuedInputs = 0;
         }
 
         beginAttack(type, energyAtPress = this.energy) {
@@ -2905,6 +2909,7 @@
               type = "heavyLauncher";
               this.heavyStep = 0;
               this.heavyWindow = 0;
+              this.heavyQueuedInputs = 0;
             } else {
               this.heavyStep = stage + 1;
               this.heavyWindow = yusukeCombat.heavyChain?.window ?? 1.15;
@@ -3035,18 +3040,50 @@
           const attackType = this.currentAttack();
           if (attackType) {
             const attack = attackData[attackType];
+            const chainingHeavy = attackType === "heavy" && !this.cpu && this.grounded;
+            // Unlike the single-slot general attack buffer, a Triangle chain
+            // needs to remember multiple NEW taps during a single long swing.
+            // Each tap advances exactly one heavy stage; holding it does not.
+            if (chainingHeavy && input.heavyPressed) {
+              const remaining = Math.max(0, 4 - this.heavyStep);
+              this.heavyQueuedInputs = Math.min(remaining,
+                this.heavyQueuedInputs + 1);
+            }
             const queuedAttack = input.spiritPunchPressed && this.grounded
               ? "spiritPunch"
               : input.gunPressed ? "gun"
-              : input.heavyPressed ? "heavy" : input.lightPressed ? "light" : null;
+              : input.heavyPressed && !chainingHeavy ? "heavy"
+              : input.lightPressed ? "light" : null;
             if (queuedAttack) {
               this.actionBuffer = queuedAttack;
               this.actionBufferEnergy = energyAtInput;
-              // Keep Square and Triangle taps queued through recovery.
+              // Preserve buffered specials and Square while another attack plays.
               this.actionBufferTime = Math.max(yusukeCombat.input.attackBuffer,
                 attack.duration - this.stateTime + .07);
             }
             this.vx *= Math.max(0, 1 - dt * movement.attackFriction);
+            if (chainingHeavy && this.heavyQueuedInputs > 0 &&
+                this.heavyWindow > 0 &&
+                // The hit must finish before cancelling into the next move.
+                // Waiting until the entire .43s recovery made quick combos
+                // appear frozen and silently lost repeated Triangle inputs.
+                this.stateTime >= Math.min(attack.duration - .04,
+                  Math.max(.23, attack.activeEnd + .035))) {
+              const remaining = this.heavyQueuedInputs - 1;
+              this.setState("idle");
+              const chained = this.beginAttack("heavy", energyAtInput);
+              // beginAttack clears this queue for the fourth-hit launcher;
+              // keep only genuinely queued follow-ups on earlier strikes.
+              this.heavyQueuedInputs = chained && this.currentAttack() === "heavy"
+                ? Math.min(Math.max(0, 4 - this.heavyStep), remaining) : 0;
+              this.actionBuffer = null;
+              this.actionBufferEnergy = null;
+              this.actionBufferTime = 0;
+              if (chained) {
+                this.applyPhysics(dt);
+                return;
+              }
+            }
             if (attack.projectile && !this.projectileSpawned && this.stateTime >= attack.spawnTime) {
               this.projectileSpawned = true;
               game.spawnProjectile(this, attack.projectile);
