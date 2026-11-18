@@ -13,6 +13,7 @@ on:
       - "mugen-yusuke-reactions-v37.js"
       - "tests/yusuke-reactions-v37.cjs"
       - "tests/browser-yusuke-reactions-v37.cjs"
+      - "tests/browser-triangle-rapid-v42.cjs"
       - "tests/yusuke-palette-v30.cjs"
       - "tests/yusuke-art-v29.cjs"
       - "tests/yusuke-animation-v28.cjs"
@@ -76,6 +77,8 @@ jobs:
           exit 1
       - name: Play through browser combat
         run: node tests/combat.cjs
+      - name: Verify four rapid Triangle taps render and launch in Chromium
+        run: node tests/browser-triangle-rapid-v42.cjs
       - name: Check Yusuke V28 actual PNG silhouettes, pose continuity and foot anchors
         run: node tests/browser-yusuke-animation-v28.cjs
       - name: Verify Yusuke V37 reaction sprites, white-background cleanup and cinematic hit timings
