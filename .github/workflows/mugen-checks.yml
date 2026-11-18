@@ -80,6 +80,8 @@ jobs:
         run: node tests/yusuke-triangle-launcher-v31.cjs
       - name: Four actual Triangle presses, fourth-hit upward flight and guarded timeout safety V41
         run: node tests/yusuke-triangle-four-hit-v41.cjs
+      - name: Rapid Triangle taps are queued through attack recovery V42
+        run: node tests/yusuke-triangle-rapid-input-v42.cjs
       - name: Recorded Yusuke V27 palette, body scale and close-combat collision fixes
         run: node tests/yusuke-video-bugs-v27.cjs
       - name: Yusuke V28 consistent sprite proportions, foot pivots and phase-locked locomotion
